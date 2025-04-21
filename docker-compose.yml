@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   google-trends:
-    build: Users/admin/PycharmProjects/google-trends
+    image: google-trends
     ports:
       - "7863:7863"
     volumes:
