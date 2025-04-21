@@ -30,13 +30,14 @@
 E:/Service/docker-volumes为你自己的本地目录
 
 ```
-    environment:
-      - PROXY_URL=http://192.168.1.12:10811
-      - ZIP_DIR=/asset/zip
-      - TASK_DIR=/asset/task
     volumes:
-      - E:/Service/docker-volumes/task:/asset/task
-      - E:/Service/docker-volumes/zip:/asset/zip
+      - E:/Service/docker-volumes/logs:/app/logs
+      - E:/Service/docker-volumes/tasks:/app/tasks
+    environment:
+      - HEADLESS=true
+      - LOG_LEVEL=INFO
+      - PLATFORM=server
+      - PROXY_URL=http://127.0.0.1:10809
     command: python main.py --port 7861
 ```
 

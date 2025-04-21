@@ -6,8 +6,8 @@ services:
     ports:
       - "7863:7863"
     volumes:
-      - ./logs:/app/logs
-      - ./tasks:/app/tasks
+      - D:/Service/docker-volumes/google-trends/logs:/app/logs
+      - D:/Service/docker-volumes/google-trends/tasks:/app/tasks
     environment:
       - HEADLESS=true
       - LOG_LEVEL=INFO
