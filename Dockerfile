@@ -4,6 +4,11 @@ FROM python:3.12
 # 设置工作目录
 WORKDIR /app
 
+# 安装 tzdata 包
+RUN apt-get update && apt-get install -y tzdata && rm -rf /var/lib/apt/lists/*
+
+# 设置时区为 Asia/Shanghai
+ENV TZ=Asia/Shanghai
 # 复制项目文件
 COPY core /app
 COPY requirements.txt /app
