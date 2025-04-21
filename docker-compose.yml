@@ -4,7 +4,7 @@ services:
   google-trends:
     image: google-trends
     ports:
-      - "7863:7863"
+      - "7863:7861"
     volumes:
       - D:/Service/docker-volumes/google-trends/logs:/app/logs
       - D:/Service/docker-volumes/google-trends/tasks:/app/tasks
@@ -14,4 +14,4 @@ services:
       - PLATFORM=server
       - PROXY_URL=http://192.168.31.85:10811
     restart: always
-    command: python main.py --port 7863
+    command: python main.py --port 7861
