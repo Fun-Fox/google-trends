@@ -1,4 +1,4 @@
-# Google Trends 爬虫项目
+# Google Trends 采集项目
 
 ## 项目简介
 本项目是一个基于 Python 和 Playwright 的 Google Trends 数据采集工具，支持通过 Gradio 提供的 Web 界面进行交互操作。
