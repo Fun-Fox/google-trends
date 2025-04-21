@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  google-trends:
+    build: Users/admin/PycharmProjects/google-trends
+    ports:
+      - "7863:7863"
+    volumes:
+      - ./logs:/app/logs
+      - ./tasks:/app/tasks
+    environment:
+      - HEADLESS=true
+      - LOG_LEVEL=INFO
+      - PLATFORM=server
+      - PROXY_URL=http://127.0.0.1:10809
+    restart: always
+    command: python webui.py --port 7863

@@ -1,0 +1,5 @@
+aiohttp==3.8.1
+aiohttp-socks==0.6.1
+gradio==3.16.2
+playwright==1.28.1
+python-dotenv==0.21.0

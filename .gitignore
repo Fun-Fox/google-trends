@@ -1,0 +1,16 @@
+*.db
+*.json
+*.log
+*.xlsx
+*.csv
+*.spec
+*.ini
+/.idea
+/.vscode
+/TaskList
+/ZipList
+/.gradio
+__pycache__
+.DS_Store
+/asset
+/task
