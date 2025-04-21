@@ -1,6 +1,4 @@
 aiohttp==3.11.16
-aiohttp-socks==0.10.1
-aiohttp-socks==0.6.1
 gradio==5.25.0
 playwright==1.51.0
 python-dotenv==0.21.0

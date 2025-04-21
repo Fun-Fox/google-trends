@@ -38,7 +38,7 @@ E:/Service/docker-volumes为你自己的本地目录
       - LOG_LEVEL=INFO
       - PLATFORM=server
       - PROXY_URL=http://127.0.0.1:10809
-    command: python main.py --port 7861
+    command: python main.py --port 7863
 ```
 
 #### 启动命令
