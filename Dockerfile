@@ -16,6 +16,6 @@ COPY .env /app
 COPY main.py /app
 # 安装依赖
 RUN pip install --no-cache-dir -r requirements.txt
-
+RUN  playwright install chromium
 # 暴露端口
 EXPOSE 7863

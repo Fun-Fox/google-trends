@@ -223,7 +223,7 @@ with gr.Blocks() as app:
         gr.Markdown("选择任务文件夹以查看热词文件夹及对应图片。")
         with gr.Row():
             with gr.Column():
-                task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=[],
+                task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=get_task_folders(),
                                            allow_custom_value=True)
                 hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False, choices=[],
                                               allow_custom_value=True)

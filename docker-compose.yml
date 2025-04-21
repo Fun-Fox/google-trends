@@ -12,6 +12,6 @@ services:
       - HEADLESS=true
       - LOG_LEVEL=INFO
       - PLATFORM=server
-      - PROXY_URL=http://192.168.31.85:10809
+      - PROXY_URL=http://192.168.31.85:10811
     restart: always
     command: python main.py --port 7863
