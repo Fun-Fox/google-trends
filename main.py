@@ -288,51 +288,46 @@ with gr.Blocks() as app:
         download_button = gr.Button("ZIP压缩")
 
 
-        def download_folder_or_files(paths):
+        def zip_folder(folder_path, zip_path):
             """
-            将选中的文件夹或文件打包为 .zip 文件并提供采集链接
-            :param paths: 选中的文件夹或文件路径列表
+            将文件夹打包为 .zip 文件
+            :param folder_path: 文件夹路径
+            :param zip_path: .zip 文件路径
+            """
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(folder_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        cname = os.path.relpath(str(file_path), str(folder_path))
+                        zipf.write(str(file_path), cname)
+
+
+        def download_folder(folder_paths):
+            """
+            将选中的文件夹打包为 .zip 文件并提供下载链接
+            :param folder_paths: 选中的文件夹路径列表
             :return: .zip 文件路径
             """
-            if not paths:
-                # logging.warning("用户未选择任何文件或文件夹")
+            if not folder_paths:
+                return None  # 用户未选择任何文件夹
+
+            # 只处理第一个选中的文件夹
+            folder_path = folder_paths[0]
+            if not os.path.isdir(folder_path):
                 return None
 
             # 读取环境变量指定的目录
-            zip_dir = os.getenv("ZIP_DIR", "zips")
-            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')  # 生成年月日时分秒格式的时间戳
-            if len(paths) > 1:
-                zip_filename = f"多文件_{timestamp}.zip"
-            else:
-                zip_filename = f"{os.path.basename(paths[0])}_{timestamp}.zip"
-            zip_path = os.path.join(current_dir, zip_dir, zip_filename)
+            zip_dir = os.getenv("ZIP_DIR")
+            zip_path = os.path.join(current_dir, zip_dir, f"{os.path.basename(folder_path)}.zip")
             os.makedirs(os.path.dirname(zip_path), exist_ok=True)
+            zip_folder(folder_path, zip_path)
+            return zip_path
 
-            try:
-                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    for path in paths:
-                        # if os.path.isdir(path):
-                        #     for root, _, files in os.walk(path):
-                        #         for file in files:
-                        #             file_path = os.path.join(root, file)
-                        #             # 使用相对路径
-                        #             arcname = os.path.relpath(file_path, start=path)
-                        #             zipf.write(file_path, arcname)
-                        #             # logging.info(f"添加文件到 ZIP: {arcname}")
-                        if os.path.isfile(path):
-                            # 直接使用文件名
-                            arcname = os.path.basename(path)
-                            zipf.write(path, arcname)
-                            # logging.info(f"添加文件到 ZIP: {arcname}")
-                # logging.info(f"ZIP 文件创建成功: {zip_path}")
-                return zip_path
-            except Exception as e:
-                # logging.error(f"创建 ZIP 文件失败: {str(e)}")
-                return None
+
         download_button.click(
-            fn=download_folder_or_files,
-            inputs=file_explorer,
-            outputs=download_output
+            fn=download_folder,  # 调用下载函数
+            inputs=file_explorer,  # 获取选中的文件夹路径
+            outputs=download_output  # 提供下载链接
         )
 
 if __name__ == '__main__':
