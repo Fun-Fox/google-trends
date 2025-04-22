@@ -9,6 +9,8 @@ services:
       - D:/Service/docker-volumes/google-trends/logs:/app/logs
       - D:/Service/docker-volumes/google-trends/tasks:/app/tasks
     environment:
+      - ZIP_DIR=/assets/zip
+      - TASK_DIR=/assets/tasks
       - HEADLESS=true
       - LOG_LEVEL=INFO
       - PLATFORM=server

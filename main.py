@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import datetime
+import zipfile
 
 from dotenv import load_dotenv
 
@@ -16,7 +17,7 @@ log_file_path = os.path.join("logs", f"{task_date}.log")
 os.makedirs("logs", exist_ok=True)
 load_dotenv()
 task_dir = os.getenv("TASK_DIR", "tasks")
-
+current_dir = os.path.dirname(os.path.abspath(__file__))
 # # 配置日志
 # logger = logging.getLogger()
 # logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
@@ -243,6 +244,96 @@ with gr.Blocks() as app:
         # 修改回调函数，正确更新 hotword_folders 的选项
         task_folders.change(fn=update_hotword_folders, inputs=task_folders, outputs=hotword_folders)
         hotword_folders.change(fn=get_images, inputs=[task_folders, hotword_folders], outputs=image_gallery)
+    with gr.Tab("下载"):
+        gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
+        with gr.Row():
+            with gr.Column():
+                file_explorer = gr.FileExplorer(
+                    label="任务文件夹",
+                    glob="**/*",
+                    root_dir=task_dir,
+                    every=1,
+                    height=300,
+                )
+                refresh_btn = gr.Button("刷新")
+
+
+                def update_file_explorer():
+                    return gr.FileExplorer(root_dir="")
+
+
+                def update_file_explorer_2():
+                    return gr.FileExplorer(root_dir=task_dir)
+
+
+                refresh_btn.click(update_file_explorer, outputs=file_explorer).then(update_file_explorer_2,
+                                                                                    outputs=file_explorer)
+
+
+            def refresh_zip_files():
+                """
+                刷新 .zip 文件列表
+                :return: 返回最新的 .zip 文件列表
+                """
+                zip_dir = os.getenv("ZIP_DIR", "zips")
+                zip_path = os.path.join(current_dir, zip_dir)
+                if not os.path.exists(zip_path):
+                    os.makedirs(zip_path, exist_ok=True)
+                return [os.path.join(zip_path, f) for f in os.listdir(zip_path) if f.endswith('.zip')]
+
+            download_output = gr.File(label="ZIP下载链接",
+                                      value=refresh_zip_files,
+                                      height=100,
+                                      every=10)
+        download_button = gr.Button("ZIP压缩")
+
+
+        def download_folder_or_files(paths):
+            """
+            将选中的文件夹或文件打包为 .zip 文件并提供采集链接
+            :param paths: 选中的文件夹或文件路径列表
+            :return: .zip 文件路径
+            """
+            if not paths:
+                # logging.warning("用户未选择任何文件或文件夹")
+                return None
+
+            # 读取环境变量指定的目录
+            zip_dir = os.getenv("ZIP_DIR", "zips")
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')  # 生成年月日时分秒格式的时间戳
+            if len(paths) > 1:
+                zip_filename = f"多文件_{timestamp}.zip"
+            else:
+                zip_filename = f"{os.path.basename(paths[0])}_{timestamp}.zip"
+            zip_path = os.path.join(current_dir, zip_dir, zip_filename)
+            os.makedirs(os.path.dirname(zip_path), exist_ok=True)
+
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for path in paths:
+                        # if os.path.isdir(path):
+                        #     for root, _, files in os.walk(path):
+                        #         for file in files:
+                        #             file_path = os.path.join(root, file)
+                        #             # 使用相对路径
+                        #             arcname = os.path.relpath(file_path, start=path)
+                        #             zipf.write(file_path, arcname)
+                        #             # logging.info(f"添加文件到 ZIP: {arcname}")
+                        if os.path.isfile(path):
+                            # 直接使用文件名
+                            arcname = os.path.basename(path)
+                            zipf.write(path, arcname)
+                            # logging.info(f"添加文件到 ZIP: {arcname}")
+                # logging.info(f"ZIP 文件创建成功: {zip_path}")
+                return zip_path
+            except Exception as e:
+                # logging.error(f"创建 ZIP 文件失败: {str(e)}")
+                return None
+        download_button.click(
+            fn=download_folder_or_files,
+            inputs=file_explorer,
+            outputs=download_output
+        )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
