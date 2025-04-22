@@ -168,7 +168,7 @@ def update_hotword_folders(task_folder):
 
 
 # Gradio 接口
-with gr.Blocks() as app:
+with gr.Blocks(title="GT") as app:
     gr.Markdown("# Google Trends 采集")
 
     # 使用 Tab 方式组织界面
@@ -337,8 +337,8 @@ if __name__ == '__main__':
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.path.join(os.getcwd(), 'Log')],
-                   server_port=args.port)
+                   server_port=args.port,favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
         app.launch(share=False, server_name="0.0.0.0",
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.path.join(os.getcwd(), 'Log')],
-                   server_port=args.port)
+                   server_port=args.port,favicon_path="favicon.ico")
