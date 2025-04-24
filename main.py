@@ -1,42 +1,45 @@
 import argparse
 import asyncio
-import logging
 import os
 import datetime
 import zipfile
 
 from dotenv import load_dotenv
 
-from core import init_browser, close_browser, setup_logger
+from agent.do import write_style_assistant
+from core import init_browser, close_browser,get_logger
 from core import crawl_google_trends_page
 import gradio as gr
 
+
 # 动态生成日志文件路径
 task_date = datetime.datetime.now().strftime("%Y年%m月%d日%H时%M分")
-log_file_path = os.path.join("logs", f"{task_date}.log")
+task_log_file_path = os.path.join(f"task_{task_date}.log")
 os.makedirs("logs", exist_ok=True)
 load_dotenv()
-task_dir = os.getenv("TASK_DIR", "tasks")
+task_root_dir = os.getenv("TASK_DIR", "tasks")
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
 # # 配置日志
 # logger = logging.getLogger()
 # logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 
 
-async def start_crawler(url):
+async def start_crawler(url, to_download_image):
     """
     启动采集任务
     :param url: 目标URL
     """
     # 获取当前时间并创建任务文件夹
-    task_dir_now = os.path.join(task_dir, task_date)
-    os.makedirs(task_dir, exist_ok=True)
+    task_dir_now = os.path.join(task_root_dir, task_date)
+    os.makedirs(task_root_dir, exist_ok=True)
 
-    logger = setup_logger(log_file_path)
+    logger = get_logger(__name__, task_log_file_path)
 
     p, browser, context, page = await init_browser(logger)
 
-    await crawl_google_trends_page(page, logger, url=url, task_dir=task_dir_now)
+    await crawl_google_trends_page(page, logger, url=url, task_dir=task_dir_now, to_download_image=to_download_image)
 
     # 关闭页面和上下文
     await page.close()
@@ -47,13 +50,13 @@ async def start_crawler(url):
 
 
 # 新增 Gradio Web 页面
-def run_crawler():
+def run_crawler(to_download_image):
     """
     运行采集任务
     :return: 爬取任务完成的消息
     """
     url = "https://trends.google.com/trending?geo=US&hours=168&sort=search-volume"
-    asyncio.run(start_crawler(url))
+    asyncio.run(start_crawler(url, to_download_image))
     return "爬取任务已完成"
 
 
@@ -63,9 +66,9 @@ def get_task_folders():
     :return: 任务文件夹列表
     """
     # task_dir = task_dir
-    if not os.path.exists(task_dir):
+    if not os.path.exists(task_root_dir):
         return []
-    folders = os.listdir(task_dir)
+    folders = os.listdir(task_root_dir)
     return folders
 
 
@@ -81,14 +84,14 @@ def get_hotword_folders(task_folder):
     elif not isinstance(task_folder, str):
         return []
 
-    hotword_dir = os.path.join(task_dir, task_folder)
+    hotword_dir = os.path.join(task_root_dir, task_folder)
     if not os.path.exists(hotword_dir):
         return []
     folders = os.listdir(hotword_dir)
     return folders
 
 
-def get_images(task_folder, hotword_folder):
+def get_images(hotword_folder):
     """
     获取图片列表
     :param task_folders:
@@ -101,23 +104,23 @@ def get_images(task_folder, hotword_folder):
     elif not isinstance(hotword_folder, str):
         return []
 
-    image_dir = os.path.join(task_dir, task_folder, hotword_folder)
-    if not os.path.exists(image_dir):
+    image_dir = hotword_folder
+    if not os.path.exists(hotword_folder):
         return []
     images = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(('.jpg', '.png'))]
     return gr.Gallery(label="图片", value=images, interactive=False)
 
 
 # 新增函数：获取 logs 目录下时间戳最新的日志文件
-def get_latest_log_file():
+def get_latest_log_file(log_dir, start_str="task_"):
     """
     获取最新的日志文件
     :return: 最新的日志文件路径
     """
-    log_dir = "logs"
+
     if not os.path.exists(log_dir):
         return None
-    log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
+    log_files = [f for f in os.listdir(log_dir) if f.endswith('.log') and f.startswith(start_str)]
     if not log_files:
         return None
     latest_log = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
@@ -125,12 +128,29 @@ def get_latest_log_file():
 
 
 # 更新 Gradio 接口中的日志读取逻辑
-def update_log_textbox():
+def update_task_log_textbox():
     """
     更新日志文本框内容
     :return: 日志内容
     """
-    latest_log_file = get_latest_log_file()
+    log_dir = "logs"
+    start_str = "task_"
+    latest_log_file = get_latest_log_file(log_dir,start_str)
+    if latest_log_file:
+        with open(latest_log_file, 'r', encoding='utf-8') as f:
+            log_content = f.read()
+        return log_content
+    return "暂无日志文件"
+
+# 更新 Gradio 接口中的日志读取逻辑
+def update_agent_log_textbox():
+    """
+    更新日志文本框内容
+    :return: 日志内容
+    """
+    log_dir = "logs"
+    start_str = "agent_"
+    latest_log_file = get_latest_log_file(log_dir,start_str)
     if latest_log_file:
         with open(latest_log_file, 'r', encoding='utf-8') as f:
             log_content = f.read()
@@ -152,15 +172,16 @@ def refresh_folders():
 
 
 # 修改回调函数，正确更新 hotword_folders 的选项
-def update_hotword_folders(task_folder):
+def update_hot_word_folders(task_folder):
     if isinstance(task_folder, list) and task_folder:
         task_folder = task_folder[0]
     elif not isinstance(task_folder, str):
         return []
-    hotword_dir = os.path.join(task_dir, task_folder)
-    if not os.path.exists(hotword_dir):
+    task_dir = os.path.join(task_root_dir, task_folder)
+    if not os.path.exists(task_dir):
         return []
-    folders = os.listdir(hotword_dir)
+    folders = [os.path.join(task_dir, folder) for folder in os.listdir(task_dir) if
+               os.path.isdir(os.path.join(task_dir, folder))]
     if folders:
         return gr.Dropdown(choices=folders, label="热词文件夹", value=folders[0], interactive=True)
     else:
@@ -215,9 +236,63 @@ with gr.Blocks(title="GT") as app:
         gr.Markdown("点击“开始爬取”按钮启动任务，日志将实时更新。")
         with gr.Row():
             with gr.Column():
+                to_download_image = gr.Checkbox(label="下载Google Trends上的三张图片", value=False, )
                 button = gr.Button("开始爬取")
-                button.click(fn=run_crawler, inputs=None, outputs=gr.Textbox(label="爬取结果"))
-                log_textbox = gr.Textbox(label="日志", value=update_log_textbox, lines=10, interactive=False)
+                button.click(fn=run_crawler, inputs=to_download_image, outputs=gr.Textbox(label="爬取结果"))
+                task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, interactive=False)
+    # 新增 Tab 用于读取和修改提示词文件
+    with gr.Tab("提示词设置"):
+        gr.Markdown("### 提示词设置")
+        gr.Markdown("在此处读取和修改提示词文件。")
+        style_note_path = os.path.join(current_dir, "style_note.txt")
+
+
+        # 加载提示词文件
+        def load_style_note(style_note_path):
+            """加载纯文本文件中的提示词"""
+            try:
+                with open(style_note_path, 'r', encoding='utf-8') as file:
+                    style_note = file.read()
+                return style_note
+            except Exception as e:
+                return None
+
+
+        # 保存提示词文件
+        def save_style_note(style_note_path, content):
+            """保存纯文本文件中的提示词"""
+            try:
+                with open(style_note_path, 'w', encoding='utf-8') as file:
+                    file.write(content)
+                return "提示词已成功保存"
+            except Exception as e:
+                return f"保存提示词文件时发生异常: {e}"
+
+
+        # 读取提示词文件
+        def read_style_note(style_note_path):
+            style_note = load_style_note(style_note_path)
+            if not style_note:
+                return "提示词文件未找到或加载失败"
+            return style_note
+
+
+        # 保存提示词文件
+        def save_style_note_callback(content, style_note_path):
+            return save_style_note(style_note_path, content)
+
+
+        # 显示提示词文件内容
+        style_note_content = gr.Textbox(label="提示词内容", lines=20, interactive=True)
+        style_note_content.value = read_style_note(style_note_path)
+
+        # 保存按钮
+        save_button = gr.Button("保存提示词")
+        save_status = gr.Textbox(label="保存状态", lines=1, interactive=False)
+
+        # 保存按钮的回调函数
+        save_button.click(fn=save_style_note_callback,
+                          inputs=[style_note_content, gr.Textbox(value=style_note_path)], outputs=save_status)
 
     with gr.Tab("任务与图片"):
         gr.Markdown("### 任务与图片")
@@ -226,8 +301,6 @@ with gr.Blocks(title="GT") as app:
             with gr.Column():
                 task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=get_task_folders(),
                                            allow_custom_value=True)
-                hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False, choices=[],
-                                              allow_custom_value=True)
                 refresh_button = gr.Button("刷新任务文件夹")  # 新增刷新按钮
 
 
@@ -238,12 +311,31 @@ with gr.Blocks(title="GT") as app:
 
                 refresh_button.click(update_drop_down, outputs=task_folders)
 
+                hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False, choices=[],
+                                              allow_custom_value=True)
+                research_button = gr.Button("🤐热词深度搜索")
+
+
+                def research_hot_word(hot_words_folders_path):
+                    agent_log_file_path = f"agent_{datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
+
+                    agent_logger = get_logger(__name__, agent_log_file_path)
+
+                    ret = write_style_assistant(hot_words_folders_path,agent_logger)
+
+                    return ret
+
+
+                research_button.click(fn=research_hot_word, inputs=[hotword_folders],
+                                      outputs=gr.Textbox(label="热词深度搜索结果"))
             with gr.Column():
+                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10, interactive=False)
                 image_gallery = gr.Gallery(label="图片", value=[], interactive=False, columns=4)
 
         # 修改回调函数，正确更新 hotword_folders 的选项
-        task_folders.change(fn=update_hotword_folders, inputs=task_folders, outputs=hotword_folders)
-        hotword_folders.change(fn=get_images, inputs=[task_folders, hotword_folders], outputs=image_gallery)
+        task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hotword_folders)
+        hotword_folders.change(fn=get_images, inputs=[hotword_folders], outputs=image_gallery)
+
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
         with gr.Row():
@@ -251,7 +343,7 @@ with gr.Blocks(title="GT") as app:
                 file_explorer = gr.FileExplorer(
                     label="任务文件夹",
                     glob="**/*",
-                    root_dir=task_dir,
+                    root_dir=task_root_dir,
                     every=1,
                     height=300,
                 )
@@ -263,7 +355,7 @@ with gr.Blocks(title="GT") as app:
 
 
                 def update_file_explorer_2():
-                    return gr.FileExplorer(root_dir=task_dir)
+                    return gr.FileExplorer(root_dir=task_root_dir)
 
 
                 refresh_btn.click(update_file_explorer, outputs=file_explorer).then(update_file_explorer_2,
@@ -280,6 +372,7 @@ with gr.Blocks(title="GT") as app:
                 if not os.path.exists(zip_path):
                     os.makedirs(zip_path, exist_ok=True)
                 return [os.path.join(zip_path, f) for f in os.listdir(zip_path) if f.endswith('.zip')]
+
 
             download_output = gr.File(label="ZIP下载链接",
                                       value=refresh_zip_files,
@@ -337,8 +430,8 @@ if __name__ == '__main__':
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.path.join(os.getcwd(), 'Log')],
-                   server_port=args.port,favicon_path="favicon.ico")
+                   server_port=args.port, favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
         app.launch(share=False, server_name="0.0.0.0",
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.path.join(os.getcwd(), 'Log')],
-                   server_port=args.port,favicon_path="favicon.ico")
+                   server_port=args.port, favicon_path="favicon.ico")
