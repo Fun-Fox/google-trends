@@ -106,7 +106,7 @@ class SearchWeb(Node):
         # 调用搜索实用函数
         search_query ,hot_word_path,logger= inputs
         logger.info(f"🌐 在网络上搜索: {search_query}")
-        results = search_web(search_query, hot_word_path)
+        results = search_web(search_query, hot_word_path,logger)
         return results
 
     def post(self, shared, prep_res, exec_res):
