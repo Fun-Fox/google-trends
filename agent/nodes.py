@@ -67,7 +67,7 @@ class DecideAction(Node):
             4. 正确使用YAML字符串格式
             """
         # 调用 LLM 进行决策
-        response, success = call_llm(prompt)
+        response, success = call_llm(prompt,logger)
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应失败"}
@@ -149,7 +149,7 @@ class AnswerEditor(Node):
         - 包括一个简短的例子或类比
         """
         # 调用 LLM 生成草稿
-        draft, success = call_llm(prompt)
+        draft, success = call_llm(prompt,logger)
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应失败"}
@@ -246,7 +246,7 @@ class ApplyStyle(Node):
         prompt = style_note.format(draft=draft)
 
         # 调用 LLM 生成最终文章
-        response, success = call_llm(prompt)
+        response, success = call_llm(prompt,logger)
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应失败"}

@@ -317,7 +317,7 @@ with gr.Blocks(title="GT") as app:
 
 
                 def research_hot_word(hot_words_folders_path):
-                    agent_log_file_path = f"agent_{datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
+                    agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
                     agent_logger = get_logger(__name__, agent_log_file_path)
 
