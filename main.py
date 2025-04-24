@@ -239,7 +239,7 @@ with gr.Blocks(title="GT") as app:
                 to_download_image = gr.Checkbox(label="下载Google Trends上的三张图片", value=False, )
                 button = gr.Button("开始爬取")
                 button.click(fn=run_crawler, inputs=to_download_image, outputs=gr.Textbox(label="爬取结果"))
-                task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, interactive=False)
+                task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, interactive=False,every=5)
     # 新增 Tab 用于读取和修改提示词文件
     with gr.Tab("提示词设置"):
         gr.Markdown("### 提示词设置")
