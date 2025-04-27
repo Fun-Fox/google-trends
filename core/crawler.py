@@ -1,4 +1,5 @@
 import asyncio
+import csv
 from dotenv import load_dotenv
 import os
 from .image_utils import ImageUtils
@@ -39,6 +40,9 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
     for i, div in enumerate(hot_key):
         text_content = await div.text_content()
         logging.debug(f'div {i + 1} 的文本内容: {text_content}')
+        
+
+
         if to_download_image:
             try:
                 await div.click()
@@ -69,5 +73,17 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
                     logging.error(f'未找到图片元素在 div {i + 1} 中')
         else:
             os.makedirs(os.path.join(task_dir, text_content), exist_ok=True)
+            logging.info(f"保存关键词：{text_content}成功")
+
+        # 将 text_content 写入 CSV 文件
+        csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS"))
+        file_exists = os.path.isfile(csv_file_path)
+        with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['hot_word']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow({'hot_word': text_content})
+        logging.info(f"关键词 {text_content} 已写入 CSV 文件")
 
         await asyncio.sleep(5)

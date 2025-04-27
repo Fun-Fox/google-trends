@@ -1,6 +1,5 @@
 from pocketflow import Flow
-from .nodes import DecideAction, SearchWeb, SupervisorNode, ApplyStyle, AnswerEditor
-
+from .nodes import DecideAction, SearchWeb, SupervisorNode, ApplyStyle, AnswerEditor, EvaluateImage
 
 
 def create_agent_inner_flow():
@@ -54,14 +53,18 @@ def create_agent_flow():
     # 创建监督节点
     supervisor = SupervisorNode()
     apply_style = ApplyStyle()
+    eval_image=EvaluateImage()
 
     # 连接组件
     # 在 agent_flow 完成后，转到 supervisor
     agent_flow >> supervisor
     # 如果 supervisor 批准回答，转到 apply_style
     supervisor - "approved" >> apply_style
+
+    apply_style - "final-article" >> eval_image
     # 如果 supervisor 拒绝回答，则返回到 agent_flow
     supervisor - "retry" >> agent_flow
+
 
     # 创建并返回外部流程，从 agent_flow 开始
     return Flow(start=agent_flow)

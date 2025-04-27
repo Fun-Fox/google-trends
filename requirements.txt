@@ -11,3 +11,7 @@ pocketflow>=0.0.1
 fastapi>=0.115.12
 duckduckgo-search>=8.0.1
 colorlog>=6.9.0
+
+pillow~=11.2.1
+pydantic~=2.11.3
+imagehash~=4.3.1

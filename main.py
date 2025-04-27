@@ -3,14 +3,14 @@ import asyncio
 import os
 import datetime
 import zipfile
+from asyncio import sleep
 
 from dotenv import load_dotenv
 
 from agent.do import write_style_assistant
-from core import init_browser, close_browser,get_logger
+from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
-
 
 # 动态生成日志文件路径
 task_date = datetime.datetime.now().strftime("%Y年%m月%d日%H时%M分")
@@ -135,12 +135,13 @@ def update_task_log_textbox():
     """
     log_dir = "logs"
     start_str = "task_"
-    latest_log_file = get_latest_log_file(log_dir,start_str)
+    latest_log_file = get_latest_log_file(log_dir, start_str)
     if latest_log_file:
         with open(latest_log_file, 'r', encoding='utf-8') as f:
             log_content = f.read()
         return log_content
     return "暂无日志文件"
+
 
 # 更新 Gradio 接口中的日志读取逻辑
 def update_agent_log_textbox():
@@ -150,7 +151,7 @@ def update_agent_log_textbox():
     """
     log_dir = "logs"
     start_str = "agent_"
-    latest_log_file = get_latest_log_file(log_dir,start_str)
+    latest_log_file = get_latest_log_file(log_dir, start_str)
     if latest_log_file:
         with open(latest_log_file, 'r', encoding='utf-8') as f:
             log_content = f.read()
@@ -173,6 +174,7 @@ def refresh_folders():
 
 # 修改回调函数，正确更新 hotword_folders 的选项
 def update_hot_word_folders(task_folder):
+    print(task_folder)
     if isinstance(task_folder, list) and task_folder:
         task_folder = task_folder[0]
     elif not isinstance(task_folder, str):
@@ -239,19 +241,19 @@ with gr.Blocks(title="GT") as app:
                 to_download_image = gr.Checkbox(label="下载Google Trends上的三张图片", value=False, )
                 button = gr.Button("开始爬取")
                 button.click(fn=run_crawler, inputs=to_download_image, outputs=gr.Textbox(label="爬取结果"))
-                task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, interactive=False,every=5)
+                task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, max_lines=15,
+                                              every=5)
     # 新增 Tab 用于读取和修改提示词文件
     with gr.Tab("提示词设置"):
         gr.Markdown("### 提示词设置")
         gr.Markdown("在此处读取和修改提示词文件。")
-        style_note_path = os.path.join(current_dir, "style_note.txt")
-
+        prompt_file_path = os.path.join(current_dir, os.getenv("PROMPT_FILE"))
 
         # 加载提示词文件
-        def load_style_note(style_note_path):
+        def load_prompt_file(file_path):
             """加载纯文本文件中的提示词"""
             try:
-                with open(style_note_path, 'r', encoding='utf-8') as file:
+                with open(file_path, 'r', encoding='utf-8') as file:
                     style_note = file.read()
                 return style_note
             except Exception as e:
@@ -259,10 +261,10 @@ with gr.Blocks(title="GT") as app:
 
 
         # 保存提示词文件
-        def save_style_note(style_note_path, content):
+        def save_prompt(file_path, content):
             """保存纯文本文件中的提示词"""
             try:
-                with open(style_note_path, 'w', encoding='utf-8') as file:
+                with open(file_path, 'w', encoding='utf-8') as file:
                     file.write(content)
                 return "提示词已成功保存"
             except Exception as e:
@@ -270,36 +272,36 @@ with gr.Blocks(title="GT") as app:
 
 
         # 读取提示词文件
-        def read_style_note(style_note_path):
-            style_note = load_style_note(style_note_path)
-            if not style_note:
+        def read_style_note(file_path):
+            prompt_file = load_prompt_file(file_path)
+            if not prompt_file:
                 return "提示词文件未找到或加载失败"
-            return style_note
+            return prompt_file
 
 
         # 保存提示词文件
-        def save_style_note_callback(content, style_note_path):
-            return save_style_note(style_note_path, content)
+        def save_prompt_callback(content, file_path):
+            return save_prompt(file_path, content)
 
 
         # 显示提示词文件内容
         style_note_content = gr.Textbox(label="提示词内容", lines=20, interactive=True)
-        style_note_content.value = read_style_note(style_note_path)
+        style_note_content.value = read_style_note(prompt_file_path)
 
         # 保存按钮
         save_button = gr.Button("保存提示词")
         save_status = gr.Textbox(label="保存状态", lines=1, interactive=False)
 
         # 保存按钮的回调函数
-        save_button.click(fn=save_style_note_callback,
-                          inputs=[style_note_content, gr.Textbox(value=style_note_path)], outputs=save_status)
+        save_button.click(fn=save_prompt_callback,
+                          inputs=[style_note_content, gr.Textbox(value=prompt_file_path)], outputs=save_status)
 
     with gr.Tab("任务与图片"):
         gr.Markdown("### 任务与图片")
         gr.Markdown("选择任务文件夹以查看热词文件夹及对应图片。")
         with gr.Row():
             with gr.Column():
-                task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=get_task_folders(),
+                task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=['']+get_task_folders(),
                                            allow_custom_value=True)
                 refresh_button = gr.Button("刷新任务文件夹")  # 新增刷新按钮
 
@@ -311,9 +313,34 @@ with gr.Blocks(title="GT") as app:
 
                 refresh_button.click(update_drop_down, outputs=task_folders)
 
-                hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False, choices=[],
+                research_all_keyword_button = gr.Button("🤐全量热词深度搜索")
+
+
+                def research_all_hot_word(task_folders):
+                    agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
+
+                    agent_logger = get_logger(__name__, agent_log_file_path)
+
+                    task_dir = os.path.join(task_root_dir, task_folders)
+                    # 修改逻辑：只扫描 task_root_dir 下的一层目录
+                    hot_words_folders = [os.path.join(task_dir, d) for d in os.listdir(task_dir) if
+                                         os.path.isdir(os.path.join(task_dir, d))]
+
+                    result = []
+                    for hot_words_folders_path in hot_words_folders:
+                        print(f"正在处理热词文件夹：{hot_words_folders_path}")
+                        ret = write_style_assistant(hot_words_folders_path, agent_logger)
+                        sleep(5)
+                        result.append(ret)
+                    return result
+
+
+                research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders],
+                                                  outputs=gr.Textbox(label="热词深度搜索结果"))
+
+                hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False,
                                               allow_custom_value=True)
-                research_button = gr.Button("🤐热词深度搜索")
+                research_button = gr.Button("🤐指定热词深度搜索")
 
 
                 def research_hot_word(hot_words_folders_path):
@@ -321,7 +348,7 @@ with gr.Blocks(title="GT") as app:
 
                     agent_logger = get_logger(__name__, agent_log_file_path)
 
-                    ret = write_style_assistant(hot_words_folders_path,agent_logger)
+                    ret = write_style_assistant(hot_words_folders_path, agent_logger)
 
                     return ret
 
@@ -329,7 +356,8 @@ with gr.Blocks(title="GT") as app:
                 research_button.click(fn=research_hot_word, inputs=[hotword_folders],
                                       outputs=gr.Textbox(label="热词深度搜索结果"))
             with gr.Column():
-                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10, interactive=False)
+                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10,
+                                               interactive=False)
                 image_gallery = gr.Gallery(label="图片", value=[], interactive=False, columns=4)
 
         # 修改回调函数，正确更新 hotword_folders 的选项
