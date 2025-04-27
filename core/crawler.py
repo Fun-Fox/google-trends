@@ -39,7 +39,7 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
 
     for i, div in enumerate(hot_key):
         text_content = await div.text_content()
-        logging.debug(f'div {i + 1} 的文本内容: {text_content}')
+        logging.info(f'div {i + 1} 的文本内容: {text_content}')
         
 
 
