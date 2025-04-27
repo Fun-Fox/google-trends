@@ -303,18 +303,37 @@ with gr.Blocks(title="GT") as app:
             with gr.Column():
                 task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=['']+get_task_folders(),
                                            allow_custom_value=True)
+
+                hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False,
+                                              allow_custom_value=True)
+                research_button = gr.Button("🤐指定热词深度搜索")
+
+                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10,every=5)
+
+
+
+
+                def research_hot_word(hot_words_folders_path):
+                    agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
+
+                    agent_logger = get_logger(__name__, agent_log_file_path)
+
+                    ret = write_style_assistant(hot_words_folders_path, agent_logger)
+
+                    return ret
+
+
+                research_button.click(fn=research_hot_word, inputs=[hotword_folders],
+                                      outputs=gr.Textbox(label="热词深度搜索结果"))
+            with gr.Column():
                 refresh_button = gr.Button("刷新任务文件夹")  # 新增刷新按钮
-
-
                 def update_drop_down():
                     return gr.Dropdown(label="任务文件夹", multiselect=False, choices=get_task_folders(),
                                        allow_custom_value=True)
 
 
                 refresh_button.click(update_drop_down, outputs=task_folders)
-
                 research_all_keyword_button = gr.Button("🤐全量热词深度搜索")
-
 
                 def research_all_hot_word(task_folders):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
@@ -338,25 +357,8 @@ with gr.Blocks(title="GT") as app:
                 research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders],
                                                   outputs=gr.Textbox(label="热词深度搜索结果"))
 
-                hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False,
-                                              allow_custom_value=True)
-                research_button = gr.Button("🤐指定热词深度搜索")
 
 
-                def research_hot_word(hot_words_folders_path):
-                    agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
-
-                    agent_logger = get_logger(__name__, agent_log_file_path)
-
-                    ret = write_style_assistant(hot_words_folders_path, agent_logger)
-
-                    return ret
-
-
-                research_button.click(fn=research_hot_word, inputs=[hotword_folders],
-                                      outputs=gr.Textbox(label="热词深度搜索结果"))
-            with gr.Column():
-                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10,every=5)
                 image_gallery = gr.Gallery(label="图片", value=[], interactive=False, columns=4)
 
         # 修改回调函数，正确更新 hotword_folders 的选项
