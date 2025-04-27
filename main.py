@@ -356,8 +356,7 @@ with gr.Blocks(title="GT") as app:
                 research_button.click(fn=research_hot_word, inputs=[hotword_folders],
                                       outputs=gr.Textbox(label="热词深度搜索结果"))
             with gr.Column():
-                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10,
-                                               interactive=False)
+                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10,every=5)
                 image_gallery = gr.Gallery(label="图片", value=[], interactive=False, columns=4)
 
         # 修改回调函数，正确更新 hotword_folders 的选项
