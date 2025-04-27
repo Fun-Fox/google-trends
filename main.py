@@ -324,7 +324,7 @@ with gr.Blocks(title="GT") as app:
 
 
                 research_button.click(fn=research_hot_word, inputs=[hotword_folders],
-                                      outputs=gr.Textbox(label="热词深度搜索结果"))
+                                      outputs=gr.Textbox(label="指定热词深度搜索结果"))
             with gr.Column():
                 refresh_button = gr.Button("刷新任务文件夹")  # 新增刷新按钮
                 def update_drop_down():
@@ -355,7 +355,7 @@ with gr.Blocks(title="GT") as app:
 
 
                 research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders],
-                                                  outputs=gr.Textbox(label="热词深度搜索结果"))
+                                                  outputs=gr.Textbox(label="全量热词深度搜索结果"))
 
 
 
