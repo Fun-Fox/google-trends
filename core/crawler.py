@@ -25,7 +25,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
     if url != "":
         url = url
     if origin != "":
-        url.strip("?geo=US")
+        url= url.strip("?geo=US")
         url += f"?geo={origin}"
     if category != 0:
         url += f"&category={category}"

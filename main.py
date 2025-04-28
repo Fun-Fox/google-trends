@@ -55,7 +55,10 @@ async def run_crawler(to_download_image, origin, category):
     :return: 爬取任务完成的消息
     """
     url = "https://trends.google.com/trending?geo=US"
-    await start_crawler(url, to_download_image, origin=origin, category=category)
+    choices = load_choices()
+    origin_code = choices['regions'].get(origin, "US")  # 默认值为 "US"
+    category_code = choices['category_names'].get(category, "0")  # 默认值为 "0"
+    await start_crawler(url, to_download_image, origin=origin_code, category=int(category_code))
     return "爬取任务已完成"
 
 
@@ -257,11 +260,9 @@ with gr.Blocks(title="GT") as app:
                 choices_data = load_choices()  # 加载 config.ini 中的 Regions 和 category_names
                 origin = gr.Dropdown(label="地区", choices=list(choices_data['regions'].values()), value="美国")
                 category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].values()), value="所有分类")
-
-            with gr.Column():
                 button = gr.Button("开始爬取")
                 button.click(fn=run_crawler, inputs=[to_download_image, origin, category],
-                             outputs=gr.Textbox(label="爬取结果"))
+                             outputs=gr.Textbox(label="执行结果"))
             task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, max_lines=15,
                                           every=5)
 
@@ -276,11 +277,6 @@ with gr.Blocks(title="GT") as app:
                 hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False,
                                               allow_custom_value=True)
                 research_button = gr.Button("🤐指定热词深度搜索")
-
-                agent_log_textbox = gr.Textbox(label="AI Agent执行日志", value=update_agent_log_textbox, lines=10,
-                                               every=5)
-
-
                 def research_hot_word(hot_words_folders_path):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
@@ -289,10 +285,17 @@ with gr.Blocks(title="GT") as app:
                     ret = write_style_assistant(hot_words_folders_path, agent_logger)
 
                     return ret
-
-
                 research_button.click(fn=research_hot_word, inputs=[hotword_folders],
-                                      outputs=gr.Textbox(label="指定热词深度搜索结果"))
+                                      outputs=gr.Textbox(label="执行结果"))
+
+                agent_log_textbox = gr.Textbox(label="AI Agent执行日志", value=update_agent_log_textbox, lines=10,
+                                               every=5)
+
+
+
+
+
+
             with gr.Column():
                 refresh_button = gr.Button("刷新任务文件夹")  # 新增刷新按钮
 
@@ -326,7 +329,7 @@ with gr.Blocks(title="GT") as app:
 
 
                 research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders],
-                                                  outputs=gr.Textbox(label="全量热词深度搜索结果"))
+                                                 outputs=gr.Textbox(label="执行结果"))
 
                 image_gallery = gr.Gallery(label="图片", value=[], interactive=False, columns=4)
 
