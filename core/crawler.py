@@ -73,11 +73,12 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
             os.makedirs(os.path.join(task_dir, text_content), exist_ok=True)
             logging.info(f"保存关键词：{text_content}成功")
 
+
         # 将 text_content 写入 CSV 文件
         csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['hot_word']
+            fieldnames = ['hot_word',"final_article"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()

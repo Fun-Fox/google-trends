@@ -138,7 +138,7 @@ from PIL import Image
 from io import BytesIO
 from base64 import b64encode
 
-api_key = "sk-xprtiszdkkdaadtwsilquhcxyjaguhjfrtfncpzlgckhwaje"
+api_key = os.getenv("API_KEY")
 api_url = "https://api.siliconflow.cn/v1/chat/completions"
 MAX_RETRIES = 2
 
