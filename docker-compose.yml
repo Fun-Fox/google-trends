@@ -7,7 +7,8 @@ services:
       - "7863:7861"
     volumes:
       - D:/Service/docker-volumes/google-trends/logs:/app/logs
-      - D:/Service/docker-volumes/google-trends/tasks:/app/tasks
+      - D:/Service/docker-volumes/google-trends/tasks:/assets/tasks
+      - D:/Service/docker-volumes/google-trends/zip:/assets/zip
     environment:
       - ZIP_DIR=/assets/zip
       - TASK_DIR=/assets/tasks
