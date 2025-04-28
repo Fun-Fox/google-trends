@@ -4,7 +4,6 @@
 *.xlsx
 *.csv
 *.spec
-*.ini
 /.idea
 /.vscode
 /TaskList
