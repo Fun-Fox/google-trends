@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from colorlog import ColoredFormatter
 import os
 import time
@@ -33,15 +32,16 @@ def manage_log_files(log_dir, max_files=3):
                             logging.info(f"成功删除日志文件: {file_path}")
                             break
                         except PermissionError:
-                            logging.warning(f"文件 {file_path} 被占用，尝试解锁...")
+                            print(f"文件 {file_path} 被占用，尝试解锁...")
                             time.sleep(1)  # 等待1秒后重试
                         except Exception as e:
-                            logging.error(f"删除日志文件 {file_path} 时发生错误: {e}")
-                            break
+                            print(f"删除日志文件 {file_path} 时发生错误: {e},跳出")
                 else:
-                    logging.warning(f"文件 {file_path} 权限不足，无法删除。")
+                    print(f"文件 {file_path} 权限不足，无法删除。")
+                    continue
             except Exception as e:
-                logging.error(f"处理日志文件 {file_path} 时发生错误: {e}")
+                print(f"处理日志文件 {file_path} 时发生错误: {e}")
+                continue
 
 def get_logger(name=__name__, log_file_path=''):
     # 在每次创建日志文件后调用管理函数
