@@ -20,9 +20,9 @@ def write_style_assistant(hot_word_path: str,logger) -> str:
         # 处理问题
         hot_word = os.path.basename(hot_word_path)
         shared = {"hot_word": hot_word, "hot_word_path": hot_word_path,"logger": logger}
-        logger.info(f"正在分析Google trends美国地区时下流行热词: {hot_word}")
+        logger.info(f"正在分析时下网络流行热词: {hot_word}")
         agent_flow.run(shared)
-        logger.info(f"[Agent任务完成] 网络搜索->下载图片->生成草稿->风格撰写->配图评分 [DONE] ")
+        logger.info(f"[Agent任务完成]-[DONE] ")
     except Exception as e:
         logger.error(f"处理热词时发生异常: {e}")
         return "处理热词时发生异常。"

@@ -26,9 +26,12 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 
 
-async def start_crawler(url, to_download_image):
+async def start_crawler(url, to_download_image, origin="US", category=0):
     """
     启动采集任务
+    :param to_download_image:
+    :type origin: object
+    :param category:
     :param url: 目标URL
     """
     # 获取当前时间并创建任务文件夹
@@ -39,7 +42,8 @@ async def start_crawler(url, to_download_image):
 
     p, browser, context, page = await init_browser(logger)
 
-    await crawl_google_trends_page(page, logger, url=url, task_dir=task_dir_now, to_download_image=to_download_image)
+    await crawl_google_trends_page(page, logger, origin=origin, category=category, url=url, task_dir=task_dir_now,
+                                   to_download_image=to_download_image)
 
     # 关闭页面和上下文
     await page.close()
@@ -50,13 +54,13 @@ async def start_crawler(url, to_download_image):
 
 
 # 新增 Gradio Web 页面
-def run_crawler(to_download_image):
+def run_crawler(to_download_image, origin, category):
     """
     运行采集任务
     :return: 爬取任务完成的消息
     """
-    url = "https://trends.google.com/trending?geo=US&hours=168&sort=search-volume"
-    asyncio.run(start_crawler(url, to_download_image))
+    url = "https://trends.google.com/trending?geo=US"
+    asyncio.run(start_crawler(url, to_download_image, origin=origin, category=int(category)))
     return "爬取任务已完成"
 
 
@@ -239,78 +243,98 @@ with gr.Blocks(title="GT") as app:
         with gr.Row():
             with gr.Column():
                 to_download_image = gr.Checkbox(label="下载Google Trends上的三张图片", value=False, )
+            # 修改 origin 和 category 的 choices 属性
+                import configparser
+                def load_choices():
+                    config = configparser.ConfigParser()
+                    with open('conf.ini', encoding='utf-8') as config_file:
+                        config.read_file(config_file)
+
+                    regions = {v: k for k, v in config['regions'].items()}
+                    category_names = {v: k for k, v in config['category_names'].items()}
+
+                    return {
+                        'regions': regions,
+                        'category_names': category_names
+                    }
+
+                choices_data = load_choices()  # 加载 config.ini 中的 Regions 和 category_names
+                origin = gr.Dropdown(label="地区", choices=list(choices_data['regions'].values()), value="美国")
+                category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].values()), value="所有分类")
+
+            with gr.Column():
                 button = gr.Button("开始爬取")
-                button.click(fn=run_crawler, inputs=to_download_image, outputs=gr.Textbox(label="爬取结果"))
-                task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, max_lines=15,
-                                              every=5)
-    # 新增 Tab 用于读取和修改提示词文件
-    with gr.Tab("提示词设置"):
-        gr.Markdown("### 提示词设置")
-        gr.Markdown("在此处读取和修改提示词文件。")
-        prompt_file_path = os.path.join(current_dir, os.getenv("PROMPT_FILE"))
-
-        # 加载提示词文件
-        def load_prompt_file(file_path):
-            """加载纯文本文件中的提示词"""
-            try:
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    style_note = file.read()
-                return style_note
-            except Exception as e:
-                return None
-
-
-        # 保存提示词文件
-        def save_prompt(file_path, content):
-            """保存纯文本文件中的提示词"""
-            try:
-                with open(file_path, 'w', encoding='utf-8') as file:
-                    file.write(content)
-                return "提示词已成功保存"
-            except Exception as e:
-                return f"保存提示词文件时发生异常: {e}"
-
-
-        # 读取提示词文件
-        def read_style_note(file_path):
-            prompt_file = load_prompt_file(file_path)
-            if not prompt_file:
-                return "提示词文件未找到或加载失败"
-            return prompt_file
-
-
-        # 保存提示词文件
-        def save_prompt_callback(content, file_path):
-            return save_prompt(file_path, content)
-
-
-        # 显示提示词文件内容
-        style_note_content = gr.Textbox(label="提示词内容", lines=20, interactive=True)
-        style_note_content.value = read_style_note(prompt_file_path)
-
-        # 保存按钮
-        save_button = gr.Button("保存提示词")
-        save_status = gr.Textbox(label="保存状态", lines=1, interactive=False)
-
-        # 保存按钮的回调函数
-        save_button.click(fn=save_prompt_callback,
-                          inputs=[style_note_content, gr.Textbox(value=prompt_file_path)], outputs=save_status)
+                button.click(fn=run_crawler, inputs=[to_download_image, origin, category],
+                             outputs=gr.Textbox(label="爬取结果"))
+            task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, max_lines=15,
+                                          every=5)
+    # # 新增 Tab 用于读取和修改提示词文件
+    # with gr.Tab("提示词设置"):
+    #     gr.Markdown("### 提示词设置")
+    #     gr.Markdown("在此处读取和修改提示词文件。")
+    #     prompt_file_path = os.path.join(current_dir, os.getenv("PROMPT_FILE"))
+    #
+    #     # 加载提示词文件
+    #     def load_prompt_file(file_path):
+    #         """加载纯文本文件中的提示词"""
+    #         try:
+    #             with open(file_path, 'r', encoding='utf-8') as file:
+    #                 style_note = file.read()
+    #             return style_note
+    #         except Exception as e:
+    #             return None
+    #
+    #
+    #     # 保存提示词文件
+    #     def save_prompt(file_path, content):
+    #         """保存纯文本文件中的提示词"""
+    #         try:
+    #             with open(file_path, 'w', encoding='utf-8') as file:
+    #                 file.write(content)
+    #             return "提示词已成功保存"
+    #         except Exception as e:
+    #             return f"保存提示词文件时发生异常: {e}"
+    #
+    #
+    #     # 读取提示词文件
+    #     def read_style_note(file_path):
+    #         prompt_file = load_prompt_file(file_path)
+    #         if not prompt_file:
+    #             return "提示词文件未找到或加载失败"
+    #         return prompt_file
+    #
+    #
+    #     # 保存提示词文件
+    #     def save_prompt_callback(content, file_path):
+    #         return save_prompt(file_path, content)
+    #
+    #
+    #     # 显示提示词文件内容
+    #     style_note_content = gr.Textbox(label="提示词内容", lines=20, interactive=True)
+    #     style_note_content.value = read_style_note(prompt_file_path)
+    #
+    #     # 保存按钮
+    #     save_button = gr.Button("保存提示词")
+    #     save_status = gr.Textbox(label="保存状态", lines=1, interactive=False)
+    #
+    #     # 保存按钮的回调函数
+    #     save_button.click(fn=save_prompt_callback,
+    #                       inputs=[style_note_content, gr.Textbox(value=prompt_file_path)], outputs=save_status)
 
     with gr.Tab("任务与图片"):
         gr.Markdown("### 任务与图片")
         gr.Markdown("选择任务文件夹以查看热词文件夹及对应图片。")
         with gr.Row():
             with gr.Column():
-                task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=['']+get_task_folders(),
+                task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=[''] + get_task_folders(),
                                            allow_custom_value=True)
 
                 hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False,
                                               allow_custom_value=True)
                 research_button = gr.Button("🤐指定热词深度搜索")
 
-                agent_log_textbox = gr.Textbox(label="AI Agent执行日志", value=update_agent_log_textbox, lines=10,every=5)
-
-
+                agent_log_textbox = gr.Textbox(label="AI Agent执行日志", value=update_agent_log_textbox, lines=10,
+                                               every=5)
 
 
                 def research_hot_word(hot_words_folders_path):
@@ -327,6 +351,8 @@ with gr.Blocks(title="GT") as app:
                                       outputs=gr.Textbox(label="指定热词深度搜索结果"))
             with gr.Column():
                 refresh_button = gr.Button("刷新任务文件夹")  # 新增刷新按钮
+
+
                 def update_drop_down():
                     return gr.Dropdown(label="任务文件夹", multiselect=False, choices=get_task_folders(),
                                        allow_custom_value=True)
@@ -334,6 +360,7 @@ with gr.Blocks(title="GT") as app:
 
                 refresh_button.click(update_drop_down, outputs=task_folders)
                 research_all_keyword_button = gr.Button("🤐全量热词深度搜索")
+
 
                 def research_all_hot_word(task_folders):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
@@ -356,8 +383,6 @@ with gr.Blocks(title="GT") as app:
 
                 research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders],
                                                   outputs=gr.Textbox(label="全量热词深度搜索结果"))
-
-
 
                 image_gallery = gr.Gallery(label="图片", value=[], interactive=False, columns=4)
 
@@ -458,9 +483,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,
-                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''),os.getenv('TASK_DIR', ''),"tmp", os.path.join(os.getcwd(), 'Log')],
+                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.getenv('TASK_DIR', ''), "tmp",
+                                  os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
         app.launch(share=False, server_name="0.0.0.0",
-                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''),os.getenv('TASK_DIR', ''),"tmp", os.path.join(os.getcwd(), 'Log')],
+                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.getenv('TASK_DIR', ''), "tmp",
+                                  os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")

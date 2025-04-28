@@ -32,8 +32,9 @@ class DecideAction(Node):
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
         prompt = f"""
             ### 上下文
-            你是一个可以搜索网络的研究助手，现在给你一个Google trends美国地区时下流行热词，深度查询理解该热词对应的事件。
-            Google trends美国地区时下流行热词: {hot_word}
+            你是一个可以搜索网络的研究助手
+            现在给你一个时下网络流行热词，你需要进行深度查询，确保最终理解并能够全面的回答该热词对应的叙事内容。
+            时下流行热词: {hot_word}
             先前的研究: 
             {context}
 
@@ -64,7 +65,8 @@ class DecideAction(Node):
             1. 对所有多行字段使用适当的缩进（4个空格）
             2. 使用|字符表示多行文本字段
             3. 保持单行字段不使用|字符
-            4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
+            4. 正确使用YAML格式
+            5. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
             """
         # 调用 LLM 进行决策
         response, success = call_llm(prompt, logger)
@@ -137,35 +139,48 @@ class AnswerEditor(Node):
         prompt = f"""
         ### 上下文
         基于以下信息，回答问题。
-        Google trends美国地区时下流行热词: {hot_word}
+        时下网络流行热词: {hot_word}
         研究: 
         {context}
 
         ### 你的回答:
-        结合研究进行完全理解，写一段关于此部分的简短段落（最多 100 字）。
+        结合热词对应的研究进行理解，撰写关于此部分的叙事文案，并且使用中文和英文。
+        
+        请以以下格式返回你的响应：
+        
+        ```yaml
+        chinese: <中文叙事文案>
+        english: <英文叙事文案>
+        ```
 
         要求：
         - 用简单易懂的语言解释想法
         - 使用日常语言，避免术语
-        - 保持非常简洁（不超过 100 字）
-        - 包括一个简短的例子或类比
+        - 正确使用YAML格式
         """
         # 调用 LLM 生成草稿
         draft, success = call_llm(prompt, logger)
+        if "```yaml" not in draft:
+            logger.error("LLM 响应格式不正确，请检查你的响应格式。")
+            return {"action": "finish", "reason": "LLM 响应格式不正确"}
+        yaml_str = draft.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+        response = yaml.safe_load(yaml_str)
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应失败"}
 
-        return draft
+        return draft, response
 
     def post(self, shared, prep_res, exec_res):
         """保存最终回答并完成流程。"""
         # 在共享存储中保存回答
 
-        draft = exec_res
+        draft, response = exec_res
         shared['draft'] = draft
+        shared['chinese'] = response['chinese']
+        shared['english'] = response['english']
         logger = shared["logger"]
-        logger.info(f"✅ 草稿生成成功")
+        logger.info(f"✅ 草稿生成成功：\n{draft}")
 
         # 我们完成了 - 不需要继续流程
         # return "done"

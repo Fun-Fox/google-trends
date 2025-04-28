@@ -61,7 +61,7 @@ def search_web(query, hot_word_path, logger):
                 return "错误: 无法获取搜索结果。"
         else:
             with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
-                news_results = ddgs.text(query, max_results=3)
+                news_results = ddgs.text(query, max_results=5)
                 search_image(query, hot_word_path, logger)
                 # Convert results to a string
                 results_str = "\n\n".join(
@@ -95,7 +95,7 @@ def search_image(query, hot_word_path, logger):
             logger.error(f"计算图片 {img_path} 哈希值时发生异常: {e}")
 
     with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
-        img_results = ddgs.images(query, max_results=3, size="Large")
+        img_results = ddgs.images(query, max_results=5, size="Large")
         # 下载并保存图片
         for i, result in enumerate(img_results):
             image_url = result["image"]

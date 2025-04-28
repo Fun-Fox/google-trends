@@ -10,9 +10,12 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 __all__ = ['crawl_google_trends_page']
 
 
-async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_download_image=False):
+async def crawl_google_trends_page(page, logging, origin="", category=0, url="", task_dir=None,
+                                   to_download_image=False):
     """
     爬取 Google Trends 页面内容
+    :param category:
+    :param origin:
     :param to_download_image:
     :param url: 目标 URL
     :param page: Playwright 页面对象
@@ -21,14 +24,20 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
     """
     if url != "":
         url = url
+    if origin != "":
+        url.strip("?geo=US")
+        url += f"?geo={origin}"
+    if category != 0:
+        url += f"&category={category}"
 
     # 打开页面
     if not page.is_closed():
         await page.goto(url)
-        logging.info('页面加载完成')
+        logging.info(f'页面加载完成{url}')
     else:
         logging.error("页面已关闭，无法导航")
         return
+    await page.query_selector_all(' div.VfPpkd-dgl2Hf-ppHlrf-sM5MNb > div')
 
     # 第一次加载图片
     try:
@@ -73,16 +82,15 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
             os.makedirs(os.path.join(task_dir, text_content), exist_ok=True)
             logging.info(f"保存关键词：{text_content}成功")
 
-
         # 将 text_content 写入 CSV 文件
         csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['hot_word',"final_article"]
+            fieldnames = ['hot_word', "chinese", "english"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
-            writer.writerow({'hot_word': text_content, "final_article": ''})
-        logging.info(f"关键词 {text_content} 已写入 CSV 文件")
+            writer.writerow({'hot_word': text_content, "chinese": '', "english": ''})
+        logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
         await asyncio.sleep(5)
