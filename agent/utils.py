@@ -16,6 +16,7 @@ proxies = {
 
 def call_llm(prompt, logger):
     try:
+        logger.info(f"## 提示: {prompt}")
         # 使用本地ollama模型gemma3
         url = f"{os.getenv('LLM_URL')}"
         payload = {
@@ -60,7 +61,7 @@ def search_web(query, hot_word_path, logger):
                 return "错误: 无法获取搜索结果。"
         else:
             with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
-                news_results = ddgs.text(query, max_results=5)
+                news_results = ddgs.text(query, max_results=3)
                 search_image(query, hot_word_path, logger)
                 # Convert results to a string
                 results_str = "\n\n".join(
@@ -174,7 +175,7 @@ def evaluate_image_relevance(prompt, image_path, logger):
                         content = message.get("content", "无内容")  # 获取 content 字段，若不存在则返回默认值
                         reasoning_content = message.get("reasoning_content", "无推理内容")  # 获取 reasoning_content 字段
 
-                        logger.info(f"API 响应: Content={content}, Reasoning Content={reasoning_content}")
+                        logger.info(f"API 响应: Content={content}\n, Reasoning Content={reasoning_content}")
                         return content  # 返回 content 字段
                     else:
                         logger.warning("API 响应中没有 choices 数据")
@@ -208,7 +209,6 @@ def convert_image_to_base64(image_path, quality=80) -> str:
         return base64_bytes.decode('utf-8')
 
 
-
 # model_name = "Qwen/Qwen2.5-VL-32B-Instruct"
 model_name = "deepseek-ai/deepseek-vl2"
 
@@ -236,7 +236,6 @@ def _build_evaluation_payload(prompt, image_base64) -> dict:
         ],
         "stream": False
     }
-
 
 
 def get_images(hotword_folder):

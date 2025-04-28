@@ -7,7 +7,7 @@ from asyncio import sleep
 
 from dotenv import load_dotenv
 
-from agent.do import write_style_assistant
+from agent.main import write_style_assistant
 from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
@@ -308,7 +308,7 @@ with gr.Blocks(title="GT") as app:
                                               allow_custom_value=True)
                 research_button = gr.Button("🤐指定热词深度搜索")
 
-                agent_log_textbox = gr.Textbox(label="Agent-LLM日志", value=update_agent_log_textbox, lines=10,every=5)
+                agent_log_textbox = gr.Textbox(label="AI Agent执行日志", value=update_agent_log_textbox, lines=10,every=5)
 
 
 
