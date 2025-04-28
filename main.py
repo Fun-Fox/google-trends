@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import os
 import datetime
 import zipfile
@@ -11,12 +10,12 @@ from agent.main import write_style_assistant
 from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
-
+load_dotenv()
 # 动态生成日志文件路径
 task_date = datetime.datetime.now().strftime("%Y年%m月%d日%H时%M分")
 task_log_file_path = os.path.join(f"task_{task_date}.log")
 os.makedirs("logs", exist_ok=True)
-load_dotenv()
+
 task_root_dir = os.getenv("TASK_DIR", "tasks")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
