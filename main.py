@@ -54,10 +54,14 @@ async def run_crawler(to_download_image, origin, category):
     运行采集任务
     :return: 爬取任务完成的消息
     """
-    url = "https://trends.google.com/trending?geo=US"
+    url = "https://trends.google.com/trending"
     choices = load_choices()
+    print(choices)
+    print(origin)
     origin_code = choices['regions'].get(origin, "US")  # 默认值为 "US"
+    print(origin_code)
     category_code = choices['category_names'].get(category, "0")  # 默认值为 "0"
+    print(category_code)
     await start_crawler(url, to_download_image, origin=origin_code, category=int(category_code))
     return "爬取任务已完成"
 
@@ -249,8 +253,8 @@ with gr.Blocks(title="GT") as app:
                     with open('conf.ini', encoding='utf-8') as config_file:
                         config.read_file(config_file)
 
-                    regions = {v: k for k, v in config['regions'].items()}
-                    category_names = {v: k for k, v in config['category_names'].items()}
+                    regions = { k:v for k, v in config['regions'].items()}
+                    category_names = {k:v for k, v in config['category_names'].items()}
 
                     return {
                         'regions': regions,
@@ -258,8 +262,8 @@ with gr.Blocks(title="GT") as app:
                     }
 
                 choices_data = load_choices()  # 加载 config.ini 中的 Regions 和 category_names
-                origin = gr.Dropdown(label="地区", choices=list(choices_data['regions'].values()), value="美国")
-                category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].values()), value="所有分类")
+                origin = gr.Dropdown(label="地区", choices=list(choices_data['regions'].keys()), value="美国")
+                category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].keys()), value="所有分类")
                 button = gr.Button("开始爬取")
                 button.click(fn=run_crawler, inputs=[to_download_image, origin, category],
                              outputs=gr.Textbox(label="执行结果"))

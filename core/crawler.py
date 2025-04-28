@@ -25,7 +25,6 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
     if url != "":
         url = url
     if origin != "":
-        url= url.strip("?geo=US")
         url += f"?geo={origin}"
     if category != 0:
         url += f"&category={category}"
@@ -33,7 +32,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
     # 打开页面
     if not page.is_closed():
         await page.goto(url)
-        logging.info(f'页面加载完成{url}')
+        logging.info(f'页面加载完成：{url}')
     else:
         logging.error("页面已关闭，无法导航")
         return
