@@ -17,6 +17,7 @@ COPY main.py /app
 COPY favicon.ico /app
 COPY prompt.txt /app
 COPY agent /app/agent
+COPY conf.ini /app
 # 安装依赖
 RUN pip install --no-cache-dir -r requirements.txt
 RUN  playwright install chromium

@@ -278,7 +278,7 @@ with gr.Blocks(title="GT") as app:
 
 
         def update_drop_down():
-            return gr.Dropdown(label="任务文件夹", multiselect=False, choices=get_task_folders(),
+            return gr.Dropdown(label="任务文件夹", multiselect=False, choices=[''] +get_task_folders(),
                                allow_custom_value=True)
 
 
