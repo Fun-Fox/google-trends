@@ -21,11 +21,6 @@ task_root_dir = os.getenv("TASK_DIR", "tasks")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-# # 配置日志
-# logger = logging.getLogger()
-# logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
-
-
 async def start_crawler(url, to_download_image, origin="US", category=0):
     """
     启动采集任务
@@ -54,13 +49,13 @@ async def start_crawler(url, to_download_image, origin="US", category=0):
 
 
 # 新增 Gradio Web 页面
-def run_crawler(to_download_image, origin, category):
+async def run_crawler(to_download_image, origin, category):
     """
     运行采集任务
     :return: 爬取任务完成的消息
     """
     url = "https://trends.google.com/trending?geo=US"
-    asyncio.run(start_crawler(url, to_download_image, origin=origin, category=int(category)))
+    await start_crawler(url, to_download_image, origin=origin, category=category)
     return "爬取任务已完成"
 
 
@@ -194,6 +189,7 @@ def update_hot_word_folders(task_folder):
         return gr.Dropdown(choices=[], label="热词文件夹", value="", interactive=True)
 
 
+
 # Gradio 接口
 with gr.Blocks(title="GT") as app:
     gr.Markdown("# Google Trends 采集")
@@ -268,58 +264,6 @@ with gr.Blocks(title="GT") as app:
                              outputs=gr.Textbox(label="爬取结果"))
             task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, max_lines=15,
                                           every=5)
-    # # 新增 Tab 用于读取和修改提示词文件
-    # with gr.Tab("提示词设置"):
-    #     gr.Markdown("### 提示词设置")
-    #     gr.Markdown("在此处读取和修改提示词文件。")
-    #     prompt_file_path = os.path.join(current_dir, os.getenv("PROMPT_FILE"))
-    #
-    #     # 加载提示词文件
-    #     def load_prompt_file(file_path):
-    #         """加载纯文本文件中的提示词"""
-    #         try:
-    #             with open(file_path, 'r', encoding='utf-8') as file:
-    #                 style_note = file.read()
-    #             return style_note
-    #         except Exception as e:
-    #             return None
-    #
-    #
-    #     # 保存提示词文件
-    #     def save_prompt(file_path, content):
-    #         """保存纯文本文件中的提示词"""
-    #         try:
-    #             with open(file_path, 'w', encoding='utf-8') as file:
-    #                 file.write(content)
-    #             return "提示词已成功保存"
-    #         except Exception as e:
-    #             return f"保存提示词文件时发生异常: {e}"
-    #
-    #
-    #     # 读取提示词文件
-    #     def read_style_note(file_path):
-    #         prompt_file = load_prompt_file(file_path)
-    #         if not prompt_file:
-    #             return "提示词文件未找到或加载失败"
-    #         return prompt_file
-    #
-    #
-    #     # 保存提示词文件
-    #     def save_prompt_callback(content, file_path):
-    #         return save_prompt(file_path, content)
-    #
-    #
-    #     # 显示提示词文件内容
-    #     style_note_content = gr.Textbox(label="提示词内容", lines=20, interactive=True)
-    #     style_note_content.value = read_style_note(prompt_file_path)
-    #
-    #     # 保存按钮
-    #     save_button = gr.Button("保存提示词")
-    #     save_status = gr.Textbox(label="保存状态", lines=1, interactive=False)
-    #
-    #     # 保存按钮的回调函数
-    #     save_button.click(fn=save_prompt_callback,
-    #                       inputs=[style_note_content, gr.Textbox(value=prompt_file_path)], outputs=save_status)
 
     with gr.Tab("任务与图片"):
         gr.Markdown("### 任务与图片")
