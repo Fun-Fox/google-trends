@@ -454,7 +454,7 @@ with gr.Blocks(title="GT") as app:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=7862, help='Gradio 应用监听的端口号')
+    parser.add_argument('--port', type=int, default=7864, help='Gradio 应用监听的端口号')
     args = parser.parse_args()
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,

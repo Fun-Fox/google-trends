@@ -16,7 +16,7 @@ proxies = {
 
 def call_llm(prompt, logger):
     try:
-        logger.info(f"## 提示: {prompt}")
+        # logger.info(f"## 提示: {prompt}")
         # 使用本地ollama模型gemma3
         url = f"{os.getenv('LLM_URL')}"
         payload = {
@@ -38,7 +38,7 @@ def call_llm(prompt, logger):
 def search_web(query, hot_word_path, logger):
     try:
         # 使用serper.dev进行网络搜索
-        logger.info(f"## 查询: {query}")
+        # logger.info(f"## 查询: {query}")
 
         api_key = os.getenv("SERPER_API_KEY", None)
         if api_key:
@@ -67,7 +67,7 @@ def search_web(query, hot_word_path, logger):
                 results_str = "\n\n".join(
                     [f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in news_results])
 
-        logger.info(f"## 结果: {results_str}")
+        # logger.info(f"## 结果: {results_str}")
         return results_str
     except Exception as e:
         logger.error(f"搜索网络时发生异常: {e}")
@@ -75,7 +75,7 @@ def search_web(query, hot_word_path, logger):
 
 
 def search_image(query, hot_word_path, logger):
-    logger.info(f"## 查询: {query}")
+    # logger.info(f"## 查询: {query}")
 
     # 检查 hot_word_path 目录下的图片数量
     existing_images = [f for f in os.listdir(hot_word_path) if f.endswith(('.jpg', '.png'))]
@@ -115,7 +115,7 @@ def search_image(query, hot_word_path, logger):
                     save_path = os.path.join(hot_word_path, f"{query}_{i + 1}.jpg")
                     with open(save_path, "wb") as file:
                         file.write(response.content)
-                    print(f"图片已保存到: {save_path}")
+                    logger.info(f"图片已保存到: {save_path}")
 
                     # 更新现有哈希值
                     existing_hashes[new_hash] = os.path.basename(save_path)
@@ -126,9 +126,9 @@ def search_image(query, hot_word_path, logger):
                         logger.info(f"目录 {hot_word_path} 中已有 {len(existing_images)} 张图片，不再下载新图片。")
                         break
                 else:
-                    print(f"无法下载图片 {image_url}，状态码: {response.status_code}")
+                    logger.info(f"无法下载图片 {image_url}，状态码: {response.status_code}")
             except Exception as e:
-                print(f"下载图片 {image_url} 时发生异常: {e}")
+                logger.info(f"下载图片 {image_url} 时发生异常: {e}")
 
 
 import os

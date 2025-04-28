@@ -40,8 +40,6 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
     for i, div in enumerate(hot_key):
         text_content = await div.text_content()
         logging.info(f'div {i + 1} 的文本内容: {text_content}')
-        
-
 
         if to_download_image:
             try:
@@ -83,7 +81,7 @@ async def crawl_google_trends_page(page, logging, url="", task_dir=None, to_down
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
-            writer.writerow({'hot_word': text_content})
+            writer.writerow({'hot_word': text_content, "final_article": ''})
         logging.info(f"关键词 {text_content} 已写入 CSV 文件")
 
         await asyncio.sleep(5)

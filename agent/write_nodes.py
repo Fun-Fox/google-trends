@@ -120,24 +120,14 @@ class ApplyStyle(Node):
                     fieldnames = reader.fieldnames
                     # 检查是否包含 'final_article' 列
                     # 检查是否包含 'final_article' 列
-                    if 'final_article' not in fieldnames:
-                        # 如果缺少 'final_article' 列，创建新的 fieldnames
-                        new_fieldnames = fieldnames + ['final_article']
-                        for row in reader:
-                            # 初始化 'final_article' 列为空字符串
-                            row['final_article'] = ''
-                            data.append(row)
-                        fieldnames = new_fieldnames
-                    else:
-                        # 如果包含 'final_article' 列，正常读取数据
-                        for row in reader:
-                            if row['hot_word'] == hot_word:
-                                # 如果 hot_word 存在，追加 final_article
-                                row['final_article'] += "\n" + exec_res
-                            data.append(row)
+                    for row in reader:
+                        if row['hot_word'] == hot_word:
+
+                            # 如果 hot_word 存在，追加 final_article
+                            row['final_article'] += "\n" + exec_res
+                        data.append(row)
             else:
                 # 如果文件不存在，创建文件并写入表头
-                fieldnames = ['hot_word', 'final_article']
                 data.append({'hot_word': hot_word, 'final_article': exec_res})
 
             # 写入数据
