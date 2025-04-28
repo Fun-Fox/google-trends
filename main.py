@@ -56,12 +56,8 @@ async def run_crawler(to_download_image, origin, category):
     """
     url = "https://trends.google.com/trending"
     choices = load_choices()
-    print(choices)
-    print(origin)
     origin_code = choices['regions'].get(origin, "US")  # 默认值为 "US"
-    print(origin_code)
     category_code = choices['category_names'].get(category, "0")  # 默认值为 "0"
-    print(category_code)
     await start_crawler(url, to_download_image, origin=origin_code, category=int(category_code))
     return "爬取任务已完成"
 
