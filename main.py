@@ -314,7 +314,11 @@ with gr.Blocks(title="GT") as app:
                     result = []
                     for hot_words_folders_path in hot_words_folders:
                         print(f"正在处理热词文件夹：{hot_words_folders_path}")
-                        ret = write_style_assistant(hot_words_folders_path, agent_logger)
+                        try:
+                            ret = write_style_assistant(hot_words_folders_path, agent_logger)
+                        except Exception as e:
+                            print(f"正在处理热词：{hot_words_folders_path}发生异常，下一个热词")
+                            continue
                         sleep(5)
                         result.append(ret)
                     return result
