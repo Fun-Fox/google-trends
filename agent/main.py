@@ -22,7 +22,9 @@ def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
         shared = {"hot_word": hot_word, "hot_word_path": hot_word_path, "logger": logger}
         logger.info(f"正在分析时下网络流行热词: {hot_word}")
         agent_flow.run(shared)
+
         logger.info(f"[Agent任务完成]-[DONE] ")
+        return shared.get("final_article", "No answer found")
     except Exception as e:
         logger.error(f"处理热词时发生异常: {e}")
         return "处理热词时发生异常。"

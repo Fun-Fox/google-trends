@@ -78,7 +78,7 @@ class WriteSupervisorNode(Node):
         logger = shared["logger"]
         """决定是否接受回答或重新启动流程。"""
         if exec_res["valid"]:
-            return "approved"
+            logger.info(f"监督员通过了回答: {exec_res['reason']}")
         else:
             logger.info(f"监督员拒绝了回答: {exec_res['reason']}")
             # 清理错误的回答
