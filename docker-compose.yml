@@ -14,9 +14,9 @@ services:
       - TASK_DIR=/assets/tasks
       - LLM_URL=http://192.168.31.85:11434/api/generate
       - API_KEY=sk-xprtiszdkkdaadtwsilquhcxyjaguhjfrtfncpzlgckhwaje
-      - MODEL_NAME=gemma3
+      - MODEL_NAME=gemma3:12b
       - LOG_LEVEL=INFO
       - PLATFORM=server
       - PROXY_URL=http://192.168.31.85:10811
     restart: always
-    command: python main.py --port 7861
+    command: python webui.py --port 7861

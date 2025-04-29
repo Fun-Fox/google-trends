@@ -13,7 +13,7 @@ ENV TZ=Asia/Shanghai
 COPY core /app/core
 COPY requirements.txt /app
 COPY .env /app
-COPY main.py /app
+COPY webui.py /app
 COPY favicon.ico /app
 COPY prompt/prompt.txt /app
 COPY agent /app/agent
