@@ -15,7 +15,7 @@ COPY requirements.txt /app
 COPY .env /app
 COPY main.py /app
 COPY favicon.ico /app
-COPY prompt.txt /app
+COPY prompt/prompt.txt /app
 COPY agent /app/agent
 COPY conf.ini /app
 # 安装依赖

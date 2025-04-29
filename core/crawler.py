@@ -22,6 +22,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
     :param logging: 日志记录器对象
     :param task_dir: 任务文件夹路径
     """
+    global hot_words
     if url != "":
         url = url
     if origin != "":
@@ -40,12 +41,14 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
 
     # 第一次加载图片
     try:
-        hot_key = await page.query_selector_all(
+        hot_words = await page.query_selector_all(
             'tbody:nth-child(3) > tr:nth-child(n) > td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc')
     except Exception as e:
         logging.error(f'未找到 div 元素: {e}')
-
-    for i, div in enumerate(hot_key):
+    if not hot_words:
+        logging.error("未采样到找到热点词")
+        return None
+    for i, div in enumerate(hot_words):
         text_content = await div.text_content()
         logging.info(f'div {i + 1} 的文本内容: {text_content}')
 
@@ -93,3 +96,4 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
         await asyncio.sleep(5)
+    logging.info(f"地区编码：{origin}，分类编码：{category}，采集任务已完成，共采集了{len(hot_words)}个关键词")

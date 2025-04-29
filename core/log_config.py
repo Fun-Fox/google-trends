@@ -72,6 +72,7 @@ def get_logger(name=__name__, log_file_path=''):
             handler  # 使用带颜色的控制台日志输出
         ],
     )
+    # 检查日志文件数量
     manage_log_files("logs")
 
     return logger

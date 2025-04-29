@@ -1,7 +1,6 @@
 from pocketflow import Flow
 
-from .research_nodes import DecideAction, SearchWeb, AnswerEditor
-from .write_nodes import SupervisorNode,EvaluateImage
+from .nodes import DecideAction, SearchWeb, AnswerEditor, SupervisorNode, EvaluateImage
 
 
 def create_agent_inner_flow():

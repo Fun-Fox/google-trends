@@ -20,23 +20,27 @@ task_root_dir = os.getenv("TASK_DIR", "tasks")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-async def start_crawler(url, to_download_image, origin="US", category=0):
+async def start_crawler(url, to_download_image, origin="", category=""):
     """
     启动采集任务
     :param to_download_image:
-    :type origin: object
+    :type origin: string
     :param category:
     :param url: 目标URL
     """
     # 获取当前时间并创建任务文件夹
-    task_dir_now = os.path.join(task_root_dir, task_date)
+    task_dir_file_name = os.path.join(task_root_dir, task_date+f'_{origin}_{category}')
     os.makedirs(task_root_dir, exist_ok=True)
 
     logger = get_logger(__name__, task_log_file_path)
 
     p, browser, context, page = await init_browser(logger)
 
-    await crawl_google_trends_page(page, logger, origin=origin, category=category, url=url, task_dir=task_dir_now,
+    choices = load_choices()
+    origin_code = choices['regions'].get(origin, "US")  # 默认值为 "US"
+    category_code = int(choices['category_names'].get(category, "0"))  # 默认值为 "0"
+
+    await crawl_google_trends_page(page, logger, origin=origin_code, category=category_code, url=url, task_dir=task_dir_file_name,
                                    to_download_image=to_download_image)
 
     # 关闭页面和上下文
@@ -54,11 +58,9 @@ async def run_crawler(to_download_image, origin, category):
     :return: 爬取任务完成的消息
     """
     url = "https://trends.google.com/trending"
-    choices = load_choices()
-    origin_code = choices['regions'].get(origin, "US")  # 默认值为 "US"
-    category_code = choices['category_names'].get(category, "0")  # 默认值为 "0"
-    await start_crawler(url, to_download_image, origin=origin_code, category=int(category_code))
-    return "爬取任务已完成"
+
+    await start_crawler(url, to_download_image, origin=origin, category=category)
+    return "热点采集任务已完成"
 
 
 def get_task_folders():
@@ -236,7 +238,7 @@ with gr.Blocks(title="GT") as app:
 
     with gr.Tab("执行及日志显示"):
         gr.Markdown("### 执行与日志")
-        gr.Markdown("点击“开始爬取”按钮启动任务，日志将实时更新。")
+        gr.Markdown("点击“开始采集”按钮启动任务，日志将实时更新。")
         with gr.Row():
             with gr.Column():
                 to_download_image = gr.Checkbox(label="下载Google Trends上的三张图片", value=False, )
@@ -258,33 +260,32 @@ with gr.Blocks(title="GT") as app:
                 choices_data = load_choices()  # 加载 config.ini 中的 Regions 和 category_names
                 origin = gr.Dropdown(label="地区", choices=list(choices_data['regions'].keys()), value="美国")
                 category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].keys()), value="所有分类")
-                button = gr.Button("开始爬取")
+                button = gr.Button("开始采集")
                 button.click(fn=run_crawler, inputs=[to_download_image, origin, category],
-                             outputs=gr.Textbox(label="执行结果"))
-            task_log_textbox = gr.Textbox(label="日志", value=update_task_log_textbox, lines=10, max_lines=15,
+                             outputs=gr.Textbox(label="采集结果"))
+            task_log_textbox = gr.Textbox(label="采集日志", value=update_task_log_textbox, lines=10, max_lines=15,
                                           every=5)
 
-    with gr.Tab("任务与图片"):
-        gr.Markdown("### 任务与图片")
-        gr.Markdown("选择任务文件夹以查看热词文件夹及对应图片。")
+    with gr.Tab("热词深度搜索"):
+        gr.Markdown("选择任务记录文件夹以查看热词、图片、以及热词对应的叙事csv文件。")
         with gr.Row():
-            task_folders = gr.Dropdown(label="任务文件夹", multiselect=False, choices=[''] + get_task_folders(),
+            task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
                                        allow_custom_value=True)
 
-            hotword_folders = gr.Dropdown(label="热词文件夹", multiselect=False,
+            hotword_folders = gr.Dropdown(label="热词", multiselect=False,
                                           allow_custom_value=True)
-        refresh_button = gr.Button("刷新任务文件夹")  # 新增刷新按钮
+        refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
 
 
         def update_drop_down():
-            return gr.Dropdown(label="任务文件夹", multiselect=False, choices=[''] +get_task_folders(),
+            return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] +get_task_folders(),
                                allow_custom_value=True)
 
 
         refresh_button.click(update_drop_down, outputs=task_folders)
         with gr.Row():
             with gr.Column():
-                research_button = gr.Button("🤐指定热词深度搜索")
+                research_button = gr.Button("🤐特定-热词-网络搜索")
                 def research_hot_word(hot_words_folders_path):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
@@ -296,7 +297,7 @@ with gr.Blocks(title="GT") as app:
                 research_button.click(fn=research_hot_word, inputs=[hotword_folders],
                                       outputs=gr.Textbox(label=""))
 
-                research_all_keyword_button = gr.Button("🤐全量热词深度搜索")
+                research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")
 
 
                 def research_all_hot_word(task_folders):
@@ -326,13 +327,32 @@ with gr.Blocks(title="GT") as app:
                                                   outputs=gr.Textbox(label=""))
         with gr.Row():
 
-            agent_log_textbox = gr.Textbox(label="AI Agent执行日志", value=update_agent_log_textbox, lines=9,
+            agent_log_textbox = gr.Textbox(label="AI搜索助手-执行记录", value=update_agent_log_textbox, lines=9,
                                            every=5)
-            image_gallery = gr.Gallery(label="图片", value=[], interactive=False, columns=5)
+            image_gallery = gr.Gallery(label="热词-对应图片信息", value=[], interactive=False, columns=5)
 
         # 修改回调函数，正确更新 hotword_folders 的选项
         task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hotword_folders)
         hotword_folders.change(fn=get_images, inputs=[hotword_folders], outputs=image_gallery)
+    with gr.Tab("人设及口播（未完成）"):
+        gr.Markdown("选择任务记录文查看热词对应的叙事")
+        with gr.Row():
+            task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+                                       allow_custom_value=True)
+            refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
+
+
+            def update_drop_down():
+                return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+                                   allow_custom_value=True)
+
+
+            refresh_button.click(update_drop_down, outputs=task_folders)
+        # 1.显示文件夹下的csv文件内容，并且可以支持选择指定行。
+        # 2.设置多个提示词文本，支持每个提示词的结果试跑
+        # 3.生成的文本转
+
+
 
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
