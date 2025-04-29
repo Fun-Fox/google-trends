@@ -16,7 +16,7 @@ def write_in_style_flow():
     supervisor = SupervisorNode()
 
     # 连接组件
-    write_in_style - "final-article" >> supervisor
+    write_in_style - "final_article" >> supervisor
 
     supervisor - "retry" >> write_in_style
 
