@@ -1,5 +1,5 @@
 __all__ = [
-    "write_style_assistant",
+    "hot_word_research_assistant",
 ]
 
-from agent.main import write_style_assistant
+from agent.main import hot_word_research_assistant

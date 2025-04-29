@@ -1,9 +1,10 @@
 from pocketflow import Flow
 
-from .nodes import DecideAction, SearchWeb, AnswerEditor, SupervisorNode, EvaluateImage
+from agent.nodes import DecideAction, SearchWeb, AnswerEditor, SupervisorNode, EvaluateImage
 
+__all__=["research_hot_word_flow", ]
 
-def create_agent_inner_flow():
+def inner_flow():
     """
     创建并连接节点以形成完整的代理流程。
     
@@ -35,7 +36,7 @@ def create_agent_inner_flow():
     return Flow(start=decide)
 
 
-def create_agent_flow():
+def research_hot_word_flow():
     """
     创建一个带有监督的代理流程，将整个代理流程视为一个节点，并将监督节点放在其外部。
 
@@ -49,7 +50,7 @@ def create_agent_flow():
         Flow: 一个带有监督的完整研究代理流程
     """
     # 创建内部流程
-    agent_flow = create_agent_inner_flow()
+    agent_flow = inner_flow()
 
     # 创建监督节点
     supervisor = SupervisorNode()

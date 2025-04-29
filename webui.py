@@ -7,7 +7,7 @@ from asyncio import sleep
 import pandas as pd
 from dotenv import load_dotenv
 
-from agent.main import write_style_assistant
+from agent.main import hot_word_research_assistant, write_in_style_assistant
 from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
@@ -325,8 +325,7 @@ with gr.Blocks(title="GT") as app:
 
                     agent_logger = get_logger(__name__, agent_log_file_path)
 
-                    ret = write_style_assistant(hot_words_folders_path, agent_logger)
-
+                    ret = hot_word_research_assistant(hot_words_folders_path, agent_logger)
                     return ret
 
 
@@ -350,7 +349,7 @@ with gr.Blocks(title="GT") as app:
                     for hot_words_folders_path in hot_words_folders:
                         print(f"正在处理热词文件夹：{hot_words_folders_path}")
                         try:
-                            ret = write_style_assistant(hot_words_folders_path, agent_logger)
+                            ret = hot_word_research_assistant(hot_words_folders_path, agent_logger)
                         except Exception as e:
                             print(f"正在处理热词：{hot_words_folders_path}发生异常，下一个热词")
                             continue
@@ -376,22 +375,117 @@ with gr.Blocks(title="GT") as app:
         # image_gallery 显示图片文件名称
 
     with gr.Tab("口播-人设测试"):
-        gr.Markdown("选择任务记录文查看热词对应的叙事")
+        gr.Markdown("选择任务记录文件夹以查看热词对应的叙事")
         with gr.Row():
-            task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+            with gr.Column():
+                task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+                                           allow_custom_value=True)
+                refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
+
+
+                def update_drop_down():
+                    return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
                                        allow_custom_value=True)
-            refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
 
 
-            def update_drop_down():
-                return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
-                                   allow_custom_value=True)
+                refresh_button.click(update_drop_down, outputs=task_folders)
+
+            with gr.Column():
+                csv_files_dropdown = gr.Dropdown(label="选择 CSV 文件", choices=[], allow_custom_value=False)
+                refresh_csv_button = gr.Button("刷新 CSV 文件")
 
 
-            refresh_button.click(update_drop_down, outputs=task_folders)
-        # 1.显示文件夹下的csv文件内容，并且可以支持选择指定行。
-        # 2.设置多个提示词文本，支持每个提示词的结果试跑
-        # 3.生成的文本转
+                def get_csv_files(task_folder):
+                    if not task_folder:
+                        return gr.Dropdown(label="选择 CSV 文件", choices=[], allow_custom_value=False)
+                    task_dir = os.path.join(task_root_dir, task_folder)
+                    if not os.path.exists(task_dir):
+                        return gr.Dropdown(label="选择 CSV 文件", choices=[], allow_custom_value=False)
+                    csv_files = [f for f in os.listdir(task_dir) if f.endswith('.csv')]
+                    return gr.Dropdown(label="选择 CSV 文件", choices=csv_files, allow_custom_value=False)
+
+
+                task_folders.change(fn=get_csv_files, inputs=task_folders, outputs=csv_files_dropdown)
+                refresh_csv_button.click(fn=get_csv_files, inputs=task_folders, outputs=csv_files_dropdown)
+
+        with gr.Row():
+            csv_content_textbox = gr.DataFrame(value=None, label="CSV 文件内容")
+            selected_row_dropdown = gr.Dropdown(label="选择叙事内容", choices=[], allow_custom_value=False)
+
+
+            def read_csv_file(task_folder, csv_file):
+                if not task_folder or not csv_file:
+                    return "", []
+                task_dir = os.path.join(task_root_dir, task_folder)
+                csv_path = os.path.join(task_dir, csv_file)
+                try:
+                    df = pd.read_csv(csv_path)
+                    # 检查 'hot_word' 列是否存在
+                    if 'hot_word' not in df.columns:
+                        print(f"CSV 文件中缺少 'hot_word' 列: {csv_path}")
+                        return "", []
+
+                    # 获取 'hot_word' 列的内容
+                    hot_word_choices = df['chinese'].tolist()
+                    return gr.DataFrame(df, label="CSV 文件内容"), gr.Dropdown(label="选择行", choices=hot_word_choices,
+                                                                               allow_custom_value=False)
+                except Exception as e:
+                    print(f"读取 CSV 文件时发生错误: {e}")
+                    return "", []
+
+
+            csv_files_dropdown.change(fn=read_csv_file, inputs=[task_folders, csv_files_dropdown],
+                                      outputs=[csv_content_textbox, selected_row_dropdown])
+
+        with gr.Row():
+
+            prompt_textbox1 = gr.Textbox(label="提示词 1",value="使用专业的新闻播音主持风格", lines=3)
+            prompt_textbox2 = gr.Textbox(label="提示词 2",value="使用幽默搞笑的相声风格", lines=3)
+            prompt_textbox3 = gr.Textbox(label="提示词 3",value="使用愤世嫉俗的批判主义风格", lines=3)
+
+        with gr.Row():
+
+            def process_prompt(selected_row, prompt):
+                draft = selected_row
+                if not draft:
+                    return "无法获取 draft"
+                return write_in_style(draft, prompt)
+
+
+            with gr.Column():
+                prompt_button1 = gr.Button("生成结果 1")
+                prompt_button1.click(
+                    fn=process_prompt,
+                    inputs=[selected_row_dropdown, prompt_textbox1],
+                    outputs=gr.Textbox(label="结果", value="", lines=5, interactive=False)
+                )
+
+            with gr.Column():
+                prompt_button2 = gr.Button("生成结果 2")
+                prompt_button2.click(
+                    fn=process_prompt,
+                    inputs=[selected_row_dropdown, prompt_textbox2],
+                    outputs=gr.Textbox(label="结果", value="", lines=5, interactive=False)
+                )
+
+            with gr.Column():
+                prompt_button3 = gr.Button("生成结果 3")
+                prompt_button3.click(
+                    fn=process_prompt,
+                    inputs=[selected_row_dropdown, prompt_textbox3],
+                    outputs=gr.Textbox(label="结果", value="", lines=5, interactive=False)
+                )
+
+
+            def write_in_style(draft, prompt):
+                agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
+                agent_logger = get_logger(__name__, agent_log_file_path)
+                try:
+                    ret = write_in_style_assistant(draft, prompt, agent_logger)
+                    return ret
+                except Exception as e:
+                    print(f"处理热词时发生错误: {e}")
+                    return f"处理热词时发生错误: {e}"
 
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")

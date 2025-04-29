@@ -4,9 +4,9 @@ __all__ = [
     "DecideAction",
     "SupervisorNode",
     "EvaluateImage",
-    "NoteStyle",
+    "WriteInStyle",
 ]
 
 from .research import SearchWeb, AnswerEditor, DecideAction
 from .evaluate import SupervisorNode, EvaluateImage
-from .note_style import NoteStyle
+from .write import WriteInStyle
