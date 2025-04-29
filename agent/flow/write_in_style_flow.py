@@ -19,7 +19,7 @@ def write_in_style_flow():
     write_in_style - "final_article" >> supervisor
 
 
-    supervisor - "retry" >> write_in_style
+    # supervisor - "retry" >> write_in_style
 
     # 创建并返回外部流程，从 agent_flow 开始
     return Flow(start=write_in_style)
