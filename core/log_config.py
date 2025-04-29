@@ -8,6 +8,7 @@ __all__ = ["get_logger"]
 if not os.path.exists("../logs"):
     os.makedirs("../logs")
 
+
 # 新增函数：管理日志文件数量
 def manage_log_files(log_dir, max_files=3):
     """
@@ -43,9 +44,10 @@ def manage_log_files(log_dir, max_files=3):
                 print(f"处理日志文件 {file_path} 时发生错误: {e}")
                 continue
 
+
 def get_logger(name=__name__, log_file_path=''):
     # 在每次创建日志文件后调用管理函数
-
+    # 这个日志文件编写是单例模式，不支持同时多个日志文件的记录
     logger = logging.getLogger(name)
 
     # 配置日志

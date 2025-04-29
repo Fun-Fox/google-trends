@@ -334,23 +334,23 @@ with gr.Blocks(title="GT") as app:
         # 修改回调函数，正确更新 hotword_folders 的选项
         task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hotword_folders)
         hotword_folders.change(fn=get_images, inputs=[hotword_folders], outputs=image_gallery)
-    with gr.Tab("人设及口播（未完成）"):
-        gr.Markdown("选择任务记录文查看热词对应的叙事")
-        with gr.Row():
-            task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
-                                       allow_custom_value=True)
-            refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
-
-
-            def update_drop_down():
-                return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
-                                   allow_custom_value=True)
-
-
-            refresh_button.click(update_drop_down, outputs=task_folders)
-        # 1.显示文件夹下的csv文件内容，并且可以支持选择指定行。
-        # 2.设置多个提示词文本，支持每个提示词的结果试跑
-        # 3.生成的文本转
+    # with gr.Tab("人设及口播（未完成）"):
+    #     gr.Markdown("选择任务记录文查看热词对应的叙事")
+    #     with gr.Row():
+    #         task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+    #                                    allow_custom_value=True)
+    #         refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
+    #
+    #
+    #         def update_drop_down():
+    #             return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+    #                                allow_custom_value=True)
+    #
+    #
+    #         refresh_button.click(update_drop_down, outputs=task_folders)
+    #     # 1.显示文件夹下的csv文件内容，并且可以支持选择指定行。
+    #     # 2.设置多个提示词文本，支持每个提示词的结果试跑
+    #     # 3.生成的文本转
 
 
 
@@ -406,11 +406,19 @@ with gr.Blocks(title="GT") as app:
             :param zip_path: .zip 文件路径
             """
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(folder_path):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        cname = os.path.relpath(str(file_path), str(folder_path))
-                        zipf.write(str(file_path), cname)
+                if os.path.isfile(folder_path):
+                    # 如果 folder_path 是文件，则直接添加到 ZIP 文件中
+                    file_name = os.path.basename(folder_path)
+                    zipf.write(folder_path, file_name)
+                elif os.path.isdir(folder_path):
+                    # 如果 folder_path 是文件夹，则遍历文件夹并添加文件
+                    for root, dirs, files in os.walk(folder_path):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            cname = os.path.relpath(str(file_path), str(folder_path))
+                            zipf.write(str(file_path), cname)
+                else:
+                    raise ValueError(f"路径 {folder_path} 既不是文件也不是文件夹")
 
 
         def download_folder(folder_paths):
