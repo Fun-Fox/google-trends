@@ -110,6 +110,8 @@ def get_hot_word_images_and_narratives(hot_word_folder):
         return [], ""
 
     image_dir = hot_word_folder
+    task_dir = os.path.dirname(hot_word_folder)
+    hot_word = os.path.basename(hot_word_folder)
     if not os.path.exists(hot_word_folder):
         return [], ""
 
@@ -117,7 +119,7 @@ def get_hot_word_images_and_narratives(hot_word_folder):
     images = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(('.jpg', '.png'))]
 
     # 获取 CSV 文件路径
-    csv_files = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith('.csv')]
+    csv_files = [os.path.join(task_dir, f) for f in os.listdir(task_dir) if f.endswith('.csv')]
     if not csv_files:
         return gr.Gallery(label="图片", value=images, interactive=False), ""
 
@@ -126,11 +128,14 @@ def get_hot_word_images_and_narratives(hot_word_folder):
     try:
         df = pd.read_csv(csv_path)
         if 'hot_word' in df.columns and 'chinese' in df.columns and 'english' in df.columns:
-            narratives = df[['hot_word', 'chinese', 'english']].to_dict(orient='records')
-            narratives_str = "\n".join(
-                [f"Hot_word: {n['hot_word']}\nChinese: {n['chinese']}\nEnglish: {n['english']}\n" for n in narratives])
-            return gr.Gallery(label="热词-对应图片信息", value=images, interactive=False, columns=5), gr.Textbox(
-                label="热词叙事", value=narratives_str, lines=5, interactive=False)
+            # 过滤出 hot_word 为 'hotword' 的行
+            filtered_df = df[df['hot_word'] == hot_word]
+            if not filtered_df.empty:
+                narratives = filtered_df[['chinese', 'english']].to_dict(orient='records')
+                narratives_str = "\n".join(
+                    [f"===中文===\n{n['chinese']}\n===英文===\n {n['english']}\n" for n in narratives])
+                return gr.Gallery(label="热词-对应图片信息", value=images, interactive=False, columns=5), gr.Textbox(
+                    label="热词叙事", value=narratives_str, lines=5, interactive=False)
     except Exception as e:
         print(f"读取 CSV 文件时发生错误: {e}")
 
@@ -483,7 +488,7 @@ with gr.Blocks(title="GT") as app:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=7864, help='Gradio 应用监听的端口号')
+    parser.add_argument('--port', type=int, default=7862, help='Gradio 应用监听的端口号')
     args = parser.parse_args()
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,
