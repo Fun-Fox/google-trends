@@ -263,7 +263,7 @@ with gr.Blocks(title="GT") as app:
 
         save_button.click(fn=save_cookie, inputs=cookie_input, outputs=status_text)
 
-    with gr.Tab("热词采集"):
+    with gr.Tab("时下热词-采集"):
         gr.Markdown("点击“开始采集”按钮启动采集任务，并显示日志。")
         with gr.Row():
             with gr.Column():
@@ -296,7 +296,7 @@ with gr.Blocks(title="GT") as app:
             task_log_textbox = gr.Textbox(label="采集日志", value=update_task_log_textbox, lines=10, max_lines=15,
                                           every=5)
 
-    with gr.Tab("热词深度搜索"):
+    with gr.Tab("时下热词-深度搜索"):
         gr.Markdown("选择任务记录文件夹以查看热词、图片、以及热词对应的叙事csv文件。")
         with gr.Row():
             task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
@@ -375,23 +375,23 @@ with gr.Blocks(title="GT") as app:
         # 修改get_images 增加获取hotword_folders 文件下的csv文件读取csv中hotword列对应的hotword 对应的chinese、english叙事，显示在textbox中
         # image_gallery 显示图片文件名称
 
-    # with gr.Tab("人设及口播（未完成）"):
-    #     gr.Markdown("选择任务记录文查看热词对应的叙事")
-    #     with gr.Row():
-    #         task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
-    #                                    allow_custom_value=True)
-    #         refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
-    #
-    #
-    #         def update_drop_down():
-    #             return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
-    #                                allow_custom_value=True)
-    #
-    #
-    #         refresh_button.click(update_drop_down, outputs=task_folders)
-    #     # 1.显示文件夹下的csv文件内容，并且可以支持选择指定行。
-    #     # 2.设置多个提示词文本，支持每个提示词的结果试跑
-    #     # 3.生成的文本转
+    with gr.Tab("口播-人设测试"):
+        gr.Markdown("选择任务记录文查看热词对应的叙事")
+        with gr.Row():
+            task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+                                       allow_custom_value=True)
+            refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
+
+
+            def update_drop_down():
+                return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+                                   allow_custom_value=True)
+
+
+            refresh_button.click(update_drop_down, outputs=task_folders)
+        # 1.显示文件夹下的csv文件内容，并且可以支持选择指定行。
+        # 2.设置多个提示词文本，支持每个提示词的结果试跑
+        # 3.生成的文本转
 
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
