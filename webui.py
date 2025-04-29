@@ -4,12 +4,14 @@ import datetime
 import zipfile
 from asyncio import sleep
 
+import pandas as pd
 from dotenv import load_dotenv
 
 from agent.main import write_style_assistant
 from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
+
 load_dotenv()
 # 动态生成日志文件路径
 task_date = datetime.datetime.now().strftime("%Y年%m月%d日%H时%M分")
@@ -29,7 +31,7 @@ async def start_crawler(url, to_download_image, origin="", category=""):
     :param url: 目标URL
     """
     # 获取当前时间并创建任务文件夹
-    task_dir_file_name = os.path.join(task_root_dir, task_date+f'_{origin}_{category}')
+    task_dir_file_name = os.path.join(task_root_dir, task_date + f'_{origin}_{category}')
     os.makedirs(task_root_dir, exist_ok=True)
 
     logger = get_logger(__name__, task_log_file_path)
@@ -40,7 +42,8 @@ async def start_crawler(url, to_download_image, origin="", category=""):
     origin_code = choices['regions'].get(origin, "US")  # 默认值为 "US"
     category_code = int(choices['category_names'].get(category, "0"))  # 默认值为 "0"
 
-    await crawl_google_trends_page(page, logger, origin=origin_code, category=category_code, url=url, task_dir=task_dir_file_name,
+    await crawl_google_trends_page(page, logger, origin=origin_code, category=category_code, url=url,
+                                   task_dir=task_dir_file_name,
                                    to_download_image=to_download_image)
 
     # 关闭页面和上下文
@@ -94,24 +97,44 @@ def get_hotword_folders(task_folder):
     return folders
 
 
-def get_images(hotword_folder):
+def get_hot_word_images_and_narratives(hot_word_folder):
     """
-    获取图片列表
-    :param task_folders:
-    :param hotword_folder: 热词文件夹名称
-    :return: 图片列表
+    获取图片列表并读取 CSV 文件中的 hotword 对应的 chinese 和 english 叙事
+    :param hot_word_folder: 热词文件夹名称
+    :return: 图片列表和叙事内容
     """
     # 确保 hotword_folder 是字符串类型
-    if isinstance(hotword_folder, list) and hotword_folder:
-        hotword_folder = hotword_folder[0]
-    elif not isinstance(hotword_folder, str):
-        return []
+    if isinstance(hot_word_folder, list) and hot_word_folder:
+        hot_word_folder = hot_word_folder[0]
+    elif not isinstance(hot_word_folder, str):
+        return [], ""
 
-    image_dir = hotword_folder
-    if not os.path.exists(hotword_folder):
-        return []
+    image_dir = hot_word_folder
+    if not os.path.exists(hot_word_folder):
+        return [], ""
+
+    # 获取图片列表
     images = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(('.jpg', '.png'))]
-    return gr.Gallery(label="图片", value=images, interactive=False)
+
+    # 获取 CSV 文件路径
+    csv_files = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith('.csv')]
+    if not csv_files:
+        return gr.Gallery(label="图片", value=images, interactive=False), ""
+
+    # 读取第一个 CSV 文件
+    csv_path = csv_files[0]
+    try:
+        df = pd.read_csv(csv_path)
+        if 'hot_word' in df.columns and 'chinese' in df.columns and 'english' in df.columns:
+            narratives = df[['hot_word', 'chinese', 'english']].to_dict(orient='records')
+            narratives_str = "\n".join(
+                [f"Hot_word: {n['hot_word']}\nChinese: {n['chinese']}\nEnglish: {n['english']}\n" for n in narratives])
+            return gr.Gallery(label="热词-对应图片信息", value=images, interactive=False, columns=5), gr.Textbox(
+                label="热词叙事", value=narratives_str, lines=5, interactive=False)
+    except Exception as e:
+        print(f"读取 CSV 文件时发生错误: {e}")
+
+    return gr.Gallery(label="图片", value=images, interactive=False), ""
 
 
 # 新增函数：获取 logs 目录下时间戳最新的日志文件
@@ -192,7 +215,6 @@ def update_hot_word_folders(task_folder):
         return gr.Dropdown(choices=[], label="热词文件夹", value="", interactive=True)
 
 
-
 # Gradio 接口
 with gr.Blocks(title="GT") as app:
     gr.Markdown("# Google Trends 采集")
@@ -241,24 +263,28 @@ with gr.Blocks(title="GT") as app:
         with gr.Row():
             with gr.Column():
                 to_download_image = gr.Checkbox(label="下载Google Trends上的三张图片", value=False, )
-            # 修改 origin 和 category 的 choices 属性
+                # 修改 origin 和 category 的 choices 属性
                 import configparser
+
+
                 def load_choices():
                     config = configparser.ConfigParser()
                     with open('conf.ini', encoding='utf-8') as config_file:
                         config.read_file(config_file)
 
-                    regions = { k:v for k, v in config['regions'].items()}
-                    category_names = {k:v for k, v in config['category_names'].items()}
+                    regions = {k: v for k, v in config['regions'].items()}
+                    category_names = {k: v for k, v in config['category_names'].items()}
 
                     return {
                         'regions': regions,
                         'category_names': category_names
                     }
 
+
                 choices_data = load_choices()  # 加载 config.ini 中的 Regions 和 category_names
                 origin = gr.Dropdown(label="地区", choices=list(choices_data['regions'].keys()), value="美国")
-                category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].keys()), value="所有分类")
+                category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].keys()),
+                                       value="所有分类")
                 button = gr.Button("开始采集")
                 button.click(fn=run_crawler, inputs=[to_download_image, origin, category],
                              outputs=gr.Textbox(label="采集结果"))
@@ -271,20 +297,24 @@ with gr.Blocks(title="GT") as app:
             task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
                                        allow_custom_value=True)
 
-            hotword_folders = gr.Dropdown(label="热词", multiselect=False,
-                                          allow_custom_value=True)
+            hot_word_folders = gr.Dropdown(label="热词", multiselect=False,
+                                           allow_custom_value=True)
         refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
+        narratives_textbox = gr.Textbox(label="叙事", value="", lines=5, interactive=False)
 
 
         def update_drop_down():
-            return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] +get_task_folders(),
+            return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
                                allow_custom_value=True)
 
 
         refresh_button.click(update_drop_down, outputs=task_folders)
+
         with gr.Row():
             with gr.Column():
                 research_button = gr.Button("🤐特定-热词-网络搜索")
+
+
                 def research_hot_word(hot_words_folders_path):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
@@ -293,9 +323,11 @@ with gr.Blocks(title="GT") as app:
                     ret = write_style_assistant(hot_words_folders_path, agent_logger)
 
                     return ret
-                research_button.click(fn=research_hot_word, inputs=[hotword_folders],
-                                      outputs=gr.Textbox(label=""))
 
+
+                research_button.click(fn=research_hot_word, inputs=[hot_word_folders],
+                                      outputs=gr.Textbox(label=""))
+            with gr.Column():
                 research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")
 
 
@@ -327,12 +359,17 @@ with gr.Blocks(title="GT") as app:
         with gr.Row():
 
             agent_log_textbox = gr.Textbox(label="AI搜索助手-执行记录", value=update_agent_log_textbox, lines=9,
+                                           max_lines=15,
                                            every=5)
             image_gallery = gr.Gallery(label="热词-对应图片信息", value=[], interactive=False, columns=5)
 
         # 修改回调函数，正确更新 hotword_folders 的选项
-        task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hotword_folders)
-        hotword_folders.change(fn=get_images, inputs=[hotword_folders], outputs=image_gallery)
+        task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hot_word_folders)
+        hot_word_folders.change(fn=get_hot_word_images_and_narratives, inputs=[hot_word_folders],
+                                outputs=[image_gallery, narratives_textbox])
+        # 修改get_images 增加获取hotword_folders 文件下的csv文件读取csv中hotword列对应的hotword 对应的chinese、english叙事，显示在textbox中
+        # image_gallery 显示图片文件名称
+
     # with gr.Tab("人设及口播（未完成）"):
     #     gr.Markdown("选择任务记录文查看热词对应的叙事")
     #     with gr.Row():
@@ -350,8 +387,6 @@ with gr.Blocks(title="GT") as app:
     #     # 1.显示文件夹下的csv文件内容，并且可以支持选择指定行。
     #     # 2.设置多个提示词文本，支持每个提示词的结果试跑
     #     # 3.生成的文本转
-
-
 
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")

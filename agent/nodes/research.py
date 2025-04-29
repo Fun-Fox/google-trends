@@ -31,14 +31,29 @@ class DecideAction(Node):
         logger.info(f"代理正在决定下一步操作...")
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
         prompt = f"""
-            ### 上下文
-            你是一个可以搜索网络的研究助手
+            ## 上下文
+            
+            你是一个可以搜索网络的热点新闻深度查询助手
             现在给你一个时下网络流行热词，你需要进行深度查询，确保最终理解并能够全面的回答该热词对应的叙事内容。
+    
+            ### 查询维度
+
+            - 事件基本信息 : 确认热词对应的具体事件、时间、地点、主要人物
+            - 事件发展脉络 : 事件起因、关键节点、最新进展
+            - 社会影响范围 : 受众群体、地域影响、行业影响
+            - 争议焦点 : 各方观点分歧、争论核心问题
+            - 官方回应 : 相关权威机构/人物的正式表态
+            - 公众反应 : 主流情绪倾向、典型评论
+            - 专业解读 : 权威专家/媒体的分析观点
+            - 传播特点 : 传播路径、关键推手、发酵速度
+            - 关联事件 : 与此热点相关的历史/并行事件
+            
+            ### 输入
             时下流行热词: {hot_word}
             先前的研究: 
             {context}
 
-            ### 操作空间
+            ## 操作空间
             [1] search
               描述: 在网络上查找更多信息
               参数:
@@ -49,8 +64,8 @@ class DecideAction(Node):
               参数:
                 - answer (str): 问题的最终回答
 
-            ## 下一步操作
-            根据上下文和可用操作决定下一步操作。
+            ### 下一步操作
+            根据上下文、查询维度和可用操作决定下一步操作。
             请以以下格式返回你的响应：
 
             ```yaml
@@ -62,9 +77,10 @@ class DecideAction(Node):
             search_query: <具体的搜索查询如果操作是搜索>
             ```
             重要：请确保：
-            1. 对所有多行字段使用适当的缩进（4个空格）
-            2. 使用|字符表示多行文本字段
-            3. 保持单行字段不使用|字符
+
+            1. 使用|字符表示多行文本字段
+            2. 多行字段使用缩进（4个空格）
+            3. 单行字段不使用|字符
             4. 正确使用YAML格式
             5. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
             """
@@ -73,12 +89,13 @@ class DecideAction(Node):
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应失败"}
-        logger.info(f"LLM 响应: {response}")
+
         # 解析响应以获取决策
         if "```yaml" not in response:
             logger.error("LLM 响应格式不正确，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
         yaml_str = response.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+        logger.info(f"LLM 响应: {yaml_str}")
         decision = yaml.safe_load(yaml_str)
 
         return decision
@@ -137,15 +154,26 @@ class AnswerEditor(Node):
 
         # 为 LLM 创建一个提示以基于网络研究内容编写草稿
         prompt = f"""
-        ### 上下文
-        基于以下信息，回答问题。
+        ## 上下文
+        
+        你是一个热点信息精炼助手，基于以下信息，回答问题。
+        
+        ### 精炼维度
+        
+        - 核心事实提取: 从海量信息中提取关键事实要素
+        - 舆情脉络梳理: 梳理公众情绪变化与讨论焦点转移路径
+        - 发酵点识别: 识别推动话题扩散的关键节点与触发因素
+        - 趋势预判: 基于现有信息预测话题可能的发展方向
+        
+        ### 输入格式:
+        
         时下网络流行热词: {hot_word}
         研究: 
         {context}
 
         ### 你的回答:
-        结合热词对应的研究进行理解，撰写关于此部分的叙事文案，并且使用中文和英文。
-        
+        结合热词对应的研究进行理解，使用精炼维度撰写叙事文案，并且使用中文和英文。
+                
         请以以下格式返回你的响应：
         
         ```yaml
@@ -164,6 +192,7 @@ class AnswerEditor(Node):
             logger.error("LLM 响应格式不正确，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
         yaml_str = draft.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+        logger.info(f"LLM 响应: {yaml_str}")
         response = yaml.safe_load(yaml_str)
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
@@ -184,3 +213,19 @@ class AnswerEditor(Node):
 
         # 我们完成了 - 不需要继续流程
         # return "done"
+
+
+if __name__=="__main__":
+    response = """
+    ```yaml
+thinking: |
+  The user is interested in RuPaul's initial response to Jiggly Caliente's death and the criticism that followed.  Several sources mention RuPaul's initial statement, but the details and the extent of the criticism aren't fully clear. A focused search about RuPaul's specific initial response and the subsequent backlash would clarify the situation.
+action: search
+reason: To gather more specific information about RuPaul's initial reaction and the associated criticism.
+search_query: "RuPaul initial response Jiggly Caliente death criticism"
+```
+    """
+
+    yaml_str = response.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+    print(f"LLM 响应: {yaml_str}")
+    decision = yaml.safe_load(yaml_str)

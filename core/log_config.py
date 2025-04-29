@@ -47,12 +47,11 @@ def manage_log_files(log_dir, max_files=3):
 
 def get_logger(name=__name__, log_file_path=''):
     # 在每次创建日志文件后调用管理函数
-    # 这个日志文件编写是单例模式，不支持同时多个日志文件的记录
     logger = logging.getLogger(name)
 
     # 配置日志
     formatter = ColoredFormatter(
-        "%(log_color)s%(asctime)s - %(levelname)s - %(message)s",
+        "%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         reset=True,
         log_colors={
@@ -64,16 +63,19 @@ def get_logger(name=__name__, log_file_path=''):
         }
     )
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
+    # 创建文件处理器
+    file_handler = logging.FileHandler(os.path.join("logs", log_file_path), encoding='utf-8')
+    file_handler.setFormatter(formatter)
 
-    logging.basicConfig(
-        level=logging.INFO,
-        handlers=[
-            logging.FileHandler(os.path.join("logs", log_file_path), encoding='utf-8'),
-            handler  # 使用带颜色的控制台日志输出
-        ],
-    )
+    # 创建控制台处理器
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    # 配置日志记录器
+    logger.setLevel(logging.INFO)
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
     # 检查日志文件数量
     manage_log_files("logs")
 
