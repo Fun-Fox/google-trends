@@ -45,7 +45,7 @@ def manage_log_files(log_dir, max_files=3):
 
 def get_logger(name=__name__, log_file_path=''):
     # 在每次创建日志文件后调用管理函数
-    manage_log_files("logs")
+
     logger = logging.getLogger(name)
 
     # 配置日志
@@ -72,5 +72,6 @@ def get_logger(name=__name__, log_file_path=''):
             handler  # 使用带颜色的控制台日志输出
         ],
     )
+    manage_log_files("logs")
 
     return logger

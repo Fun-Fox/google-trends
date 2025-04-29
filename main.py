@@ -175,7 +175,6 @@ def refresh_folders():
 
 # 修改回调函数，正确更新 hotword_folders 的选项
 def update_hot_word_folders(task_folder):
-    print(task_folder)
     if isinstance(task_folder, list) and task_folder:
         task_folder = task_folder[0]
     elif not isinstance(task_folder, str):
