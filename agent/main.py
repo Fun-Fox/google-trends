@@ -23,8 +23,8 @@ def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
         logger.info(f"正在分析时下网络流行热词: {hot_word}")
         agent_flow.run(shared)
 
-        logger.info(f"[Agent任务完成]-[DONE] ")
-        return shared.get("final_article", "No answer found")
+        logger.info(f"[热词深度搜索Agent任务完成]-[DONE] ")
+        return "[热词深度搜索Agent任务完成]-[DONE]"
     except Exception as e:
         logger.error(f"处理热词时发生异常: {e}")
         return "处理热词时发生异常。"
@@ -38,7 +38,10 @@ def write_in_style_assistant(draft: str, prompt: str, logger) -> str | None:
         agent_flow = write_in_style_flow()
         logger.info(f"\n 正在结合时下热点叙事进行撰写:\n {draft}")
         agent_flow.run(shared)
-        logger.info(f"[Agent任务完成]-[DONE] ")
+        final_article = shared.get("final_article", "No answer found")
+
+        logger.info(f"[Agent任务完成]-[DONE]: \n {final_article} ")
+        return final_article
     except Exception as e:
         logger.error(f"处理热词时发生异常: {e}")
         return "处理热词时发生异常。"
