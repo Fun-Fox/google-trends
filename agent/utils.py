@@ -56,6 +56,7 @@ def search_web(query, hot_word_path, logger):
                 results = response.json().get("organic", [])
                 results_str = "\n\n".join(
                     [f"标题: {r['title']}\nURL: {r['link']}\n摘要: {r['snippet']}" for r in results])
+                search_image(query, hot_word_path, logger)
             else:
                 logger.error(f"错误: 无法获取搜索结果。状态码: {response.status_code}")
                 return "错误: 无法获取搜索结果。"
