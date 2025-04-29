@@ -180,8 +180,10 @@ class AnswerEditor(Node):
         请以以下格式返回你的响应：
         
         ```yaml
-        chinese: <中文叙事文案>
-        english: <英文叙事文案>
+        chinese: |
+            <中文叙事文案>
+        english: |
+            <英文叙事文案>
         ```
 
         重要：请确保：
