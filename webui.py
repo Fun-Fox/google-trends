@@ -236,9 +236,8 @@ with gr.Blocks(title="GT") as app:
 
         save_button.click(fn=save_cookie, inputs=cookie_input, outputs=status_text)
 
-    with gr.Tab("执行及日志显示"):
-        gr.Markdown("### 执行与日志")
-        gr.Markdown("点击“开始采集”按钮启动任务，日志将实时更新。")
+    with gr.Tab("热词采集"):
+        gr.Markdown("点击“开始采集”按钮启动采集任务，并显示日志。")
         with gr.Row():
             with gr.Column():
                 to_download_image = gr.Checkbox(label="下载Google Trends上的三张图片", value=False, )
