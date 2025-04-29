@@ -431,8 +431,6 @@ with gr.Blocks(title="GT") as app:
 
             # 只处理第一个选中的文件夹
             folder_path = folder_paths[0]
-            if not os.path.isdir(folder_path):
-                return None
 
             # 读取环境变量指定的目录
             zip_dir = os.getenv("ZIP_DIR")
