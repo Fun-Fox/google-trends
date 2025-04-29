@@ -3,6 +3,9 @@ from colorlog import ColoredFormatter
 import os
 import time
 
+from dotenv import load_dotenv
+
+load_dotenv()
 __all__ = ["get_logger"]
 # 判断logs文件夹是否存在，不存在则创建
 if not os.path.exists("../logs"):
@@ -65,17 +68,18 @@ def get_logger(name=__name__, log_file_path=''):
 
     # 创建文件处理器
     file_handler = logging.FileHandler(os.path.join("logs", log_file_path), encoding='utf-8')
-    file_handler.setFormatter(formatter)
+    # if os.getenv("PLATFORM") == "local":
+    #     file_handler.setFormatter(formatter)
     # 配置日志记录器
     logger.setLevel(logging.INFO)
     logger.addHandler(file_handler)
 
     # 创建控制台处理器
-    if os.getenv("PLATFORM") =="local":
-
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
+    # if os.getenv("PLATFORM") =="local":
+    #
+    #     console_handler = logging.StreamHandler()
+    #     console_handler.setFormatter(formatter)
+    #     logger.addHandler(console_handler)
 
     # 检查日志文件数量
     manage_log_files("logs")
