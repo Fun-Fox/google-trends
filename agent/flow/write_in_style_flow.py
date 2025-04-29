@@ -1,6 +1,6 @@
 from pocketflow import Flow
 
-from agent.nodes import WriteInStyle, SupervisorNode
+from agent.nodes import WriteInStyle, WriteSupervisorNode
 
 __all__ = ["write_in_style_flow"]
 def write_in_style_flow():
@@ -13,7 +13,7 @@ def write_in_style_flow():
 
     write_in_style= WriteInStyle()
     # 创建监督节点
-    supervisor = SupervisorNode()
+    supervisor = WriteSupervisorNode()
 
     # 连接组件
     write_in_style - "final_article" >> supervisor

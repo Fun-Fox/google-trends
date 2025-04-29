@@ -5,7 +5,7 @@ from pocketflow import Node
 from agent.utils import call_llm
 import yaml
 
-__all__ = ["WriteInStyle"]
+__all__ = ["WriteInStyle","WriteSupervisorNode"]
 load_dotenv()
 
 
