@@ -81,8 +81,7 @@ class DecideAction(Node):
             1. 使用|字符表示多行文本字段
             2. 多行字段使用缩进（4个空格）
             3. 单行字段不使用|字符
-            4. 正确使用YAML格式
-            5. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
+            4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
             """
         # 调用 LLM 进行决策
         response, success = call_llm(prompt, logger)
@@ -172,7 +171,11 @@ class AnswerEditor(Node):
         {context}
 
         ### 你的回答:
-        结合热词对应的研究进行理解，使用精炼维度撰写叙事文案，并且使用中文和英文。
+        结合热词对应的研究进行理解，
+        - 使用精炼维度撰写叙事文案
+        - 使用中文和英文。
+        - 用简单易懂的语言解释想法
+        - 使用日常语言，避免术语
                 
         请以以下格式返回你的响应：
         
@@ -181,10 +184,10 @@ class AnswerEditor(Node):
         english: <英文叙事文案>
         ```
 
-        要求：
-        - 用简单易懂的语言解释想法
-        - 使用日常语言，避免术语
-        - 正确使用YAML格式
+        重要：请确保：
+        1. 使用|字符表示多行文本字段
+        2. 多行字段使用缩进（4个空格）
+        3. 单行字段不使用|字符
         """
         # 调用 LLM 生成草稿
         draft, success = call_llm(prompt, logger)
