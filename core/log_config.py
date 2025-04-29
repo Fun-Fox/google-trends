@@ -49,7 +49,7 @@ def get_logger(name=__name__, log_file_path=''):
     # 在每次创建日志文件后调用管理函数
     logger = logging.getLogger(name)
 
-    # 配置日志
+        # 配置日志
     formatter = ColoredFormatter(
         "%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -66,15 +66,16 @@ def get_logger(name=__name__, log_file_path=''):
     # 创建文件处理器
     file_handler = logging.FileHandler(os.path.join("logs", log_file_path), encoding='utf-8')
     file_handler.setFormatter(formatter)
-
-    # 创建控制台处理器
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-
     # 配置日志记录器
     logger.setLevel(logging.INFO)
     logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+
+    # 创建控制台处理器
+    if os.getenv("PLATFORM") =="local":
+
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
     # 检查日志文件数量
     manage_log_files("logs")

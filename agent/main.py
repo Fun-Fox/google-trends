@@ -34,7 +34,7 @@ def write_in_style_assistant(draft: str, prompt: str, logger) -> str | None:
             "draft": draft, "prompt": prompt, "logger": logger
         }
         agent_flow = write_in_style_flow()
-        logger.info(f"正在结合时下热点叙事进行撰写:\n {draft}")
+        logger.info(f"\n 正在结合时下热点叙事进行撰写:\n {draft}")
         agent_flow.run(shared)
         logger.info(f"[Agent任务完成]-[DONE] ")
     except Exception as e:

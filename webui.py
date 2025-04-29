@@ -401,21 +401,21 @@ with gr.Blocks(title="GT") as app:
                     task_dir = os.path.join(task_root_dir, task_folder)
                     if not os.path.exists(task_dir):
                         return gr.Dropdown(label="选择 CSV 文件", choices=[], allow_custom_value=False)
-                    csv_files = [f for f in os.listdir(task_dir) if f.endswith('.csv')]
-                    return gr.Dropdown(label="选择 CSV 文件", choices=csv_files, allow_custom_value=False)
+                    csv_files = ['']+[f for f in os.listdir(task_dir) if f.endswith('.csv')]
+                    return gr.Dropdown(label="选择 CSV 文件", value='',choices=csv_files, allow_custom_value=False)
 
 
                 task_folders.change(fn=get_csv_files, inputs=task_folders, outputs=csv_files_dropdown)
                 refresh_csv_button.click(fn=get_csv_files, inputs=task_folders, outputs=csv_files_dropdown)
 
         with gr.Row():
-            csv_content_textbox = gr.DataFrame(value=None, label="CSV 文件内容")
-            selected_row_dropdown = gr.Dropdown(label="选择叙事内容", choices=[], allow_custom_value=False)
+            csv_content_textbox = gr.DataFrame(value=None, label="CSV 文件内容",max_height=300,max_chars=200)
+            selected_row_dropdown = gr.Dropdown(label="选择叙事内容", choices=[], allow_custom_value=True)
 
 
             def read_csv_file(task_folder, csv_file):
-                if not task_folder or not csv_file:
-                    return "", []
+                if not task_folder or csv_file is None or csv_file == '':
+                    return gr.DataFrame(value=None, label="CSV 文件内容",max_height=300,max_chars=200), gr.Dropdown(label="选择叙事内容", choices=[], allow_custom_value=True)
                 task_dir = os.path.join(task_root_dir, task_folder)
                 csv_path = os.path.join(task_dir, csv_file)
                 try:
@@ -427,8 +427,8 @@ with gr.Blocks(title="GT") as app:
 
                     # 获取 'hot_word' 列的内容
                     hot_word_choices = df['chinese'].tolist()
-                    return gr.DataFrame(df, label="CSV 文件内容"), gr.Dropdown(label="选择行", choices=hot_word_choices,
-                                                                               allow_custom_value=False)
+                    return gr.DataFrame(df, label="CSV 文件内容",max_height=300,max_chars=200), gr.Dropdown(label="选择行", choices=hot_word_choices,
+                                                                               allow_custom_value=True)
                 except Exception as e:
                     print(f"读取 CSV 文件时发生错误: {e}")
                     return "", []
