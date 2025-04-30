@@ -12,12 +12,12 @@ services:
     environment:
       - ZIP_DIR=/assets/zip
       - TASK_DIR=/assets/tasks
-      - LOCAL_LLM_URL=http://192.168.31.85:11434/api/generate
+      - LOCAL_LLM_URL=http://<ip>:11434/api/generate
       - CLOUD_API_KEY=
       - LOCAL_MODEL_NAME=gemma3
       - LOG_LEVEL=INFO
       - PLATFORM=server
-      - PROXY_URL=http://192.168.31.85:10811
+      - PROXY_URL=
       - SERPER_API_KEY=
     restart: always
     command: python webui.py --port 7861

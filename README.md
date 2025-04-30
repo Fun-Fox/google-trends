@@ -244,12 +244,12 @@ E:/Service/docker-volumes为你自己的本地目录
     environment:
       - ZIP_DIR=/assets/zip
       - TASK_DIR=/assets/tasks
-      - LOCAL_LLM_URL=http://192.168.31.85:11434/api/generate
+      - LOCAL_LLM_URL=http://<本地ip>:11434/api/generate
       - CLOUD_API_KEY=
       - LOCAL_MODEL_NAME=gemma3
       - LOG_LEVEL=INFO
       - PLATFORM=server
-      - PROXY_URL=http://192.168.31.85:10811
+      - PROXY_URL=
       - SERPER_API_KEY=
 ```
 
