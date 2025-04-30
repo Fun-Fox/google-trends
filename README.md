@@ -50,16 +50,16 @@
 graph TD
     A[DecideAction] -->|"search"| B[SearchWeb]
     A -->|"answer"| C[AnswerEditor]
+    C -->D[SupervisorNode]
+    D -->|"approved"|E[EvaluateImage]
+    D -->|"retry"| A
     B -->|"decide"| A
-    C --> D[SupervisorNode]
-    D --> |"approved |E[EvaluateImage]
-    D --> |"retry"| A
     
 ```
 
 #### 提示词
 
-##### DecideAction
+> DecideAction
 
 ```
     f"""
@@ -118,7 +118,7 @@ graph TD
        """
 ```
 
-##### AnswerEditor
+> AnswerEditor
 
 ```
     f"""
@@ -162,7 +162,7 @@ graph TD
     """
 ```
 
-##### EvaluateImage
+> EvaluateImage
 
 ```
     f"""
