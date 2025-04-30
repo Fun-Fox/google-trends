@@ -37,24 +37,22 @@ def call_local_llm(prompt, logger=None, image_path='', ):
         # 使用本地ollama模型gemma3
         url = f"{os.getenv('LOCAL_LLM_URL')}"
 
-        if os.getenv("LOCAL_MODEL_NAME") == "gemma3":
+        if os.getenv("LOCAL_MODEL_NAME") == "gemma3" and  image_path != "":
+            logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行视觉操作")
+            payload = {
+                "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
+                "prompt": prompt,
+                "stream": False,
+                "image": convert_image_to_base64(image_path)
+            }
 
-            if image_path != "":
-                logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行视觉操作")
-                payload = {
-                    "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
-                    "prompt": prompt,
-                    "stream": False,
-                    "image": convert_image_to_base64(image_path)
-                }
-        else:
-            if image_path == "":
-                logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行语言(非视觉)操作")
-                payload = {
-                    "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
-                    "prompt": prompt,
-                    "stream": False
-                }
+        if image_path == "":
+            logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行语言(非视觉)操作")
+            payload = {
+                "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
+                "prompt": prompt,
+                "stream": False
+            }
         response = requests.post(url, json=payload, proxies=proxies)
         if response.status_code == 200:
             return response.json().get("response", ""), True
