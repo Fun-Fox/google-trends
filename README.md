@@ -47,14 +47,19 @@ E:/Service/docker-volumes为你自己的本地目录
 
 ```
     volumes:
-      - E:/Service/docker-volumes/logs:/app/logs
-      - E:/Service/docker-volumes/tasks:/app/tasks
+      - D:/Service/docker-volumes/google-trends/logs:/app/logs
+      - D:/Service/docker-volumes/google-trends/tasks:/assets/tasks
+      - D:/Service/docker-volumes/google-trends/zip:/assets/zip
     environment:
-      - HEADLESS=true
+      - ZIP_DIR=/assets/zip
+      - TASK_DIR=/assets/tasks
+      - LOCAL_LLM_URL=http://192.168.31.85:11434/api/generate
+      - CLOUD_API_KEY=
+      - LOCAL_MODEL_NAME=gemma3
       - LOG_LEVEL=INFO
       - PLATFORM=server
-      - PROXY_URL=http://127.0.0.1:10809
-    command: python main.py --port 7863
+      - PROXY_URL=http://192.168.31.85:10811
+      - SERPER_API_KEY=
 ```
 
 #### 启动命令
