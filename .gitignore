@@ -16,3 +16,4 @@ __pycache__
 /logs
 /zip
 *.zip
+.env
