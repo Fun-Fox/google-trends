@@ -15,6 +15,19 @@ proxies = {
 
 
 def call_llm(prompt, logger=None, image_path='', ):
+    if os.getenv("CLOUD_MODEL_NAME") != '' and image_path != "":
+        # 不是视觉的暂时不走这里
+        response = call_cloud_model(prompt, logger, image_path)
+        return response
+    if 'gemma3' in os.getenv("LOCAL_MODEL_NAME"):
+        response = call_llm(prompt, logger, image_path)
+        return response
+    elif 'gemma3' not in os.getenv("LOCAL_MODEL_NAME"):
+        response = call_llm(prompt, logger)
+        return response
+
+
+def call_local_llm(prompt, logger=None, image_path='', ):
     # 支持视觉与非视觉模型  ·
     try:
         # logger.info(f"## 提示: {prompt}")
@@ -157,7 +170,7 @@ api_url = os.getenv("CLOUD_API_URL")
 MAX_RETRIES = 2
 
 
-def call_cloud_model(prompt, model_name, image_path='', logger=None):
+def call_cloud_model(prompt, logger=None, image_path=''):
     """评估图片与叙事的相关性，并对图片进行评分。
 
     Args:
@@ -170,6 +183,7 @@ def call_cloud_model(prompt, model_name, image_path='', logger=None):
         :param image_path:
         :param prompt:
     """
+    model_name = os.getenv("CLOUD_MODEL_NAME")
     for attempt in range(MAX_RETRIES):
         try:
             if image_path != "":

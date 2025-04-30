@@ -151,11 +151,7 @@ class EvaluateImage(Node):
         if len(images_list) > 8:  # //只评估8张图片
             images_list = images_list[:8]
         for image_path in images_list:
-            if os.getenv("CLOUD_MODEL_NAME") != '':
-                model_name = os.getenv("CLOUD_MODEL_NAME")
-                response = call_cloud_model(prompt, model_name, image_path, logger)
-            if 'gemma3' in os.getenv("LOCAL_MODEL_NAME"):
-                response = call_llm(prompt, logger,image_path)
+            response = call_llm(prompt, logger,image_path)
             logger.info(f"LLM 响应: {response}")
             if "```yaml" not in response:
                 logger.error("LLM 响应格式不正确，请检查你的响应格式。")
