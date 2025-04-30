@@ -222,7 +222,7 @@ def update_hot_word_folders(task_folder):
 
 # Gradio 接口
 with gr.Blocks(title="GT") as app:
-    gr.Markdown("# Google Trends 采集")
+    gr.Markdown("# Google Trends 时下热词 采集、搜索、叙事风格撰写")
 
     # 使用 Tab 方式组织界面
     with gr.Tab("Cookie 设置"):

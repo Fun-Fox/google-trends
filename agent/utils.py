@@ -17,13 +17,16 @@ proxies = {
 def call_llm(prompt, logger=None, image_path='', ):
     if os.getenv("CLOUD_MODEL_NAME") != '' and image_path != "":
         # 不是视觉的暂时不走这里
+        logger.info(f"使用云端模型{os.getenv('CLOUD_MODEL_NAME')}")
         response = call_cloud_model(prompt, logger, image_path)
         return response
     if 'gemma3' in os.getenv("LOCAL_MODEL_NAME"):
-        response = call_llm(prompt, logger, image_path)
+        logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')}")
+        response = call_local_llm(prompt, logger, image_path)
         return response
     elif 'gemma3' not in os.getenv("LOCAL_MODEL_NAME"):
-        response = call_llm(prompt, logger)
+        logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')}")
+        response = call_local_llm(prompt, logger)
         return response
 
 
@@ -37,6 +40,7 @@ def call_local_llm(prompt, logger=None, image_path='', ):
         if os.getenv("LOCAL_MODEL_NAME") == "gemma3":
 
             if image_path != "":
+                logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行视觉操作")
                 payload = {
                     "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
                     "prompt": prompt,
@@ -45,6 +49,7 @@ def call_local_llm(prompt, logger=None, image_path='', ):
                 }
         else:
             if image_path == "":
+                logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行语言(非视觉)操作")
                 payload = {
                     "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
                     "prompt": prompt,
@@ -68,6 +73,7 @@ def search_web(query, hot_word_path, logger):
 
         api_key = os.getenv("SERPER_API_KEY", None)
         if api_key:
+            logger.info(f"使用SERPER Google付费搜索进行查询")
 
             url = "https://google.serper.dev/search"
             headers = {
@@ -87,6 +93,8 @@ def search_web(query, hot_word_path, logger):
                 logger.error(f"错误: 无法获取搜索结果。状态码: {response.status_code}")
                 return "错误: 无法获取搜索结果。"
         else:
+            logger.info(f"使用DuckDuckgo免费搜索进行查询")
+
             with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
                 news_results = ddgs.text(query, max_results=5)
                 search_image(query, hot_word_path, logger)
@@ -187,11 +195,15 @@ def call_cloud_model(prompt, logger=None, image_path=''):
     for attempt in range(MAX_RETRIES):
         try:
             if image_path != "":
+                logger.info(f"使用云端模型{os.getenv('CLOUD_MODEL_NAME')},进行视觉操作")
+
                 # 将图片转换为Base64编码
                 image_base64 = convert_image_to_base64(image_path)
                 # 构建请求负载
                 payload = _build_evaluation_payload(prompt, model_name, image_base64)
             else:
+                logger.info(f"使用云端模型{os.getenv('CLOUD_MODEL_NAME')},进行语言(非视觉)操作")
+
                 payload = _build_evaluation_payload(prompt, model_name, '')
 
             headers = {

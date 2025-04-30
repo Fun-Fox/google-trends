@@ -1,19 +1,17 @@
-# Google Trends 采集项目
+# Google Trends 时下热词叙事风格撰写
 
 ## 项目简介
-本项目是一个基于 Python 和 Playwright 的 Google Trends 时下热词数据采集工具，并且支持对热点词进行google搜索进行LLM深度解读
-
-- 执行网络搜索以收集信息
-- 自动下载并保存 Google Trends 页面中的热词图片
-- 根据时下热词进行深度解读
-- 人设测试
-
-## 系统截图
-
+本项目是一个基于 Python 和 Playwright 的 Google Trends 时下热词采集、搜索、叙事撰写、叙事配图评分、叙事撰写（人设测试）工具。
+支持本地模型与云端模型。本地模型（多模态）基于gemma3，云模型（多模态）基于deepseek-ai/deepseek-vl2
 
 ## 流程
 
 热点->深度查询->叙事->叙事配图->配图评分->叙事撰写（人设测试）
+
+## 系统截图
+
+
+
 
 ## 它是如何工作的？
 
