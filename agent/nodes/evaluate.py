@@ -3,12 +3,14 @@ import os
 
 from dotenv import load_dotenv
 from pocketflow import Node
-from agent.utils import  get_images, evaluate_image_relevance
+from agent.utils import get_images, call_cloud_model, call_llm
 import yaml
 
 load_dotenv()
 
 __all__ = ["SupervisorNode", "EvaluateImage"]
+
+
 # 监督节点
 class SupervisorNode(Node):
     def prep(self, shared):
@@ -100,7 +102,6 @@ class SupervisorNode(Node):
             return "retry"
 
 
-
 class EvaluateImage(Node):
     def prep(self, shared):
         """
@@ -150,7 +151,11 @@ class EvaluateImage(Node):
         if len(images_list) > 8:  # //只评估8张图片
             images_list = images_list[:8]
         for image_path in images_list:
-            response = evaluate_image_relevance(prompt, image_path, logger)
+            if os.getenv("CLOUD_MODEL_NAME") != '':
+                model_name = os.getenv("CLOUD_MODEL_NAME")
+                response = call_cloud_model(prompt, model_name, image_path, logger)
+            else:
+                response = call_llm(prompt, logger,image_path)
             logger.info(f"LLM 响应: {response}")
             if "```yaml" not in response:
                 logger.error("LLM 响应格式不正确，请检查你的响应格式。")

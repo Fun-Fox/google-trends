@@ -14,16 +14,29 @@ proxies = {
 }
 
 
-def call_llm(prompt, logger):
+def call_llm(prompt, logger=None, image_path='', ):
+    # 支持视觉与非视觉模型  ·
     try:
         # logger.info(f"## 提示: {prompt}")
         # 使用本地ollama模型gemma3
-        url = f"{os.getenv('LLM_URL')}"
-        payload = {
-            "model": f"{os.getenv('MODEL_NAME')}",
-            "prompt": prompt,
-            "stream": False
-        }
+        url = f"{os.getenv('LOCAL_LLM_URL')}"
+
+        if os.getenv("LOCAL_MODEL_NAME") == "gemma3":
+
+            if image_path != "":
+                payload = {
+                    "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
+                    "prompt": prompt,
+                    "stream": False,
+                    "image": convert_image_to_base64(image_path)
+                }
+        else:
+            if image_path == "":
+                payload = {
+                    "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
+                    "prompt": prompt,
+                    "stream": False
+                }
         response = requests.post(url, json=payload, proxies=proxies)
         if response.status_code == 200:
             return response.json().get("response", ""), True
@@ -139,12 +152,12 @@ from PIL import Image
 from io import BytesIO
 from base64 import b64encode
 
-api_key = os.getenv("API_KEY")
-api_url = "https://api.siliconflow.cn/v1/chat/completions"
+api_key = os.getenv("CLOUD_API_KEY")
+api_url = os.getenv("CLOUD_API_URL")
 MAX_RETRIES = 2
 
 
-def evaluate_image_relevance(prompt, image_path, logger):
+def call_cloud_model(prompt, model_name, image_path='', logger=None):
     """评估图片与叙事的相关性，并对图片进行评分。
 
     Args:
@@ -152,13 +165,21 @@ def evaluate_image_relevance(prompt, image_path, logger):
         logger
     Returns:
         包含评估结果的字典。
+        :param model_name:
+        :param logger:
+        :param image_path:
+        :param prompt:
     """
     for attempt in range(MAX_RETRIES):
         try:
-            # 将图片转换为Base64编码
-            image_base64 = convert_image_to_base64(image_path)
-            # 构建请求负载
-            payload = _build_evaluation_payload(prompt, image_base64)
+            if image_path != "":
+                # 将图片转换为Base64编码
+                image_base64 = convert_image_to_base64(image_path)
+                # 构建请求负载
+                payload = _build_evaluation_payload(prompt, model_name, image_base64)
+            else:
+                payload = _build_evaluation_payload(prompt, model_name, '')
+
             headers = {
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {api_key}'
@@ -211,28 +232,34 @@ def convert_image_to_base64(image_path, quality=80) -> str:
 
 
 # model_name = "Qwen/Qwen2.5-VL-32B-Instruct"
-model_name = "deepseek-ai/deepseek-vl2"
 
 
-def _build_evaluation_payload(prompt, image_base64) -> dict:
-    """构建评估请求负载。"""
+def _build_evaluation_payload(prompt, model_name, image_base64='', ) -> dict:
+    """构建评估请求负载。
+    :type model_name: object
+    """
+    content = [
+        {
+            "type": "text",
+            "text": prompt
+        }
+    ]
+
+    # 仅当 image_base64 存在时添加图片内容
+    if image_base64 != '':
+        content.append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/jpeg;base64,{image_base64}"
+            }
+        })
+
     return {
         "model": f"{model_name}",
         "messages": [
             {
                 "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{image_base64}"
-                        }
-                    }
-                ]
+                "content": content
             }
         ],
         "stream": False
