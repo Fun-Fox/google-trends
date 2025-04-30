@@ -8,20 +8,43 @@
 - 根据时下热词进行深度解读
 - 人设测试
 
+## 系统截图
+
+
 ## 流程
 
 热点->深度查询->叙事->叙事配图->配图评分->叙事撰写（人设测试）
 
 ## 它是如何工作的？
 
-魔法通过一个简单但强大的图结构发生，该结构包含三个主要部分：
+深度搜索工作流：research_hot_word_flow
+节点说明：
+- DecideAction：决策节点，判断是否继续深度搜索，如果继续则继续深度搜索，如果结束则结束深度搜索
+- SearchWeb：网页搜索（热词相关文本及图片）
+- AnswerEditor：根据最终结果进行LLM写初稿
+- SupervisorNode：对初稿内容进行审核
+- EvaluateImage：评估符合热词叙事的配图，对图片进行多维度评分
 
 ```mermaid
 graph TD
     A[DecideAction] -->|"search"| B[SearchWeb]
     A -->|"answer"| C[AnswerEditor]
     B -->|"decide"| A
-    C -->|"decide"| A    
+    C --> D[SupervisorNode]
+    D --> |"approved |E[EvaluateImage]
+    D --> |"retry"| A
+    
+```
+
+风格撰写工作流：write_in_style_flow
+节点说明：
+- WriteInStyle：根据不同的风格Prompt，结合初稿进行LLM写最终稿
+- WriteSupervisorNode：对初稿内容进行审核
+
+```mermaid
+graph TD
+    A[WriteInStyle] -->|"final_article"| B[WriteSupervisorNode]
+    B -->|"retry"| A  
     
 ```
 
@@ -67,3 +90,4 @@ E:/Service/docker-volumes为你自己的本地目录
 ```
     docker compose up -d
 ```
+
