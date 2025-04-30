@@ -154,7 +154,7 @@ class EvaluateImage(Node):
             if os.getenv("CLOUD_MODEL_NAME") != '':
                 model_name = os.getenv("CLOUD_MODEL_NAME")
                 response = call_cloud_model(prompt, model_name, image_path, logger)
-            else:
+            if 'gemma3' in os.getenv("LOCAL_MODEL_NAME"):
                 response = call_llm(prompt, logger,image_path)
             logger.info(f"LLM 响应: {response}")
             if "```yaml" not in response:
