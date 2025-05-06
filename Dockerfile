@@ -28,10 +28,14 @@ COPY agent /app/agent
 COPY index-tts /app/index-tts
 
 # 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r /app/index-tts/requirements.txt && \
+RUN mkdir -p /root/.pip && \
+    echo "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple\ntrusted-host = files.pythonhosted.org\ntrusted-host = pypi.org\ntrusted-host = files.pythonhosted.org" > /root/.pip/pip.conf \
+
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt --no-deps && \
+    pip install --no-cache-dir -r /app/index-tts/requirements.txt --no-deps && \
     pip install deepspeed && \
-    playwright install chromium \
+    playwright install chromium
 
 
 #  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
