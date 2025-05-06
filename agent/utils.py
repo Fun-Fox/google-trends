@@ -1,7 +1,6 @@
 import os
 
 import imagehash
-import requests
 from dotenv import load_dotenv
 from duckduckgo_search import DDGS
 
@@ -16,18 +15,19 @@ proxies = {
 
 def call_llm(prompt, logger=None, image_path='', ):
     if os.getenv("CLOUD_MODEL_NAME") != '' and image_path != "":
-        # 不是视觉的暂时不走这里
+        # 只有视觉的模型调用云端模型
         logger.info(f"使用云端模型{os.getenv('CLOUD_MODEL_NAME')}")
-        response = call_cloud_model(prompt, logger, image_path)
-        return response
-    if 'gemma3' in os.getenv("LOCAL_MODEL_NAME"):
+        response,success = call_cloud_model(prompt, logger, image_path)
+        return response,success
+    if 'gemma3' in os.getenv("LOCAL_MODEL_NAME") and image_path != "":
         logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')}")
-        response = call_local_llm(prompt, logger, image_path)
-        return response
-    elif 'gemma3' not in os.getenv("LOCAL_MODEL_NAME"):
+        response,success = call_local_llm(prompt, logger, image_path)
+        return response,success
+    elif 'gemma3' in os.getenv("LOCAL_MODEL_NAME") and image_path == "":
         logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')}")
-        response = call_local_llm(prompt, logger)
-        return response
+        response,success = call_local_llm(prompt, logger)
+        return response,success
+    return None, None
 
 
 def call_local_llm(prompt, logger=None, image_path='', ):
@@ -37,7 +37,7 @@ def call_local_llm(prompt, logger=None, image_path='', ):
         # 使用本地ollama模型gemma3
         url = f"{os.getenv('LOCAL_LLM_URL')}"
 
-        if os.getenv("LOCAL_MODEL_NAME") == "gemma3" and  image_path != "":
+        if os.getenv("LOCAL_MODEL_NAME") == "gemma3" and image_path != "":
             logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行视觉操作")
             payload = {
                 "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
@@ -53,7 +53,7 @@ def call_local_llm(prompt, logger=None, image_path='', ):
                 "prompt": prompt,
                 "stream": False
             }
-        response = requests.post(url, json=payload, proxies=proxies)
+        response = requests.post(url, json=payload)
         if response.status_code == 200:
             return response.json().get("response", ""), True
         else:

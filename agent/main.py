@@ -43,8 +43,8 @@ def write_in_style_assistant(draft: str, prompt: str, logger) -> str | None:
         logger.info(f"[Agent任务完成]-[DONE]: \n {final_article} ")
         return final_article
     except Exception as e:
-        logger.error(f"处理热词时发生异常: {e}")
-        return "处理热词时发生异常。"
+        logger.error(f"风格转写出现异常: {e}")
+        return "风格转写出现异常。"
 
 
 #

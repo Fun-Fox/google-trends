@@ -1,11 +1,8 @@
-import os
-
 from dotenv import load_dotenv
 from pocketflow import Node
 from agent.utils import call_llm
-import yaml
 
-__all__ = ["WriteInStyle","WriteSupervisorNode"]
+__all__ = ["WriteInStyle", "WriteSupervisorNode"]
 load_dotenv()
 
 
@@ -22,9 +19,18 @@ class WriteInStyle(Node):
         """
         draft, prompt, logger = inputs
 
-
         # 将 draft 插入到 style_note 中
-        prompt = prompt +'\n\n # 重点！时下热点详细叙事如下：\n' + draft
+        prompt = (prompt +
+                  '\n ## 时下热点详细叙事如下：\n'
+                  + draft +
+                  '\n ## 输出内容要求\n '
+                  + """
+                    - 只有一个角色则只输出一段话
+                    - 有多个角色则以（角色名称：一段话）形式输出
+                    - 不包含换行符\n
+                    - 只包含纯文本
+                    - 不包含语气描述词
+                    """)
 
         logger.info(f"===已拿到风格撰写提示===\n{prompt}\n,===正在进行风格撰写===")
 
@@ -33,6 +39,7 @@ class WriteInStyle(Node):
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应失败"}
+        logger.info(f"LLM 响应成功:{response}")
         return response
 
     def post(self, shared, prep_res, exec_res):
@@ -44,7 +51,6 @@ class WriteInStyle(Node):
         logger.info(f"风格撰写结果:\n {exec_res}")
 
         return "final_article"
-
 
 
 class WriteSupervisorNode(Node):

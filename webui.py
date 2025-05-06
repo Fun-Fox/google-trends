@@ -3,7 +3,9 @@ import os
 import datetime
 import zipfile
 from asyncio import sleep
-
+import sys
+import time
+import warnings
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -218,6 +220,12 @@ def update_hot_word_folders(task_folder):
         return gr.Dropdown(choices=folders, label="热词文件夹", value=folders[0], interactive=True)
     else:
         return gr.Dropdown(choices=[], label="热词文件夹", value="", interactive=True)
+
+
+
+
+
+
 
 
 # Gradio 接口
@@ -439,9 +447,9 @@ with gr.Blocks(title="GT") as app:
 
         with gr.Row():
 
-            prompt_textbox1 = gr.Textbox(label="提示词 1",value="使用专业的新闻播音主持风格", lines=3)
-            prompt_textbox2 = gr.Textbox(label="提示词 2",value="使用幽默搞笑的相声风格", lines=3)
-            prompt_textbox3 = gr.Textbox(label="提示词 3",value="使用愤世嫉俗的批判主义风格", lines=3)
+            prompt_textbox1 = gr.Textbox(label="提示词 1",value="制作播音文稿，使用专业的新闻播音主持风格", lines=3)
+            prompt_textbox2 = gr.Textbox(label="提示词 2",value="制作播音文稿，使用幽默搞笑的相声风格", lines=3)
+            prompt_textbox3 = gr.Textbox(label="提示词 3",value="制作播音文稿，使用愤世嫉俗的批判主义风格", lines=3)
 
         with gr.Row():
 
@@ -579,11 +587,66 @@ with gr.Blocks(title="GT") as app:
             inputs=file_explorer,  # 获取选中的文件夹路径
             outputs=download_output  # 提供下载链接
         )
+    with gr.Tab("音频生成"):
+
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        warnings.filterwarnings("ignore", category=UserWarning)
+        sys.path.append(current_dir)
+        sys.path.append(os.path.join(current_dir, 'index-tts', "indextts"))
+        from indextts.infer import IndexTTS
+        from tools.i18n.i18n import I18nAuto
+        i18n = I18nAuto(language="zh_CN")
+        # MODE = 'local'
+        tts = IndexTTS(model_dir="index-tts/checkpoints", cfg_path="index-tts/checkpoints/config.yaml", device="cuda:0",
+                       use_cuda_kernel=True)
+
+        os.makedirs("audio/tasks", exist_ok=True)
+        os.makedirs("prompts", exist_ok=True)
+
+        with gr.Row():
+            os.makedirs("prompts",exist_ok=True)
+            prompt_audio = gr.Audio(label="请上传参考音频",key="prompt_audio",
+                                    sources=["upload","microphone"],type="filepath")
+            prompt_list = os.listdir("prompts")
+            default = ''
+            if prompt_list:
+                default = prompt_list[0]
+            with gr.Column():
+                input_text_single = gr.TextArea(label="请输入目标文本",key="input_text_single")
+                infer_mode = gr.Radio(choices=["普通推理", "批次推理"], label="选择推理模式（批次推理：更适合长句，性能翻倍）",value="普通推理")
+                gen_button = gr.Button("生成语音",key="gen_button",interactive=True)
+            output_audio = gr.Audio(label="生成结果", visible=True,key="output_audio")
+
+
+        def gen_single(prompt, text, infer_mode, progress=gr.Progress()):
+            output_path = None
+            if not output_path:
+                output_path = os.path.join("outputs", f"spk_{int(time.time())}.wav")
+            # set gradio progress
+            tts.gr_progress = progress
+            if infer_mode == "普通推理":
+                output = tts.infer(prompt, text, output_path)  # 普通推理
+            else:
+                output = tts.infer_fast(prompt, text, output_path)  # 批次推理
+            return gr.update(value=output, visible=True)
+
+
+        def update_prompt_audio():
+            update_button = gr.update(interactive=True)
+            return update_button
+        prompt_audio.upload(update_prompt_audio,
+                             inputs=[],
+                             outputs=[gen_button])
+
+        gen_button.click(gen_single,
+                         inputs=[prompt_audio, input_text_single, infer_mode],
+                         outputs=[output_audio])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=7862, help='Gradio 应用监听的端口号')
+    parser.add_argument('--port', type=int, default=7864, help='Gradio 应用监听的端口号')
     args = parser.parse_args()
+    app.queue(20)
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.getenv('TASK_DIR', ''), "tmp",

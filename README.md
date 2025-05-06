@@ -222,6 +222,13 @@ graph TD
 
 ## 部署
 
+```commandline
+git https://github.com/Fun-Fox/google-trends.git
+git submodule update --init --recursive
+pip install transformers
+huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir /app/index-tts/checkpoints
+```
+
 ### docker build 镜像
 
 ```

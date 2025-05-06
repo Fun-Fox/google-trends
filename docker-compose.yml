@@ -9,15 +9,19 @@ services:
       - D:/Service/docker-volumes/google-trends/logs:/app/logs
       - D:/Service/docker-volumes/google-trends/tasks:/assets/tasks
       - D:/Service/docker-volumes/google-trends/zip:/assets/zip
+      - D:/Service/docker-volumes/google-trends/index-tts/checkpoints:/app/index-tts/checkpoints
     environment:
       - ZIP_DIR=/assets/zip
       - TASK_DIR=/assets/tasks
-      - LOCAL_LLM_URL=http://<ip>:11434/api/generate
-      - CLOUD_API_KEY=
+      - CLOUD_API_KEY=sk-xprtiszdkkdaadtwsilquhcxyjaguhjfrtfncpzlgckhwaje
+      - CLOUD_MODEL_NAME=deepseek-ai/deepseek-vl2
+      - LOCAL_LLM_URL=http://192.168.31.85:11434/api/generate
       - LOCAL_MODEL_NAME=gemma3
       - LOG_LEVEL=INFO
       - PLATFORM=server
-      - PROXY_URL=
-      - SERPER_API_KEY=
+      - PROXY_URL=http://192.168.31.85:7890
+      - SERPER_API_KEY=9c26637b5196e0d89bf79858da5472b77bb6c42a
     restart: always
     command: python webui.py --port 7861
+
+
