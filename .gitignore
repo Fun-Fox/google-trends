@@ -19,4 +19,4 @@ __pycache__
 .env
 *.bak
 *.wav
-/audio
+/tts

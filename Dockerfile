@@ -2,7 +2,8 @@
 #FROM chinayin/playwright:1.41.2-chromium-python3.11
 #docker pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nvcr.io/nvidia/pytorch:24.11-py3
 #FROM nvidia/cuda:12.8.0-base-ubuntu22.04
-FROM nvcr.io/nvidia/pytorch:24.11-py3
+#FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nvcr.io/nvidia/pytorch:24.11-py3
+FROM pytorch/pytorch:2.7.0-cuda12.8-cudnn9-devel
 # 设置工作目录
 WORKDIR /app
 
@@ -17,8 +18,6 @@ ENV TZ=Asia/Shanghai
 
 # 设置环境变量
 #ENV HF_ENDPOINT=https://hf-mirror.com
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PIP_NO_CACHE_DIR=true
 
 # 复制项目文件
 COPY requirements.txt /app/
@@ -29,7 +28,7 @@ COPY index-tts /app/index-tts
 
 # 安装 Python 依赖
 RUN mkdir -p /root/.pip && \
-    echo "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple\ntrusted-host = files.pythonhosted.org\ntrusted-host = pypi.org\ntrusted-host = files.pythonhosted.org" > /root/.pip/pip.conf \
+    echo "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple\ntrusted-host = files.pythonhosted.org\ntrusted-host = pypi.org\ntrusted-host = files.pythonhosted.org" > /root/.pip/pip.conf
 
 RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt --no-deps && \

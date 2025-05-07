@@ -2,6 +2,7 @@ import argparse
 import csv
 import os
 import datetime
+import shutil
 import zipfile
 from asyncio import sleep
 import sys
@@ -377,76 +378,97 @@ with gr.Blocks(title="GT") as app:
         # 修改get_images 增加获取hotword_folders 文件下的csv文件读取csv中hotword列对应的hotword 对应的chinese、english叙事，显示在textbox中
         # image_gallery 显示图片文件名称
 
-    with gr.Tab("口播-人设测试"):
-        gr.Markdown("选择任务记录文件夹以查看热词对应的叙事")
+    with gr.Tab("口播文案生成"):
+        gr.Markdown("""
+        流程：选择采集热词任务 >> 查看已完成深度搜索的热词叙事内容 >> 设置口播人设提示词 >> 点击【生成】生成口播文案
+        """)
         with gr.Row():
             with gr.Column():
-                task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+                task_folders = gr.Dropdown(label="选择采集热词任务列表", multiselect=False,
+                                           choices=[''] + get_task_folders(),
                                            allow_custom_value=True)
-                refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
+                refresh_button = gr.Button("刷新任务列表")  # 新增刷新按钮
 
 
                 def update_drop_down():
-                    return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
+                    return gr.Dropdown(label="采集热词任务列表", multiselect=False, choices=[''] + get_task_folders(),
                                        allow_custom_value=True)
 
 
                 refresh_button.click(update_drop_down, outputs=task_folders)
 
             with gr.Column():
-                csv_files_dropdown = gr.Dropdown(label="选择 CSV 文件", choices=[], allow_custom_value=False)
-                refresh_csv_button = gr.Button("刷新 CSV 文件")
+                hot_word_csv_files_path = gr.Dropdown(label="选择热词清单(CSV文件)", choices=[],
+                                                      allow_custom_value=False)
+                refresh_csv_1_button = gr.Button("刷新热词清单(CSV文件)")
 
 
                 def get_csv_files(task_folder):
                     if not task_folder:
-                        return gr.Dropdown(label="选择 CSV 文件", choices=[], allow_custom_value=False)
+                        return gr.Dropdown(label="选择热词清单(CSV文件)", choices=[], allow_custom_value=False)
                     task_dir = os.path.join(task_root_dir, task_folder)
                     if not os.path.exists(task_dir):
-                        return gr.Dropdown(label="选择 CSV 文件", choices=[], allow_custom_value=False)
-                    csv_files = [''] + [f for f in os.listdir(task_dir) if f.endswith('.csv')]
-                    return gr.Dropdown(label="选择 CSV 文件", value='', choices=csv_files, allow_custom_value=False)
+                        return gr.Dropdown(label="选择热词清单(CSV文件)", choices=[], allow_custom_value=False)
+                    csv_files = [''] + [os.path.join(task_dir, f) for f in os.listdir(task_dir) if f.endswith('.csv')]
+                    return gr.Dropdown(label="选择热词清单(CSV文件)", value='', choices=csv_files,
+                                       allow_custom_value=False)
 
 
-                task_folders.change(fn=get_csv_files, inputs=task_folders, outputs=csv_files_dropdown)
-                refresh_csv_button.click(fn=get_csv_files, inputs=task_folders, outputs=csv_files_dropdown)
+                task_folders.change(fn=get_csv_files, inputs=task_folders, outputs=hot_word_csv_files_path)
+                refresh_csv_1_button.click(fn=get_csv_files, inputs=task_folders, outputs=hot_word_csv_files_path)
 
         with gr.Row():
-            csv_content_textbox = gr.DataFrame(value=None, label="CSV 文件内容", max_height=300, max_chars=200)
-            selected_row_dropdown = gr.Dropdown(label="选择叙事内容", choices=[], allow_custom_value=True)
+            content_textbox = gr.DataFrame(value=None, label="热词叙事内容显示(CSV文件)",
+                                           column_widths=[20, 50, 50], max_height=150, max_chars=100)
+            selected_row = gr.Dropdown(label="选择叙事内容", choices=[], allow_custom_value=True)
 
 
-            def read_csv_file(task_folder, csv_file):
-                if not task_folder or csv_file is None or csv_file == '':
-                    return gr.DataFrame(value=None, label="CSV 文件内容", max_height=300, max_chars=200), gr.Dropdown(
+            def read_csv_file(csv_file_path):
+                if csv_file_path is None or csv_file_path == '':
+                    return gr.DataFrame(value=None, label="热词叙事内容显示(CSV文件)", column_widths=[20, 50, 50],
+                                        max_height=150, max_chars=100), gr.Dropdown(
                         label="选择叙事内容", choices=[], allow_custom_value=True)
-                task_dir = os.path.join(task_root_dir, task_folder)
-                csv_path = os.path.join(task_dir, csv_file)
+                csv_path = csv_file_path
                 try:
                     df = pd.read_csv(csv_path)
                     # 检查 'hot_word' 列是否存在
                     if 'hot_word' not in df.columns:
                         print(f"CSV 文件中缺少 'hot_word' 列: {csv_path}")
-                        return "", []
+                        return gr.DataFrame(value=None, label="热词叙事内容显示(CSV文件)",
+                                            column_widths=[20, 50, 50], max_height=150, max_chars=100), gr.Dropdown(
+                            label="选择叙事内容", choices=[], allow_custom_value=True)
 
                     # 获取 'hot_word' 列的内容
-                    combined_choices = [f"{hw}/{hwc}" for hw, hwc in zip(df['hot_word'], df['chinese'])]
-                    return gr.DataFrame(df, label="CSV 文件内容", max_height=300, max_chars=200), gr.Dropdown(
-                        label="选择行", choices=combined_choices,
+                    combined_choices = []
+                    for hw, hwc in zip(df['hot_word'], df['chinese']):
+                        if pd.notna(hwc) and hwc != "":  # 判断中文叙事不为空
+                            combined_choices.append(f"{hw}/{hwc}")
+
+                    for hw, hwc in zip(df['hot_word'], df['english']):
+                        if pd.notna(hwc) and hwc != "":  # 判断英文叙事不为空
+                            combined_choices.append(f"{hw}/{hwc}")
+                    return gr.DataFrame(df[['hot_word', 'chinese', 'english']], label="热词叙事内容显示(CSV文件)",
+                                        column_widths=[20, 50, 50],
+                                        max_height=150, max_chars=100), gr.Dropdown(
+                        label="选择叙事文案", choices=combined_choices,
                         allow_custom_value=True)
                 except Exception as e:
                     print(f"读取 CSV 文件时发生错误: {e}")
                     return "", []
 
 
-            csv_files_dropdown.change(fn=read_csv_file, inputs=[task_folders, csv_files_dropdown],
-                                      outputs=[csv_content_textbox, selected_row_dropdown])
+            hot_word_csv_files_path.change(fn=read_csv_file, inputs=[hot_word_csv_files_path],
+                                           outputs=[content_textbox, selected_row])
 
         with gr.Row():
-            prompt_textbox1 = gr.Textbox(label="提示词 1", value="制作播音文稿，使用专业的新闻播音主持风格", lines=3)
+            prompt_textbox1 = gr.Textbox(label="请输入口播人设提示词 1",
+                                         value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 使用英文输出\n- 通过标点符号(-)在任意位置控制停顿""",
+                                         lines=3)
 
-            prompt_textbox2 = gr.Textbox(label="提示词 2", value="制作播音文稿，使用幽默搞笑的相声风格", lines=3)
-            prompt_textbox3 = gr.Textbox(label="提示词 3", value="制作播音文稿，使用愤世嫉俗的批判主义风格", lines=3)
+            prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 使用英文输出\n- 通过标点符号(-)在任意位置控制停顿
+            """, lines=3)
+            prompt_textbox3 = gr.Textbox(label="请输入口播人设提示词 3", value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 使用英文输出\n- 通过标点符号(-)在任意位置控制停顿
+            """, lines=3)
 
         with gr.Row():
 
@@ -456,37 +478,6 @@ with gr.Blocks(title="GT") as app:
                     return "无法获取 draft"
                 return write_in_style(draft, prompt)
 
-
-            with gr.Column():
-                prompt_button1 = gr.Button("生成结果")
-                result1=gr.Textbox(label="结果", value="", lines=10, interactive=False)
-                prompt_button1.click(
-                    fn=process_prompt,
-                    inputs=[selected_row_dropdown, prompt_textbox1],
-                    outputs=result1
-                )
-                save_button1 = gr.Button("保存结果")
-
-
-            with gr.Column():
-                prompt_button2 = gr.Button("生成结果")
-                result2=gr.Textbox(label="结果", value="", lines=10, interactive=False)
-                prompt_button2.click(
-                    fn=process_prompt,
-                    inputs=[selected_row_dropdown, prompt_textbox2],
-                    outputs=result2
-                )
-                save_button2 = gr.Button("保存结果")
-
-            with gr.Column():
-                prompt_button3 = gr.Button("生成结果")
-                result3=gr.Textbox(label="结果", value="", lines=10, interactive=False)
-                prompt_button3.click(
-                    fn=process_prompt,
-                    inputs=[selected_row_dropdown, prompt_textbox3],
-                    outputs=result3
-                )
-                save_button3 = gr.Button("保存结果")
 
             def save_result(result, csv_file_path, selected_row):
                 if not result or not csv_file_path or not selected_row:
@@ -531,23 +522,53 @@ with gr.Blocks(title="GT") as app:
                     return f"❌ 保存失败: {str(e)}"
 
 
-            save_button1.click(
-                fn=save_result,
-                inputs=[result1, csv_files_dropdown, selected_row_dropdown],
-                outputs=gr.Textbox(label="", value="", interactive=False)
-            )
+            with gr.Column():
+                prompt_button1 = gr.Button("生成结果")
+                result1 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
+                prompt_button1.click(
+                    fn=process_prompt,
+                    inputs=[selected_row, prompt_textbox1],
+                    outputs=result1
+                )
+                save_button1 = gr.Button("保存结果")
+                save_button1.click(
+                    fn=save_result,
+                    inputs=[result1, hot_word_csv_files_path, selected_row],
+                    outputs=gr.Textbox(label="", value="", interactive=False)
+                )
 
-            save_button1.click(
-                fn=save_result,
-                inputs=[result2, csv_files_dropdown, selected_row_dropdown],
-                outputs=gr.Textbox(label="", value="", interactive=False)
-            )
+            with gr.Column():
+                prompt_button2 = gr.Button("生成结果")
+                result2 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
+                prompt_button2.click(
+                    fn=process_prompt,
+                    inputs=[selected_row, prompt_textbox2],
+                    outputs=result2
+                )
+                save_button2 = gr.Button("保存结果")
 
-            save_button1.click(
-                fn=save_result,
-                inputs=[result3, csv_files_dropdown, selected_row_dropdown],
-                outputs=gr.Textbox(label="", value="", interactive=False)
-            )
+                save_button2.click(
+                    fn=save_result,
+                    inputs=[result2, hot_word_csv_files_path, selected_row],
+                    outputs=gr.Textbox(label="", value="", interactive=False)
+                )
+
+            with gr.Column():
+                prompt_button3 = gr.Button("生成结果")
+                result3 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
+                prompt_button3.click(
+                    fn=process_prompt,
+                    inputs=[selected_row, prompt_textbox3],
+                    outputs=result3
+                )
+                save_button3 = gr.Button("保存结果")
+
+                save_button3.click(
+                    fn=save_result,
+                    inputs=[result3, hot_word_csv_files_path, selected_row],
+                    outputs=gr.Textbox(label="", value="", interactive=False)
+                )
+
 
             def write_in_style(draft, prompt):
                 agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
@@ -559,58 +580,223 @@ with gr.Blocks(title="GT") as app:
                     print(f"处理热词时发生错误: {e}")
                     return f"处理热词时发生错误: {e}"
 
-    with gr.Tab("音频生成"):
-
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        warnings.filterwarnings("ignore", category=UserWarning)
-        sys.path.append(current_dir)
-        sys.path.append(os.path.join(current_dir, 'index-tts', "indextts"))
-        from indextts.infer import IndexTTS
-        from tools.i18n.i18n import I18nAuto
-
-        i18n = I18nAuto(language="zh_CN")
-        # MODE = 'local'
-        tts = IndexTTS(model_dir="index-tts/checkpoints", cfg_path="index-tts/checkpoints/config.yaml", device="cuda:0",
-                       use_cuda_kernel=True)
-
-        os.makedirs("audio", exist_ok=True)
+    with gr.Tab("口播音频生成"):
 
         with gr.Row():
-            prompt_audio = gr.Audio(label="请上传参考音频", key="prompt_audio",
-                                    sources=["upload", "microphone"], type="filepath")
             with gr.Column():
-                input_text_single = gr.TextArea(label="请输入目标文本", key="input_text_single")
-                infer_mode = gr.Radio(choices=["普通推理", "批次推理"],
-                                      label="选择推理模式（批次推理：更适合长句，性能翻倍）", value="普通推理")
-                gen_button = gr.Button("生成语音", key="gen_button", interactive=True)
-            output_audio = gr.Audio(label="生成结果", visible=True, key="output_audio")
+                task_folders = gr.Dropdown(label="选择采集热词任务列表", multiselect=False,
+                                           choices=[''] + get_task_folders(),
+                                           allow_custom_value=True)
+                refresh_button = gr.Button("刷新任务列表")  # 新增刷新按钮
 
 
-        def gen_single(prompt, text, infer_mode, progress=gr.Progress()):
-            output_path = None
-            if not output_path:
-                output_path = os.path.join("outputs", f"spk_{int(time.time())}.wav")
-            # set gradio progress
-            tts.gr_progress = progress
-            if infer_mode == "普通推理":
-                output = tts.infer(prompt, text, output_path)  # 普通推理
-            else:
-                output = tts.infer_fast(prompt, text, output_path)  # 批次推理
-            return gr.update(value=output, visible=True)
+                def update_drop_down():
+                    return gr.Dropdown(label="采集热词任务列表", multiselect=False, choices=[''] + get_task_folders(),
+                                       allow_custom_value=True)
 
 
-        def update_prompt_audio():
-            update_button = gr.update(interactive=True)
-            return update_button
+                refresh_button.click(update_drop_down, outputs=task_folders)
+
+            with gr.Column():
+                hot_word_csv_files_path = gr.Dropdown(label="选择热词清单(CSV文件)", choices=[],
+                                                      allow_custom_value=False)
+                refresh_csv_1_button = gr.Button("刷新热词清单(CSV文件)")
 
 
-        prompt_audio.upload(update_prompt_audio,
-                            inputs=[],
-                            outputs=[gen_button])
+                def get_csv_files(task_folder):
+                    if not task_folder:
+                        return gr.Dropdown(label="选择热词清单(CSV文件)", choices=[], allow_custom_value=False)
+                    task_dir = os.path.join(task_root_dir, task_folder)
+                    if not os.path.exists(task_dir):
+                        return gr.Dropdown(label="选择热词清单(CSV文件)", choices=[], allow_custom_value=False)
+                    csv_files = [''] + [os.path.join(task_dir, f) for f in os.listdir(task_dir) if f.endswith('.csv')]
+                    return gr.Dropdown(label="选择热词清单(CSV文件)", value='', choices=csv_files,
+                                       allow_custom_value=False)
 
-        gen_button.click(gen_single,
-                         inputs=[prompt_audio, input_text_single, infer_mode],
-                         outputs=[output_audio])
+
+                task_folders.change(fn=get_csv_files, inputs=task_folders, outputs=hot_word_csv_files_path)
+                refresh_csv_1_button.click(fn=get_csv_files, inputs=task_folders, outputs=hot_word_csv_files_path)
+
+        with gr.Row():
+            content_textbox = gr.DataFrame(value=None, label="热词口播文案显示(CSV文件)",
+                                           column_widths=[20, 50, 50, 50], max_height=150, max_chars=100)
+            selected_row_tmp = gr.Dropdown(label="选择口播文案", choices=[], allow_custom_value=True)
+
+
+            def read_result_csv_file(csv_file_path):
+                if csv_file_path is None or csv_file_path == '':
+                    return gr.DataFrame(value=None, label="热词口播文案显示(CSV文件)", column_widths=[20, 50],
+                                        max_height=150, max_chars=100), gr.Dropdown(
+                        label="选择口播文案", choices=[],
+                        allow_custom_value=True)
+                csv_path = csv_file_path
+                try:
+                    df = pd.read_csv(csv_path)
+                    # 检查 'hot_word' 列是否存在
+                    if 'hot_word' not in df.columns:
+                        print(f"CSV 文件中缺少 'hot_word' 列: {csv_path}")
+                        return gr.DataFrame(value=None, label="热词口播文案显示(CSV文件)", column_widths=[20, 150],
+                                            max_height=150, max_chars=200), gr.Dropdown(
+                            label="选择口播文案", choices=[],
+                            allow_custom_value=True)
+                    if 'result' not in df.columns:
+                        # 如果没有 result 列，提示用户“口播文案未生成”
+                        print(f"CSV 文件中缺少 'result' 列: {csv_path}")
+                        return gr.DataFrame(value=None, label="热词口播文案显示(CSV文件)", column_widths=[20, 150],
+                                            max_height=150, max_chars=200), gr.Dropdown(
+                            label="选择口播文案", choices=[],
+                            allow_custom_value=True)
+
+                    # 获取 'hot_word' 列的内容
+                    combined_choices = []
+                    for hw, hwc in zip(df['hot_word'], df['result']):
+                        # 使用 \n---\n 分割字符串为列表
+                        results_list = hwc.split('---')
+                        for idx, result_item in enumerate(results_list):
+                            combined_choices.append(f"{hw}/[{idx}]/{result_item.strip()}")
+                    return gr.DataFrame(df[['hot_word', 'result']], label="热词口播文案显示(CSV文件)",
+                                        column_widths=[20, 150],
+                                        max_height=150, max_chars=200), gr.Dropdown(
+                        label="选择口播文案", choices=combined_choices,
+                        allow_custom_value=True)
+                except Exception as e:
+                    print(f"读取 CSV 文件时发生错误: {e}")
+                    return "", []
+
+
+            warnings.filterwarnings("ignore", category=FutureWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)
+            sys.path.append(current_dir)
+            sys.path.append(os.path.join(current_dir, 'index-tts', "indextts"))
+            from indextts.infer import IndexTTS
+            from tools.i18n.i18n import I18nAuto
+
+            i18n = I18nAuto(language="zh_CN")
+            tts = IndexTTS(model_dir="index-tts/checkpoints", cfg_path="index-tts/checkpoints/config.yaml",
+                           device="cuda:0",
+                           use_cuda_kernel=True)
+
+            os.makedirs("tts/tmp", exist_ok=True)
+
+
+            def parse_speakers_and_texts(selected_row_tmp_value):
+
+                parts = selected_row_tmp_value.split("/")
+                if len(parts) < 3:
+                    return []
+
+                content = "/".join(parts[2:])  # 获取实际文本部分，防止热词或序号中包含 '/'
+
+                if '\n' not in content.strip().strip('\n'):
+                    speaker, text = content.strip().strip('\n').split(':', 1)
+
+                    return [{"speaker": speaker.strip(), "text": text.strip()}]
+
+                lines = content.strip().split('\n')
+
+                result = []
+                for line in lines:
+                    if '：' in line:
+                        speaker, text = line.split('：', 1)
+                        result.append({"speaker": speaker.strip(), "text": text.strip()})
+
+                return result
+
+
+            hot_word_csv_files_path.change(fn=read_result_csv_file, inputs=[hot_word_csv_files_path],
+                                           outputs=[content_textbox, selected_row_tmp])
+
+        synthesize_button = gr.Button("开始合成语音", variant="primary")
+
+
+        @gr.render(inputs=selected_row_tmp)
+        def render_audio_inputs(selected_row_tmp_value):
+            if not selected_row_tmp_value:
+                return
+
+            speaker_text_list = parse_speakers_and_texts(selected_row_tmp_value)
+            speaker_list = []
+            for item in speaker_text_list:
+                speaker = item["speaker"]
+                if speaker not in speaker_list:
+                    speaker_list.append(speaker)
+            speaker_audio_list = []
+            with gr.Row():
+
+                for speaker in speaker_list:
+                    speaker_audio = gr.Audio(label=f"请上传 {speaker} 的参考音频", sources=["upload", "microphone"],
+                                             type="filepath")
+                    speaker_audio_list.append(speaker_audio)
+
+            with gr.Column():
+                for idx, item in enumerate(speaker_text_list):
+                    speaker = item["speaker"]
+                    text = item["text"]
+                    gr.Textbox(label=f"{speaker} 的台词[{idx}]", value=text, interactive=False)
+
+            output_audio = gr.Audio(label="生成结果", visible=True)
+
+            from pydub import AudioSegment
+
+            def synthesize_multiple_voices(*speaker_au_list):
+                print(speaker_au_list)
+                output_files = []
+                progress = gr.Progress()
+                progress(0, desc="开始生成语音")
+                text_length = len(speaker_text_list)
+                task_path = os.path.join("tts", os.path.basename(task_folders.value))
+                for i, audio_item in enumerate(speaker_text_list, start=1):
+                    progress(i / text_length * 0.1, f"开始生成第{i}段文本的语音")
+                    speaker_name = audio_item["speaker"]
+                    print(speaker_name)
+                    speaker_audio_path = speaker_audio_list[speaker_list.index(speaker_name)].value['path']
+                    content = audio_item["text"]
+                    print(content)
+                    if not speaker_audio_path or not content:
+                        return None
+                    output_path = os.path.join("tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
+                    progress(i / text_length * 0.8, f"第{i}段文本的语音生成成功")
+                    tts.infer_fast(speaker_audio_path, content, output_path)
+                    output_files.append(output_path)
+                progress(0.9, "开始拼接语音")
+                combined_audio = AudioSegment.empty()
+                for file in output_files:
+                    segment = AudioSegment.from_wav(file)
+                    combined_audio += segment
+
+                hot_word = selected_row_tmp_value.split("/")[0]
+                hot_word_index = selected_row_tmp_value.split("/")[1]
+                task_path = os.path.join("tts", os.path.basename(task_folders.value))
+
+                os.makedirs(task_path, exist_ok=True)
+                # 保存最终拼接文件
+                final_output_path = os.path.join(task_path, f"{hot_word}_{hot_word_index}_{int(time.time())}.wav")
+                combined_audio.export(final_output_path, format="wav")
+
+                progress(1, f"语音拼接完成")
+                # 清空零时文件夹
+                tmp_folder = "tts/tmp"
+                if os.path.exists(tmp_folder):
+                    for file in os.listdir(tmp_folder):
+                        file_path = os.path.join(tmp_folder, file)
+                        try:
+                            if os.path.isfile(file_path):
+                                os.unlink(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
+                        except Exception as e:
+                            print(f"删除 {file_path} 失败: {e}")
+                else:
+                    os.makedirs(tmp_folder, exist_ok=True)
+
+                return final_output_path
+
+            synthesize_button.click(
+                synthesize_multiple_voices,
+                inputs=speaker_audio_list,  # 所有动态生成的 Audio + Textbox
+                outputs=output_audio
+            )
+
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
         with gr.Row():
