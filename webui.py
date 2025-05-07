@@ -676,7 +676,7 @@ with gr.Blocks(title="GT") as app:
                            device="cuda:0",
                            use_cuda_kernel=True)
 
-            os.makedirs("tts/tmp", exist_ok=True)
+            os.makedirs(os.path.join(task_root_dir,"tts/tmp"), exist_ok=True)
 
 
             def parse_speakers_and_texts(selected_row_tmp_value):
@@ -751,7 +751,7 @@ with gr.Blocks(title="GT") as app:
                     content = audio_item["text"]
                     if not speaker_audio_path or not content:
                         return None
-                    output_path = os.path.join("tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
+                    output_path = os.path.join(task_root_dir,"tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
                     progress(i / text_length * 0.8, f"第{i}段文本的语音生成成功")
                     tts.infer_fast(speaker_audio_path, content, output_path)
                     output_files.append(output_path)
@@ -763,7 +763,7 @@ with gr.Blocks(title="GT") as app:
 
                 hot_word = selected_row_tmp_value.split("/")[0]
                 hot_word_index = selected_row_tmp_value.split("/")[1]
-                task_path = os.path.join("tts", os.path.basename(task_folders.value))
+                task_path = os.path.join(task_root_dir,"tts", os.path.basename(task_folders.value))
 
                 os.makedirs(task_path, exist_ok=True)
                 # 保存最终拼接文件
@@ -772,7 +772,7 @@ with gr.Blocks(title="GT") as app:
 
                 progress(1, f"语音拼接完成")
                 # 清空零时文件夹
-                tmp_folder = "tts/tmp"
+                tmp_folder = os.path.join(task_root_dir,"tts/tmp")
                 if os.path.exists(tmp_folder):
                     for file in os.listdir(tmp_folder):
                         file_path = os.path.join(tmp_folder, file)
@@ -894,11 +894,11 @@ if __name__ == '__main__':
     app.queue(20)
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,
-                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.getenv('TASK_DIR', ''), "tmp",
+                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''),"tts", os.getenv('TASK_DIR', ''), "tmp",
                                   os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
-        app.launch(share=False, server_name="0.0.0.0",
-                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), os.getenv('TASK_DIR', ''), "tmp",
+        app.launch(share=True, server_name="0.0.0.0",
+                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''),"tts", os.getenv('TASK_DIR', ''), "tmp",
                                   os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")
