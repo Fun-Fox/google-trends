@@ -744,14 +744,11 @@ with gr.Blocks(title="GT") as app:
                 progress = gr.Progress()
                 progress(0, desc="开始生成语音")
                 text_length = len(speaker_text_list)
-                task_path = os.path.join("tts", os.path.basename(task_folders.value))
                 for i, audio_item in enumerate(speaker_text_list, start=1):
                     progress(i / text_length * 0.1, f"开始生成第{i}段文本的语音")
                     speaker_name = audio_item["speaker"]
-                    print(speaker_name)
                     speaker_audio_path = speaker_audio_list[speaker_list.index(speaker_name)].value['path']
                     content = audio_item["text"]
-                    print(content)
                     if not speaker_audio_path or not content:
                         return None
                     output_path = os.path.join("tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
