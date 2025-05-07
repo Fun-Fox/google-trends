@@ -156,7 +156,11 @@ class EvaluateImage(Node):
             if "```yaml" not in response:
                 logger.error("LLM 响应格式不正确，请检查你的响应格式。")
                 return {"action": "finish", "reason": "LLM 响应格式不正确"}
-            yaml_str = response.split("```yaml")[1].split("```")[0].strip()
+            try:
+                yaml_str = response.split("```yaml")[1].split("```")[0].strip()
+            except Exception as e:
+                logger.error(f"处理 LLM 响应时发生错误: {e}")
+                continue
             decision = yaml.safe_load(yaml_str)
 
             if isinstance(decision, dict) and "total_score" in decision:

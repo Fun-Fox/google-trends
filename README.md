@@ -227,6 +227,7 @@ git https://github.com/Fun-Fox/google-trends.git
 git submodule update --init --recursive
 pip install transformers
 huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir /app/index-tts/checkpoints
+docker pull  pytorch/pytorch:2.7.0-cuda12.8-cudnn9-devel
 ```
 
 ### docker build 镜像

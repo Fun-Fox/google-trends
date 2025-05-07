@@ -898,7 +898,7 @@ if __name__ == '__main__':
                                   os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
-        app.launch(share=True, server_name="0.0.0.0",
+        app.launch(share=False, server_name="0.0.0.0",
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''),"tts", os.getenv('TASK_DIR', ''), "tmp",
                                   os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")

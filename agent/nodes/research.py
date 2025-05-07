@@ -83,6 +83,7 @@ class DecideAction(Node):
             2. 多行字段使用缩进（4个空格）
             3. 单行字段不使用|字符
             4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
+            5. 非键值对不允许随意使用冒号: 
             """
         # 调用 LLM 进行决策
         response, success = call_llm(prompt, logger)
@@ -94,7 +95,10 @@ class DecideAction(Node):
         if "```yaml" not in response:
             logger.error("LLM 响应格式不正确，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
-        yaml_str = response.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+        try:
+            yaml_str = response.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+        except Exception as e:
+            return {"action": "finish", "reason": "LLM 响应格式不正确"}
         logger.info(f"LLM 响应: {yaml_str}")
         decision = yaml.safe_load(yaml_str)
 
@@ -197,7 +201,10 @@ class AnswerEditor(Node):
         if "```yaml" not in draft:
             logger.error("LLM 响应格式不正确，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
-        yaml_str = draft.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+        try:
+            yaml_str = draft.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+        except Exception as e:
+            return {"action": "finish", "reason": "LLM 响应格式不正确"}
         logger.info(f"LLM 响应: {yaml_str}")
         response = yaml.safe_load(yaml_str)
         if not success:
