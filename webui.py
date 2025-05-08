@@ -731,7 +731,7 @@ with gr.Blocks(title="GT") as app:
             with gr.Row():
 
                 for speaker in speaker_list:
-                    speaker_audio = gr.Audio(label=f"请上传 {speaker} 的参考音频", sources=["upload", "microphone"],
+                    speaker_audio = gr.Audio(label=f"请上传 {speaker} 的参考音频(要求60s-110s)", sources=["upload", "microphone"],
                                              type="filepath")
                     speaker_audio_list.append(speaker_audio)
 
@@ -833,7 +833,7 @@ with gr.Blocks(title="GT") as app:
 
                     final_output_path = os.path.join(
                         task_path,
-                        f"{hot_word}_{hot_word_index}_{speaker_name}_with_wait_{int(time.time())}.wav"
+                        f"{hot_word}_{hot_word_index}_{speaker_name}_{int(time.time())}.wav"
                     )
                     combined_audio.export(final_output_path, format="wav")
                     output_files_by_speaker[speaker_name] = final_output_path
