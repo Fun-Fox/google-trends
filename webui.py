@@ -734,12 +734,23 @@ with gr.Blocks(title="GT") as app:
                     text = item["text"]
                     gr.Textbox(label=f"{speaker} 的台词[{idx}]", value=text, interactive=False)
 
-            output_audio = gr.Audio(label="生成结果", visible=True)
 
             from pydub import AudioSegment
 
+            def ms_to_srt_time(ms):
+                """将毫秒转换为 SRT 时间格式"""
+                total_seconds = ms // 1000
+                milliseconds = ms % 1000
+                seconds = total_seconds % 60
+                minutes = (total_seconds // 60) % 60
+                hours = total_seconds // 3600
+                return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+
             def synthesize_multiple_voices(*speaker_au_list):
-                print(speaker_au_list)
+                output_files_by_speaker = {}
+                output_files_by_speaker_list =[]
+                # 存储语音路径 + speaker 名称 + 时长信息
+                output_files_with_duration = []
                 output_files = []
                 progress = gr.Progress()
                 progress(0, desc="开始生成语音")
@@ -747,30 +758,92 @@ with gr.Blocks(title="GT") as app:
                 for i, audio_item in enumerate(speaker_text_list, start=1):
                     progress(i / text_length * 0.1, f"开始生成第{i}段文本的语音")
                     speaker_name = audio_item["speaker"]
-                    speaker_audio_path = speaker_audio_list[speaker_list.index(speaker_name)].value['path']
+                    speaker_audio_path = speaker_au_list[speaker_list.index(speaker_name)]
                     content = audio_item["text"]
                     if not speaker_audio_path or not content:
                         return None
                     output_path = os.path.join(task_root_dir,"tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
-                    progress(i / text_length * 0.8, f"第{i}段文本的语音生成成功")
+                    progress(i / text_length * 0.6, f"第{i}段文本的语音生成成功")
                     tts.infer_fast(speaker_audio_path, content, output_path)
                     output_files.append(output_path)
-                progress(0.9, "开始拼接语音")
-                combined_audio = AudioSegment.empty()
-                for file in output_files:
-                    segment = AudioSegment.from_wav(file)
-                    combined_audio += segment
 
+                    #初始化时间轴变量
+                    current_time = 0
+
+
+                    # 获取语音时长（毫秒）
+                    segment = AudioSegment.from_wav(output_path)
+                    duration_ms = len(segment)  # 毫秒
+
+                    # 添加时间轴信息
+                    start_time = current_time
+                    end_time = current_time + duration_ms
+                    current_time = end_time  # 更新时间轴
+
+                    # 存储完整信息
+                    output_files_with_duration.append({
+                        "speaker": speaker_name,
+                        "path": output_path,
+                        "duration": duration_ms,
+                        "content":content,
+                        "start_time": start_time,
+                        "end_time": end_time
+                    })
+
+                # 第二步：对每个 speaker 的音频按 i 升序排序并拼接
+                progress(0.7, f"开始按角色进行独立音轨拼接（含等待静音）")
                 hot_word = selected_row_tmp_value.split("/")[0]
                 hot_word_index = selected_row_tmp_value.split("/")[1]
-                task_path = os.path.join(task_root_dir,"tts", os.path.basename(task_folders.value))
+                task_path = os.path.join(task_root_dir, "tts", os.path.basename(task_folders.value))
 
-                os.makedirs(task_path, exist_ok=True)
-                # 保存最终拼接文件
-                final_output_path = os.path.join(task_path, f"{hot_word}_{hot_word_index}_{int(time.time())}.wav")
-                combined_audio.export(final_output_path, format="wav")
+                for speaker_name in set(seg["speaker"] for seg in output_files_with_duration):
+                    # 筛选当前 speaker 的语音段
+                    speaker_segments = [seg for seg in output_files_with_duration if seg["speaker"] == speaker_name]
+                    speaker_segments.sort(key=lambda x: x["start_time"])  # 按时间排序
 
-                progress(1, f"语音拼接完成")
+                    combined_audio = AudioSegment.empty()
+                    last_end_time = 0  # 上一段结束时间
+
+                    for seg in speaker_segments:
+                        start_time = seg["start_time"]
+                        file_path = seg["path"]
+
+                        # 插入等待静音
+                        if start_time > last_end_time:
+                            silence_duration = start_time - last_end_time
+                            silence = AudioSegment.silent(duration=silence_duration)
+                            combined_audio += silence
+
+                        # 添加当前语音
+                        segment = AudioSegment.from_wav(file_path)
+                        combined_audio += segment
+
+                        # 更新最后时间
+                        last_end_time = seg["end_time"]
+
+                    # 保存最终拼接文件
+
+                    os.makedirs(task_path, exist_ok=True)
+
+                    final_output_path = os.path.join(
+                        task_path,
+                        f"{hot_word}_{hot_word_index}_{speaker_name}_with_wait_{int(time.time())}.wav"
+                    )
+                    combined_audio.export(final_output_path, format="wav")
+                    output_files_by_speaker[speaker_name] = final_output_path
+                progress(0.8, f"角色独立音轨拼接完成")
+
+                # 第三步 导出 SRT 字幕文件
+                srt_path = os.path.join(task_path, f"{hot_word}_{hot_word_index}.srt")
+                with open(srt_path, "w", encoding="utf-8") as f:
+                    for i, seg in enumerate(output_files_with_duration, start=1):
+                        start = ms_to_srt_time(seg["start_time"])
+                        end = ms_to_srt_time(seg["end_time"])
+                        content = seg["content"].strip()
+                        speaker = seg["speaker"]
+                        f.write(f"{i}\n{start} --> {end}\n[{speaker}] {content}\n\n")
+                progress(1, f"SRT 字幕已经生成")
+
                 # 清空零时文件夹
                 tmp_folder = os.path.join(task_root_dir,"tts/tmp")
                 if os.path.exists(tmp_folder):
@@ -785,14 +858,27 @@ with gr.Blocks(title="GT") as app:
                             print(f"删除 {file_path} 失败: {e}")
                 else:
                     os.makedirs(tmp_folder, exist_ok=True)
+                output_text = '\n'.join([f"{k}:{v}" for k, v in output_files_by_speaker.items()])
 
-                return final_output_path
+                return gr.Textbox(value=output_text)
+
+            output_audio = gr.Textbox()
+
 
             synthesize_button.click(
                 synthesize_multiple_voices,
-                inputs=speaker_audio_list,  # 所有动态生成的 Audio + Textbox
+                inputs=speaker_audio_list,
                 outputs=output_audio
             )
+
+
+    with gr.Tab("多角色数字人合成"):
+        pass
+    # 使用heyGem 数字人API 语音合成进行合成数字人
+    # https://github.com/GuijiAI/HeyGem.ai.git
+
+
+
 
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
