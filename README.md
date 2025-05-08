@@ -230,42 +230,4 @@ huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_g
 docker pull  pytorch/pytorch:2.7.0-cuda12.8-cudnn9-devel
 ```
 
-### docker build 镜像
-
-```
-   docker build -t google-trends .
-```
-
-### docker compose 本地启动
-
-#### 配置修改
-
-- PROXY_URL:修改代理服务器地址
-
-#### 修改volumes配置
-
-E:/Service/docker-volumes为你自己的本地目录
-
-```
-    volumes:
-      - D:/Service/docker-volumes/google-trends/logs:/app/logs
-      - D:/Service/docker-volumes/google-trends/tasks:/assets/tasks
-      - D:/Service/docker-volumes/google-trends/zip:/assets/zip
-    environment:
-      - ZIP_DIR=/assets/zip
-      - TASK_DIR=/assets/tasks
-      - LOCAL_LLM_URL=http://<本地ip>:11434/api/generate
-      - CLOUD_API_KEY=
-      - LOCAL_MODEL_NAME=gemma3
-      - LOG_LEVEL=INFO
-      - PLATFORM=server
-      - PROXY_URL=
-      - SERPER_API_KEY=
-```
-
-#### 启动命令
-
-```
-    docker compose up -d
-```
 
