@@ -651,16 +651,15 @@ with gr.Blocks(title="GT") as app:
                     combined_choices = []
                     for hw, hwc in zip(df['hot_word'], df['result']):
                         # 使用 \n---\n 分割字符串为列表
-                        if hwc is None or hwc == '':
+                        if hwc is None or str(hwc) == '' and str(hw) == 'nan':
                             continue
-                        if '---' in hwc:
+                        if '---' in str(hwc):
                             results_list = hwc.split('---')
-                            for idx, result_item in enumerate(results_list,start=1):
+                            for idx, result_item in enumerate(results_list, start=1):
                                 combined_choices.append(f"{hw}/[{idx}]/{result_item.strip()}")
-                        else:
-                            combined_choices.append(f"{hw}/[1]/{hwc.strip()}")
-                        print(f"文案列表{combined_choices}")
-                        # results_list = hwc.split('---')
+                        elif '---' not in str(hwc):
+                            combined_choices.append(f"{hw}/[1]/{str(hwc).strip()}")
+                    # results_list = hwc.split('---')
 
                     return gr.DataFrame(df[['hot_word', 'result']], label="热词口播文案显示(CSV文件)",
                                         column_widths=[20, 150],
@@ -684,7 +683,7 @@ with gr.Blocks(title="GT") as app:
                            device="cuda:0",
                            use_cuda_kernel=True)
 
-            os.makedirs(os.path.join(task_root_dir,"tts/tmp"), exist_ok=True)
+            os.makedirs(os.path.join(task_root_dir, "tts/tmp"), exist_ok=True)
 
 
             def parse_speakers_and_texts(selected_row_tmp_value):
@@ -742,7 +741,6 @@ with gr.Blocks(title="GT") as app:
                     text = item["text"]
                     gr.Textbox(label=f"{speaker} 的台词[{idx}]", value=text, interactive=False)
 
-
             from pydub import AudioSegment
 
             def ms_to_srt_time(ms):
@@ -756,7 +754,7 @@ with gr.Blocks(title="GT") as app:
 
             def synthesize_multiple_voices(*speaker_au_list):
                 output_files_by_speaker = {}
-                output_files_by_speaker_list =[]
+                output_files_by_speaker_list = []
                 # 存储语音路径 + speaker 名称 + 时长信息
                 output_files_with_duration = []
                 output_files = []
@@ -772,7 +770,7 @@ with gr.Blocks(title="GT") as app:
                     content = audio_item["text"]
                     if not speaker_audio_path or not content:
                         return None
-                    output_path = os.path.join(task_root_dir,"tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
+                    output_path = os.path.join(task_root_dir, "tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
                     progress(i / text_length * 0.6, f"第{i}段文本的语音生成成功")
                     tts.infer_fast(speaker_audio_path, content, output_path)
                     output_files.append(output_path)
@@ -792,7 +790,7 @@ with gr.Blocks(title="GT") as app:
                         "speaker": speaker_name,
                         "path": output_path,
                         "duration": duration_ms,
-                        "content":content,
+                        "content": content,
                         "start_time": start_time,
                         "end_time": end_time
                     })
@@ -853,7 +851,7 @@ with gr.Blocks(title="GT") as app:
                 progress(1, f"SRT 字幕已经生成")
 
                 # 清空零时文件夹
-                tmp_folder = os.path.join(task_root_dir,"tts/tmp")
+                tmp_folder = os.path.join(task_root_dir, "tts/tmp")
                 if os.path.exists(tmp_folder):
                     for file in os.listdir(tmp_folder):
                         file_path = os.path.join(tmp_folder, file)
@@ -872,21 +870,16 @@ with gr.Blocks(title="GT") as app:
 
             output_audio = gr.Textbox()
 
-
             synthesize_button.click(
                 synthesize_multiple_voices,
                 inputs=speaker_audio_list,
                 outputs=output_audio
             )
 
-
     with gr.Tab("多角色数字人合成"):
         pass
     # 使用heyGem 数字人API 语音合成进行合成数字人
     # https://github.com/GuijiAI/HeyGem.ai.git
-
-
-
 
     with gr.Tab("下载"):
         gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
@@ -988,11 +981,13 @@ if __name__ == '__main__':
     app.queue(20)
     if os.getenv('PLATFORM', '') == 'local':
         app.launch(share=False,
-                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''),"tts", os.getenv('TASK_DIR', ''), "tmp",
+                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), "tts", os.getenv('TASK_DIR', ''),
+                                  "tmp",
                                   os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
         app.launch(share=False, server_name="0.0.0.0",
-                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''),"tts", os.getenv('TASK_DIR', ''), "tmp",
+                   allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), "tts", os.getenv('TASK_DIR', ''),
+                                  "tmp",
                                   os.path.join(os.getcwd(), 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")
