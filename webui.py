@@ -755,6 +755,8 @@ with gr.Blocks(title="GT") as app:
                 progress = gr.Progress()
                 progress(0, desc="开始生成语音")
                 text_length = len(speaker_text_list)
+                # 初始化时间轴变量
+                current_time = 0
                 for i, audio_item in enumerate(speaker_text_list, start=1):
                     progress(i / text_length * 0.1, f"开始生成第{i}段文本的语音")
                     speaker_name = audio_item["speaker"]
@@ -766,10 +768,6 @@ with gr.Blocks(title="GT") as app:
                     progress(i / text_length * 0.6, f"第{i}段文本的语音生成成功")
                     tts.infer_fast(speaker_audio_path, content, output_path)
                     output_files.append(output_path)
-
-                    #初始化时间轴变量
-                    current_time = 0
-
 
                     # 获取语音时长（毫秒）
                     segment = AudioSegment.from_wav(output_path)
@@ -811,6 +809,7 @@ with gr.Blocks(title="GT") as app:
                         # 插入等待静音
                         if start_time > last_end_time:
                             silence_duration = start_time - last_end_time
+                            print(f"插入等待静音片段： {silence_duration}ms ")
                             silence = AudioSegment.silent(duration=silence_duration)
                             combined_audio += silence
 
@@ -858,7 +857,7 @@ with gr.Blocks(title="GT") as app:
                             print(f"删除 {file_path} 失败: {e}")
                 else:
                     os.makedirs(tmp_folder, exist_ok=True)
-                output_text = '\n'.join([f"{k}:{v}" for k, v in output_files_by_speaker.items()])
+                output_text = '\n\n'.join([f"{k}:{v}" for k, v in output_files_by_speaker.items()])
 
                 return gr.Textbox(value=output_text)
 
