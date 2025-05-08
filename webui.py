@@ -751,7 +751,7 @@ with gr.Blocks(title="GT") as app:
                 minutes = (total_seconds // 60) % 60
                 hours = total_seconds // 3600
                 return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
-
+            from  datetime import datetime
             def synthesize_multiple_voices(*speaker_au_list):
                 output_files_by_speaker = {}
                 output_files_by_speaker_list = []
@@ -763,6 +763,8 @@ with gr.Blocks(title="GT") as app:
                 text_length = len(speaker_text_list)
                 # 初始化时间轴变量
                 current_time = 0
+                formatted_time = datetime.fromtimestamp(time.time()).strftime("%Y年%m月%d日%H时%M分%S秒")
+
                 for i, audio_item in enumerate(speaker_text_list, start=1):
                     progress(i / text_length * 0.1, f"开始生成第{i}段文本的语音")
                     speaker_name = audio_item["speaker"]
@@ -770,7 +772,7 @@ with gr.Blocks(title="GT") as app:
                     content = audio_item["text"]
                     if not speaker_audio_path or not content:
                         return None
-                    output_path = os.path.join(task_root_dir, "tts/tmp", f"{i}_{speaker_name}_{int(time.time())}.wav")
+                    output_path = os.path.join(task_root_dir, "tts/tmp", f"{i}_{speaker_name}_{formatted_time}.wav")
                     progress(i / text_length * 0.6, f"第{i}段文本的语音生成成功")
                     tts.infer_fast(speaker_audio_path, content, output_path)
                     output_files.append(output_path)
@@ -833,14 +835,14 @@ with gr.Blocks(title="GT") as app:
 
                     final_output_path = os.path.join(
                         task_path,
-                        f"{hot_word}_{hot_word_index}_{speaker_name}_{int(time.time())}.wav"
+                        f"{hot_word}_{hot_word_index}_{speaker_name}_{formatted_time}.wav"
                     )
                     combined_audio.export(final_output_path, format="wav")
                     output_files_by_speaker[speaker_name] = final_output_path
                 progress(0.8, f"角色独立音轨拼接完成")
 
                 # 第三步 导出 SRT 字幕文件
-                srt_path = os.path.join(task_path, f"{hot_word}_{hot_word_index}.srt")
+                srt_path = os.path.join(task_path, f"{hot_word}_{hot_word_index}_{formatted_time}.srt")
                 with open(srt_path, "w", encoding="utf-8") as f:
                     for i, seg in enumerate(output_files_with_duration, start=1):
                         start = ms_to_srt_time(seg["start_time"])
