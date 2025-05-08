@@ -651,7 +651,11 @@ with gr.Blocks(title="GT") as app:
                     combined_choices = []
                     for hw, hwc in zip(df['hot_word'], df['result']):
                         # 使用 \n---\n 分割字符串为列表
-                        results_list = hwc.split('---')
+                        if '---' in hwc:
+                            results_list = hwc.split('---')
+                        else:
+                            results_list = [hwc]
+                        # results_list = hwc.split('---')
                         for idx, result_item in enumerate(results_list):
                             combined_choices.append(f"{hw}/[{idx}]/{result_item.strip()}")
                     return gr.DataFrame(df[['hot_word', 'result']], label="热词口播文案显示(CSV文件)",
@@ -774,6 +778,7 @@ with gr.Blocks(title="GT") as app:
                     duration_ms = len(segment)  # 毫秒
 
                     # 添加时间轴信息
+
                     start_time = current_time
                     end_time = current_time + duration_ms
                     current_time = end_time  # 更新时间轴
