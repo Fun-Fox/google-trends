@@ -653,10 +653,10 @@ with gr.Blocks(title="GT") as app:
                         # 使用 \n---\n 分割字符串为列表
                         if '---' in hwc:
                             results_list = hwc.split('---')
-                            for idx, result_item in enumerate(results_list):
+                            for idx, result_item in enumerate(results_list,start=1):
                                 combined_choices.append(f"{hw}/[{idx}]/{result_item.strip()}")
                         else:
-                            combined_choices.append(f"{hw}/[{idx}]/{hwc.strip()}")
+                            combined_choices.append(f"{hw}/[1]/{hwc.strip()}")
                         # results_list = hwc.split('---')
 
                     return gr.DataFrame(df[['hot_word', 'result']], label="热词口播文案显示(CSV文件)",
