@@ -46,6 +46,8 @@ class SupervisorNode(Node):
             logger.info(f"监督员批准了回答: {exec_res['reason']}")
             hot_word_path = shared["hot_word_path"]
             hot_word = shared["hot_word"]
+            relation_news = shared["relation_news"]
+            search_history = shared["search_history"]
             current_path = os.path.dirname(os.path.dirname(os.path.dirname(__name__)))
             hot_words_csv = os.path.join(current_path, os.path.dirname(hot_word_path), os.getenv("HOT_WORDS"))
             # 确保 hot_word_path 是有效的路径
@@ -82,16 +84,16 @@ class SupervisorNode(Node):
                             data.append(row_tmp)
                 else:
                     # 如果文件不存在，创建文件并写入表头
-                    data.append({'hot_word': hot_word, 'chinese': '', 'english': ''})
+                    data.append({'hot_word': hot_word, 'relation_news': relation_news,'search_history':search_history,'chinese': '', 'english': ''})
 
                 # 写入数据
                 with open(hot_words_csv, 'w', newline='', encoding='utf-8') as csvfile:
-                    fieldnames = ['hot_word', 'chinese', "english"]
+                    fieldnames = ['hot_word', 'relation_news','search_history','chinese', "english"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)
 
-                logger.info(f"数据已写入 CSV 文件: {hot_words_csv}")
+                logger.info(f"====热词新闻、搜索研究历史数据、草稿数据已写入 CSV 文件: {hot_words_csv}===")
             except Exception as e:
                 logger.error(f"写入 CSV 文件时发生异常: {e}")
             return "approved"
