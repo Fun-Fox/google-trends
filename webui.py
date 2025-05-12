@@ -16,6 +16,8 @@ from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
 
+from utils.file_encoding import detect_encoding
+
 load_dotenv()
 # 动态生成日志文件路径
 task_date = datetime.datetime.now().strftime("%Y年%m月%d日%H时%M分")
@@ -130,7 +132,7 @@ def get_hot_word_images_and_narratives(hot_word_folder):
     # 读取第一个 CSV 文件
     csv_path = csv_files[0]
     try:
-        df = pd.read_csv(csv_path)
+        df = pd.read_csv(csv_path,encoding=detect_encoding(csv_path))
         if 'hot_word' in df.columns and 'chinese' in df.columns and 'english' in df.columns:
             # 过滤出 hot_word 为 'hotword' 的行
             filtered_df = df[df['hot_word'] == hot_word]
@@ -141,7 +143,7 @@ def get_hot_word_images_and_narratives(hot_word_folder):
                 return gr.Gallery(label="热词-对应图片信息", value=images, interactive=False, columns=5), gr.Textbox(
                     label="热词叙事", value=narratives_str, lines=5, interactive=False)
     except Exception as e:
-        print(f"读取 CSV 文件时发生错误: {e}")
+        print(f"webui:读取 CSV 文件时发生错误: {e}")
 
     return gr.Gallery(label="图片", value=images, interactive=False), ""
 
@@ -434,7 +436,7 @@ with gr.Blocks(title="GT") as app:
                         label="选择叙事内容", choices=[], allow_custom_value=True)
                 csv_path = csv_file_path
                 try:
-                    df = pd.read_csv(csv_path)
+                    df = pd.read_csv(csv_path,encoding=detect_encoding(csv_path))
                     # 检查 'hot_word' 列是否存在
                     if 'hot_word' not in df.columns:
                         print(f"CSV 文件中缺少 'hot_word' 列: {csv_path}")
@@ -457,7 +459,7 @@ with gr.Blocks(title="GT") as app:
                         label="选择叙事文案", choices=combined_choices,
                         allow_custom_value=True)
                 except Exception as e:
-                    print(f"读取 CSV 文件时发生错误: {e}")
+                    print(f"口播文案：读取 CSV 文件时发生错误: {e}")
                     return "", []
 
 
@@ -635,7 +637,7 @@ with gr.Blocks(title="GT") as app:
                         allow_custom_value=True)
                 csv_path = csv_file_path
                 try:
-                    df = pd.read_csv(csv_path)
+                    df = pd.read_csv(csv_path,encoding=detect_encoding(csv_path))
                     # 检查 'hot_word' 列是否存在
                     if 'hot_word' not in df.columns:
                         print(f"CSV 文件中缺少 'hot_word' 列: {csv_path}")

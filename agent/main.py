@@ -1,19 +1,12 @@
 import os
 
 import pandas as pd
-import chardet
-
+from utils.file_encoding import detect_encoding
 # from fastapi import FastAPI, HTTPException
 from .flow import research_hot_word_flow, write_in_style_flow
 
 # app = FastAPI()
 __all__ = ["hot_word_research_assistant", "write_in_style_assistant"]
-def detect_encoding(file_path, sample_size=10000):
-    """自动检测文件编码"""
-    with open(file_path, "rb") as f:
-        raw_data = f.read(sample_size)
-    result = chardet.detect(raw_data)
-    return result["encoding"]
 
 
 def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
@@ -39,10 +32,8 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
     csv_file_path = os.path.join(task_dir, csv_files[0])
 
     try:
-        # 自动检测编码
-        encoding = detect_encoding(csv_file_path)
         # 读取 CSV 文件
-        df = pd.read_csv(csv_file_path,encoding=encoding)
+        df = pd.read_csv(csv_file_path,encoding=detect_encoding(csv_file_path))
 
         # 检查必要列是否存在
         if 'hot_word' not in df.columns or 'relation_news' not in df.columns:
