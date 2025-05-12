@@ -96,11 +96,11 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['hot_word', "relation_news", "chinese", "english"]
+            fieldnames = ['hot_word', "relation_news", "search_history" ,"chinese", "english"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
-            writer.writerow({'hot_word': text_content, "relation_news":'---'.join(title_new), "chinese": '', "english": ''})
+            writer.writerow({'hot_word': text_content, "relation_news":'---'.join(title_new),"search_history":'', "chinese": '', "english": ''})
             logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
             await asyncio.sleep(5)

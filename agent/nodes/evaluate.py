@@ -66,12 +66,16 @@ class SupervisorNode(Node):
                                 # 如果 hot_word 存在，追加 final_article
                                 row_tmp = {
                                     "hot_word": row['hot_word'],
+                                    'relation_news': row['relation_news'],
+                                    'search_history': shared['search_history'],
                                     'chinese': shared['chinese'],
-                                    'english': shared['english']
+                                    'english': shared['english'],
                                 }
                             else:
                                 row_tmp = {
                                     "hot_word": row['hot_word'],
+                                    'relation_news': row['relation_news'],
+                                    'search_history': row['search_history'],
                                     'chinese': row['chinese'],
                                     'english': row['english']
                                 }

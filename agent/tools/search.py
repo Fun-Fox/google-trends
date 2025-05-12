@@ -74,7 +74,7 @@ search_web_call_count = 0
 #             print(f"Search error: {str(e)}")
 #             return []
 
-def search_web(query, hot_word_path, logger,num_results=5):
+def search_web(query, hot_word_path, logger,num_results=3):
     try:
         # 使用serper.dev进行网络搜索
         # logger.info(f"## 查询: {query}")

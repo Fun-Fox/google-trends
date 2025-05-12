@@ -1,7 +1,9 @@
+from time import sleep
+
 from dotenv import load_dotenv
 from pocketflow import Node
 
-from agent.tools.parser import  analyze_site
+from agent.tools.parser import analyze_site
 from agent.tools.search import search_web
 from agent.tools.crawler import WebCrawler
 from agent.utils import call_llm
@@ -65,6 +67,7 @@ class DecideAction(Node):
             {relation_news}
             
             - 先前的研究: 
+            研究中包含的链接如已经大于10条,则给出回答.
             
             {context}
 
@@ -126,7 +129,8 @@ class DecideAction(Node):
             shared["search_query"] = exec_res["search_query"]
             logger.info(f"🔍 代理决定搜索: {exec_res['search_query']}")
         else:
-            shared["context"] = exec_res["answer"]  # 保存上下文，如果 LLM 在不搜索的情况下给出回答。
+            shared["search_history"] = shared["context"]  # 保存上下文，如果 LLM 在不搜索的情况下给出回答。
+            shared["context"] = exec_res["answer"]
             logger.info(f"💡 代理决定回答问题")
 
         # 返回操作以确定流程中的下一个节点
@@ -143,6 +147,7 @@ class SearchWeb(Node):
         # 调用搜索实用函数
         search_query, hot_word_path, logger = inputs
         logger.info(f"🌐 在网络上搜索: {search_query}")
+        sleep(5)
         _, results_dict = search_web(search_query, hot_word_path, logger)
         analyzed_results = []
         for i in results_dict:
@@ -154,9 +159,9 @@ class SearchWeb(Node):
             logger.info(f"🌐 标题:{title}")
             logger.info(f"🌐 摘要:{snippet}")
             logger.info(f"🌐 源链接:{link}")
-            content_list = WebCrawler(link,snippet = i['snippet']).crawl()
+            content_list = WebCrawler(link, snippet=i['snippet']).crawl()
 
-            analyzed_results.append(analyze_site(content_list,logger))
+            analyzed_results.append(analyze_site(content_list, logger))
 
         results = []
         for analyzed_result in analyzed_results:
@@ -188,11 +193,11 @@ class SearchWeb(Node):
 class AnswerEditor(Node):
     def prep(self, shared):
         """获取用于回答的问题和上下文。"""
-        return shared["hot_word"], shared.get("context", ""), shared["logger"]
+        return shared["hot_word"], shared.get("context"), shared["logger"]
 
     def exec(self, inputs):
         """调用 LLM 编制草稿。"""
-        hot_word, context, logger = inputs
+        hot_word, context,  logger = inputs
 
         logger.info(f"编制草稿...")
 
@@ -266,6 +271,7 @@ class AnswerEditor(Node):
 
         # 我们完成了 - 不需要继续流程
         # return "done"
+
 
 #
 # class AnalyzeResultsNode(Node):
