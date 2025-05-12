@@ -1,10 +1,15 @@
 from dotenv import load_dotenv
 from pocketflow import Node
-from agent.utils import call_llm, search_web
+
+from agent.tools.parser import analyze_results, analyze_content, analyze_site
+from agent.tools.search import search_web
+from agent.tools.crawler import WebCrawler
+from agent.utils import call_llm
 import yaml
 
 load_dotenv()
-__all__= ["DecideAction", "SearchWeb", "AnswerEditor"]
+__all__ = ["DecideAction", "SearchWeb", "AnswerEditor"]
+
 
 class DecideAction(Node):
     def prep(self, shared):
@@ -129,8 +134,31 @@ class SearchWeb(Node):
         # 调用搜索实用函数
         search_query, hot_word_path, logger = inputs
         logger.info(f"🌐 在网络上搜索: {search_query}")
-        results = search_web(search_query, hot_word_path, logger)
-        return results
+        _, results_dict = search_web(search_query, hot_word_path, logger)
+        analyzed_results = []
+        for i in results_dict:
+            title = i['title']
+            snippet = i['snippet']
+            link = i['link']
+
+            logger.info(f"🌐 对搜索的内容进项深度扫描")
+            logger.info(f"🌐 标题:{title}")
+            logger.info(f"🌐 摘要:{snippet}")
+            logger.info(f"🌐 源链接:{link}")
+            content_list = WebCrawler(link).crawl()
+            analyzed_results.append(analyze_site(content_list))
+        results = []
+        for analyzed_result in analyzed_results:
+            for content in analyzed_result:
+                result = (f"标题：{content['title']}\n" +
+                          f"摘要：{content['snippet']}\n" +
+                          f"汇总：{content['analysis']['summary']}\n" +
+                          f"话题：{content['analysis']['topics']}\n" +
+                          f"内容类型：{content['analysis']['content_type']}\n")
+
+                results.append(result)
+
+        return '\n\n'.join(results)
 
     def post(self, shared, prep_res, exec_res):
         """保存搜索结果并返回决策节点。"""
@@ -228,7 +256,42 @@ class AnswerEditor(Node):
         # return "done"
 
 
-if __name__=="__main__":
+class AnalyzeResultsNode(Node):
+    """使用LLM分析搜索结果"""
+
+    def prep(self, shared):
+        return shared.get("query"), shared.get("search_results", [])
+
+    def exec(self, inputs):
+        query, results = inputs
+        if not results:
+            return {
+                "summary": "没有搜索结果进项分析",
+                "key_points": [],
+                "follow_up_queries": []
+            }
+
+        return analyze_results(query, results)
+
+    def post(self, shared, prep_res, exec_res):
+        shared["analysis"] = exec_res
+
+        # Print analysis
+        print("\n搜索结果:")
+        print("\n汇总:", exec_res["summary"])
+
+        print("\n关键点:")
+        for point in exec_res["key_points"]:
+            print(f"- {point}")
+
+        print("\n推荐后续搜索内容:")
+        for query in exec_res["follow_up_queries"]:
+            print(f"- {query}")
+
+        return "default"
+
+
+if __name__ == "__main__":
     response = """
     ```yaml
 thinking: |

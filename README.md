@@ -246,9 +246,20 @@ graph TD
 ```commandline
 git https://github.com/Fun-Fox/google-trends.git
 git submodule update --init --recursive
-pip install transformers
-huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir /app/index-tts/checkpoints
-docker pull  pytorch/pytorch:2.7.0-cuda12.8-cudnn9-devel
+pip install -r requirements.txt
+playwright install chromium
+cd index-tts
+pip install -r requirements.txt
+set HF_ENDPOINT=https://hf-mirror.com
+huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir /checkpoints
 ```
+
+## 模型文件
+- bigvgan_generator.pth
+- bpe.model
+- gpt.pth
+## 安装ffmpeg
+- windows: conda  install ffmpeg
+- linux： apt-get install ffmpeg
 
 

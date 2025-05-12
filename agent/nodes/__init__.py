@@ -8,6 +8,6 @@ __all__ = [
     "WriteSupervisorNode"
 ]
 
-from .research import SearchWeb, AnswerEditor, DecideAction
+from .deepsearch import SearchWeb, AnswerEditor, DecideAction
 from .evaluate import SupervisorNode, EvaluateImage
 from .write import WriteInStyle, WriteSupervisorNode

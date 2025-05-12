@@ -1,9 +1,6 @@
 import os
 
-import imagehash
 from dotenv import load_dotenv
-from duckduckgo_search import DDGS
-
 load_dotenv()
 
 # 设置代理
@@ -12,6 +9,7 @@ proxies = {
     "https": f"{os.getenv('PROXY_URL')}",
 }
 
+__all__ =["call_llm"]
 
 def call_llm(prompt, logger=None, image_path='', ):
     if os.getenv("CLOUD_MODEL_NAME") != '' and image_path != "":
@@ -62,106 +60,6 @@ def call_local_llm(prompt, logger=None, image_path='', ):
     except Exception as e:
         logger.error(f"调用LLM时发生异常: {e}")
         return "错误: 调用LLM时发生异常。", False
-
-
-def search_web(query, hot_word_path, logger):
-    try:
-        # 使用serper.dev进行网络搜索
-        # logger.info(f"## 查询: {query}")
-
-        api_key = os.getenv("SERPER_API_KEY", None)
-        if api_key:
-            logger.info(f"使用SERPER Google付费搜索进行查询")
-
-            url = "https://google.serper.dev/search"
-            headers = {
-                "X-API-KEY": api_key,
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "q": query
-            }
-            response = requests.post(url, headers=headers, json=payload, proxies=proxies)
-            if response.status_code == 200:
-                results = response.json().get("organic", [])
-                results_str = "\n\n".join(
-                    [f"标题: {r['title']}\nURL: {r['link']}\n摘要: {r['snippet']}" for r in results])
-                search_image(query, hot_word_path, logger)
-            else:
-                logger.error(f"错误: 无法获取搜索结果。状态码: {response.status_code}")
-                return "错误: 无法获取搜索结果。"
-        else:
-            logger.info(f"使用DuckDuckgo免费搜索进行查询")
-
-            with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
-                news_results = ddgs.text(query, max_results=5)
-                search_image(query, hot_word_path, logger)
-                # Convert results to a string
-                results_str = "\n\n".join(
-                    [f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in news_results])
-
-        # logger.info(f"## 结果: {results_str}")
-        return results_str
-    except Exception as e:
-        logger.error(f"搜索网络时发生异常: {e}")
-        return "错误: 搜索网络时发生异常。"
-
-
-def search_image(query, hot_word_path, logger):
-    # logger.info(f"## 查询: {query}")
-
-    # 检查 hot_word_path 目录下的图片数量
-    existing_images = [f for f in os.listdir(hot_word_path) if f.endswith(('.jpg', '.png'))]
-    if len(existing_images) >= 8:
-        logger.info(f"目录 {hot_word_path} 中已有 {len(existing_images)} 张图片，不再下载新图片。")
-        return
-
-    # 计算现有图片的哈希值
-    existing_hashes = {}
-    for img_name in existing_images:
-        img_path = os.path.join(hot_word_path, img_name)
-        try:
-            with Image.open(img_path) as img:
-                img_hash = imagehash.average_hash(img)
-                existing_hashes[img_hash] = img_name
-        except Exception as e:
-            logger.error(f"计算图片 {img_path} 哈希值时发生异常: {e}")
-
-    with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
-        img_results = ddgs.images(query, max_results=5, size="Large")
-        # 下载并保存图片
-        for i, result in enumerate(img_results):
-            image_url = result["image"]
-            try:
-                response = requests.get(image_url)
-                if response.status_code == 200:
-                    # 打开图片并计算哈希值
-                    img = Image.open(BytesIO(response.content))
-                    new_hash = imagehash.average_hash(img)
-
-                    # 检查是否已有相似图片
-                    if any(new_hash - existing_hash < 10 for existing_hash in existing_hashes):
-                        logger.info(f"图片 {image_url} 与目录中的图片相似，不保存。")
-                        continue
-
-                    # 保存图片
-                    save_path = os.path.join(hot_word_path, f"{query}_{i + 1}.jpg")
-                    with open(save_path, "wb") as file:
-                        file.write(response.content)
-                    logger.info(f"图片已保存到: {save_path}")
-
-                    # 更新现有哈希值
-                    existing_hashes[new_hash] = os.path.basename(save_path)
-
-                    # 再次检查图片数量，避免超过10个
-                    existing_images = [f for f in os.listdir(hot_word_path) if f.endswith(('.jpg', '.png'))]
-                    if len(existing_images) >= 10:
-                        logger.info(f"目录 {hot_word_path} 中已有 {len(existing_images)} 张图片，不再下载新图片。")
-                        break
-                else:
-                    logger.info(f"无法下载图片 {image_url}，状态码: {response.status_code}")
-            except Exception as e:
-                logger.info(f"下载图片 {image_url} 时发生异常: {e}")
 
 
 import os
