@@ -123,7 +123,6 @@ content_type: <填写内容类型>
         yaml_str = response.split("```yaml")[1].split("```")[0].strip()
         import yaml
         analysis = yaml.safe_load(yaml_str)
-        print(f"analysis:{analysis}")
 
         # 验证必要字段是否存在
         assert "summary" in analysis

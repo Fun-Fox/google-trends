@@ -154,7 +154,7 @@ class SearchWeb(Node):
             logger.info(f"🌐 标题:{title}")
             logger.info(f"🌐 摘要:{snippet}")
             logger.info(f"🌐 源链接:{link}")
-            content_list = WebCrawler(link).crawl()
+            content_list = WebCrawler(link,snippet = i['snippet']).crawl()
 
             analyzed_results.append(analyze_site(content_list,logger))
 
