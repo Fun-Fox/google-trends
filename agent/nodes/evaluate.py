@@ -6,6 +6,8 @@ from pocketflow import Node
 from agent.utils import get_images, call_llm
 import yaml
 
+from utils.file_encoding import detect_encoding
+
 load_dotenv()
 
 __all__ = ["SupervisorNode", "EvaluateImage"]
@@ -59,7 +61,7 @@ class SupervisorNode(Node):
 
                 if file_exists:
                     # 读取现有数据
-                    with open(hot_words_csv, 'r', newline='', encoding='utf-8') as csvfile:
+                    with open(hot_words_csv, 'r', newline='', encoding=detect_encoding(hot_words_csv)) as csvfile:
                         reader = csv.DictReader(csvfile)
                         # 检查是否包含 'final_article' 列
                         # 检查是否包含 'final_article' 列
@@ -87,7 +89,7 @@ class SupervisorNode(Node):
                     data.append({'hot_word': hot_word, 'relation_news': relation_news,'search_history':search_history,'chinese': '', 'english': ''})
 
                 # 写入数据
-                with open(hot_words_csv, 'w', newline='', encoding='utf-8') as csvfile:
+                with open(hot_words_csv, 'w', newline='', encoding=detect_encoding(hot_words_csv)) as csvfile:
                     fieldnames = ['hot_word', 'relation_news','search_history','chinese', "english"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
