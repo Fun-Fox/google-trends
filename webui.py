@@ -252,14 +252,18 @@ with gr.Blocks(title="GT") as app:
         # 保存按钮的回调函数
         def save_cookie(cookie_str):
             try:
-                # 将新的 COOKIE_STRING 写入 .env 文件，并显式指定编码为 utf-8
+                # 读取现有 .env 文件内容
                 with open(".env", "r", encoding="utf-8") as f:
                     lines = f.readlines()
+
+                # 写入时过滤掉旧的 COOKIE_STRING 行，并在最后插入新的
                 with open(".env", "w", encoding="utf-8") as f:
                     for line in lines:
                         if not line.startswith("COOKIE_STRING="):
                             f.write(line)
-                    f.write(f"COOKIE_STRING=\"{cookie_str}\"\n")
+                    # 写入新的 COOKIE_STRING
+                    f.write(f'COOKIE_STRING="{cookie_str}"\n')
+
                 return "COOKIE_STRING 已成功保存"
             except Exception as e:
                 return f"保存 COOKIE_STRING 失败: {e}"

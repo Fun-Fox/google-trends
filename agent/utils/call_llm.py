@@ -53,6 +53,7 @@ def call_local_llm(prompt, logger=None, image_path='', ):
             }
         response = requests.post(url, json=payload)
         if response.status_code == 200:
+            logger.info(f"模型返回信息{response.json().get('response')}")
             return response.json().get("response", ""), True
         else:
             logger.error(f"错误: 无法从模型获取响应。状态码: {response.status_code}")

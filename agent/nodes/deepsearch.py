@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from pocketflow import Node
 
-from agent.tools.parser import analyze_results, analyze_content, analyze_site
+from agent.tools.parser import  analyze_site
 from agent.tools.search import search_web
 from agent.tools.crawler import WebCrawler
 from agent.utils import call_llm
@@ -25,13 +25,14 @@ class DecideAction(Node):
         context = shared.get("context", "无先前搜索")
         # 从共享存储中获取问题
         hot_word = shared["hot_word"]
+        relation_news = shared["relation_news"]
         logger = shared["logger"]
         # 返回问题和上下文，供 exec 步骤使用
-        return hot_word, context, logger
+        return hot_word, context, relation_news, logger
 
     def exec(self, inputs):
         """调用 LLM 决定是搜索还是回答。"""
-        hot_word, context, logger = inputs
+        hot_word, context, relation_news, logger = inputs
 
         logger.info(f"代理正在决定下一步操作...")
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
@@ -55,8 +56,16 @@ class DecideAction(Node):
             - 关联事件 : 与此热点相关的历史/并行事件
             
             ### 输入
-            时下流行热词: {hot_word}
-            先前的研究: 
+            - 时下流行热词: 
+            
+            {hot_word}
+            
+            - 相关新闻报导标题：
+            
+            {relation_news}
+            
+            - 先前的研究: 
+            
             {context}
 
             ## 操作空间
@@ -146,16 +155,19 @@ class SearchWeb(Node):
             logger.info(f"🌐 摘要:{snippet}")
             logger.info(f"🌐 源链接:{link}")
             content_list = WebCrawler(link).crawl()
-            analyzed_results.append(analyze_site(content_list))
+
+            analyzed_results.append(analyze_site(content_list,logger))
+
         results = []
         for analyzed_result in analyzed_results:
             for content in analyzed_result:
-                result = (f"标题：{content['title']}\n" +
-                          f"摘要：{content['snippet']}\n" +
+                print(content)
+                result = (f"标题：{content.get('title', '无')}\n" +
+                          f"摘要：{content.get('snippet', '无')}\n" +
                           f"汇总：{content['analysis']['summary']}\n" +
                           f"话题：{content['analysis']['topics']}\n" +
                           f"内容类型：{content['analysis']['content_type']}\n")
-
+                print(result)
                 results.append(result)
 
         return '\n\n'.join(results)
@@ -255,40 +267,40 @@ class AnswerEditor(Node):
         # 我们完成了 - 不需要继续流程
         # return "done"
 
-
-class AnalyzeResultsNode(Node):
-    """使用LLM分析搜索结果"""
-
-    def prep(self, shared):
-        return shared.get("query"), shared.get("search_results", [])
-
-    def exec(self, inputs):
-        query, results = inputs
-        if not results:
-            return {
-                "summary": "没有搜索结果进项分析",
-                "key_points": [],
-                "follow_up_queries": []
-            }
-
-        return analyze_results(query, results)
-
-    def post(self, shared, prep_res, exec_res):
-        shared["analysis"] = exec_res
-
-        # Print analysis
-        print("\n搜索结果:")
-        print("\n汇总:", exec_res["summary"])
-
-        print("\n关键点:")
-        for point in exec_res["key_points"]:
-            print(f"- {point}")
-
-        print("\n推荐后续搜索内容:")
-        for query in exec_res["follow_up_queries"]:
-            print(f"- {query}")
-
-        return "default"
+#
+# class AnalyzeResultsNode(Node):
+#     """使用LLM分析搜索结果"""
+#
+#     def prep(self, shared):
+#         return shared.get("query"), shared.get("search_results", [])
+#
+#     def exec(self, inputs):
+#         query, results = inputs
+#         if not results:
+#             return {
+#                 "summary": "没有搜索结果进项分析",
+#                 "key_points": [],
+#                 "follow_up_queries": []
+#             }
+#
+#         return analyze_results(query, results)
+#
+#     def post(self, shared, prep_res, exec_res):
+#         shared["analysis"] = exec_res
+#
+#         # Print analysis
+#         print("\n搜索结果:")
+#         print("\n汇总:", exec_res["summary"])
+#
+#         print("\n关键点:")
+#         for point in exec_res["key_points"]:
+#             print(f"- {point}")
+#
+#         print("\n推荐后续搜索内容:")
+#         for query in exec_res["follow_up_queries"]:
+#             print(f"- {query}")
+#
+#         return "default"
 
 
 if __name__ == "__main__":

@@ -1,4 +1,6 @@
 # 导入所需库
+import os
+
 import requests  # 用于发起 HTTP 请求获取网页内容
 from bs4 import BeautifulSoup  # 用于解析 HTML 页面结构
 from urllib.parse import urljoin, urlparse  # 用于处理 URL 拼接与解析
@@ -49,7 +51,21 @@ class WebCrawler:
             Dict: 包含页面信息的字典，如标题、正文、链接等；失败时返回 None
         """
         try:
-            response = requests.get(url)  # 发起 GET 请求
+            proxy_url = os.getenv("PROXY_URL")
+            proxies = {
+                "http": proxy_url,
+                "https": proxy_url
+            } if proxy_url else None
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Referer": "https://www.google.com/",
+                "Connection": "keep-alive"
+            }
+
+            response = requests.get(url, headers=headers,proxies=proxies,timeout=10)
             response.raise_for_status()  # 如果响应状态码不是 200，抛出异常
 
             soup = BeautifulSoup(response.text, "html.parser")  # 解析 HTML 内容
@@ -59,16 +75,16 @@ class WebCrawler:
                 "url": url,  # 当前页面 URL
                 "title": soup.title.string if soup.title else "",  # 页面标题
                 "text": soup.get_text(separator="\n", strip=True),  # 页面正文内容，用换行分隔并去除空白
-                "links": []  # 存储提取到的链接
+                # "links": []  # 存储提取到的链接
             }
 
             # 遍历页面中的所有 <a> 标签，提取 href 属性
-            for link in soup.find_all("a"):
-                href = link.get("href")
-                if href:
-                    absolute_url = urljoin(url, href)  # 将相对路径转为绝对 URL
-                    if self.is_valid_url(absolute_url):  # 只保留同域名下的链接
-                        content["links"].append(absolute_url)
+            # for link in soup.find_all("a"):
+            #     href = link.get("href")
+            #     if href:
+            #         absolute_url = urljoin(url, href)  # 将相对路径转为绝对 URL
+            #         if self.is_valid_url(absolute_url):  # 只保留同域名下的链接
+            #             content["links"].append(absolute_url)
 
             return content
 
@@ -98,9 +114,9 @@ class WebCrawler:
                 self.visited.add(url)  # 将当前 URL 加入已访问集合
                 results.append(content)  # 添加到结果列表
 
-                # 找出新的 URL 并加入待访问队列
-                new_urls = [url for url in content["links"]
-                            if url not in self.visited and url not in to_visit]
-                to_visit.extend(new_urls)
+                # # 找出新的 URL 并加入待访问队列
+                # new_urls = [url for url in content["links"]
+                #             if url not in self.visited and url not in to_visit]
+                # to_visit.extend(new_urls)
 
         return results

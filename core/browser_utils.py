@@ -20,7 +20,7 @@ def parse_cookie_string(cookie_str: str) -> list:
 async def init_browser(logging):
     p = await async_playwright().__aenter__()
     headless = os.getenv('HEADLESS', 'True').lower() == 'true'
-    browser = await p.chromium.launch(headless=headless)
+    browser = await p.chromium.launch(headless=headless,proxy={"server": os.getenv("PROXY_URL", "127.0.0.1:7890")})
     context = await browser.new_context()
 
     # 解析并设置cookies

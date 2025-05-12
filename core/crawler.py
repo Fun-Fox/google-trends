@@ -37,7 +37,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
     else:
         logging.error("页面已关闭，无法导航")
         return
-    await page.query_selector_all(' div.VfPpkd-dgl2Hf-ppHlrf-sM5MNb > div')
+    await page.query_selector_all('div.VfPpkd-dgl2Hf-ppHlrf-sM5MNb > div')
 
     # 第一次加载图片
     try:
@@ -50,14 +50,24 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         text_content = await div.text_content()
         logging.info(f'div {i + 1} 的文本内容: {text_content}')
 
-        if to_download_image:
-            try:
-                await div.click()
-                await asyncio.sleep(5)
-                logging.debug(f'点击了 div {i + 1}')
-            except Exception as e:
-                logging.error(f'点击 div {i + 1} 时出错: {e}')
+        try:
+            await div.click()
+            await asyncio.sleep(5)
+            logging.debug(f'点击了 div {i + 1}')
+        except Exception as e:
+            logging.error(f'点击 div {i + 1} 时出错: {e}')
 
+        new_titles_selector = 'div.EMz5P > div.k44Spe > div:nth-child(4) > div > div.jDtQ5 > div:nth-child(n) > a > div.MEJ15 > div.QbLC8c'
+        new_titles = await page.query_selector_all(new_titles_selector)
+        title_new = []
+        for index, title in enumerate(new_titles):
+            title_text = await title.text_content()
+            logging.info(f"关键词{text_content}：第{index + 1}个标题：{title_text}")
+            title_new.append(title_text)
+
+
+
+        if to_download_image:
             # 获取指定路径下的图片的 src 地址
             img_selector = 'div.EMz5P > div.k44Spe > div:nth-child(4) > div > div.jDtQ5 > div:nth-child(n) > a > div.yYagic > img'
             img_src_list = await page.query_selector_all(img_selector)
@@ -86,12 +96,12 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['hot_word', "chinese", "english"]
+            fieldnames = ['hot_word', "relation_news", "chinese", "english"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
-            writer.writerow({'hot_word': text_content, "chinese": '', "english": ''})
-        logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
+            writer.writerow({'hot_word': text_content, "relation_news":'---'.join(title_new), "chinese": '', "english": ''})
+            logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
-        await asyncio.sleep(5)
-    logging.info(f"地区编码：{origin}，分类编码：{category}，采集任务已完成，共采集了{len(hot_words)}个关键词")
+            await asyncio.sleep(5)
+        logging.info(f"地区编码：{origin}，分类编码：{category}，采集任务已完成，共采集了{len(hot_words)}个关键词")

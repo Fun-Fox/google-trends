@@ -1,10 +1,59 @@
 import os
+
+import pandas as pd
+
 # from fastapi import FastAPI, HTTPException
 from .flow import research_hot_word_flow, write_in_style_flow
 
 # app = FastAPI()
 __all__ = ["hot_word_research_assistant", "write_in_style_assistant"]
 
+
+def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
+    """
+    根据 hot_word_path 获取对应的 relation_news 内容
+    :param hot_word_path: 热词文件夹路径
+    :return: relation_news 字符串 或 None
+    """
+    # 获取热词名称（即文件夹名）
+    hot_word = os.path.basename(hot_word_path)
+
+    # 获取该热词所在的任务目录
+    task_dir = os.path.dirname(hot_word_path)
+
+    # 查找该任务目录下的所有 .csv 文件
+    csv_files = [f for f in os.listdir(task_dir) if f.endswith('.csv')]
+
+    if not csv_files:
+        print(f"未找到 CSV 文件在目录: {task_dir}")
+        return None
+
+    # 使用第一个 CSV 文件（假设只有一个有效 CSV）
+    csv_file_path = os.path.join(task_dir, csv_files[0])
+
+    try:
+        # 读取 CSV 文件
+        df = pd.read_csv(csv_file_path)
+
+        # 检查必要列是否存在
+        if 'hot_word' not in df.columns or 'relation_news' not in df.columns:
+            print(f"CSV 文件缺少必要列: {csv_file_path}")
+            return None
+
+        # 查找匹配的行
+        row = df[df['hot_word'] == hot_word]
+
+        if row.empty:
+            print(f"未找到 hot_word 为 '{hot_word}' 的记录")
+            return None
+
+        # 返回 relation_news 字段内容
+        relation_news = row.iloc[0]['relation_news']
+        return str(relation_news) if pd.notna(relation_news) else None
+
+    except Exception as e:
+        print(f"读取 CSV 文件时发生错误: {e}")
+        return None
 
 def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
     """处理"""
@@ -17,9 +66,11 @@ def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
         if not os.path.exists(hot_word_path):
             return "热词路径不存在"
 
+        relation_news ='\n'.join(get_relation_news_by_hot_word(hot_word_path).split('---'))
+
         # 处理问题
         hot_word = os.path.basename(hot_word_path)
-        shared = {"hot_word": hot_word, "hot_word_path": hot_word_path, "logger": logger}
+        shared = {"hot_word": hot_word,"relation_news": relation_news,"hot_word_path": hot_word_path, "logger": logger}
         logger.info(f"正在分析时下网络流行热词: {hot_word}")
         agent_flow.run(shared)
 
@@ -70,9 +121,9 @@ if __name__ == "__main__":
 
     # uvicorn.run(app, host="0.0.0.0", port=8000)
     #
-    result = hot_word_research_assistant("关税")
+    # result = hot_word_research_assistant("关税")
     print("\n===== 最终文章 =====\n")
-    print(result)
+    # print(result)
 
     print("\n========================\n")
     # print(article)
