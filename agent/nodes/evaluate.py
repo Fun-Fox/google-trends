@@ -1,5 +1,6 @@
 import csv
 import os
+from time import sleep
 
 from dotenv import load_dotenv
 from pocketflow import Node
@@ -159,6 +160,7 @@ class EvaluateImage(Node):
         if len(images_list) > 8:  # //只评估8张图片
             images_list = images_list[:8]
         for image_path in images_list:
+            sleep(5)
             response, success = call_llm(prompt, logger, image_path)
             if not success:
                 logger.error("LLM 调用失败，请检查你的配置。")
