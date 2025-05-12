@@ -43,8 +43,8 @@ class DecideAction(Node):
             ## 上下文
             
             你是一个可以搜索网络的热点新闻深度搜索助手
-            现在给你一个时下网络流行热词，你需要参考查询维度进行深度搜索，深度思考并理解该热词对应的叙事内容。
-    
+            现在给你一个时下网络流行热词，你需要参考查询维度、先前的研究进行深度搜索，深度思考并理解该热词对应的叙事内容。
+            如先前的研究条数大于10条，优先结束搜索，进行回答操作。
             ### 查询维度
             
             - 发生时间：最近48小时内
@@ -67,8 +67,7 @@ class DecideAction(Node):
             
             {relation_news}
             
-            - 先前的研究: 
-            先前已进行了{links_count}条研究,如已经接近10条,请结束搜索,进行回答操作.
+            - 先前的研究,总计为{links_count}条,具体如下：
             
             {context}
 
@@ -173,14 +172,13 @@ class SearchWeb(Node):
         results = []
         for analyzed_result in analyzed_results:
             for content in analyzed_result:
-                print(content)
 
                 result = (f"标题：{content.get('title', '无')}\n" +
-                          f"摘要：{content.get('snippet', '无')}\n" +
+                          # f"摘要：{content.get('snippet', '无')}\n" +
                           f"汇总：{content['analysis']['summary']}\n" +
                           f"话题：{content['analysis']['topics']}\n" +
-                          f"内容类型：{content['analysis']['content_type']}\n")
-                print(result)
+                          f"内容类型：{content['analysis']['content_type']}\n"
+                          )
                 results.append(result)
 
         logger.info(f"✅ 当前已采集链接总数: {total_links_count}")
