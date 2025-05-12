@@ -188,24 +188,6 @@ def _build_evaluation_payload(prompt, model_name, image_base64='', ) -> dict:
     }
 
 
-def get_images(hotword_folder):
-    """
-    获取图片列表
-    :param task_folders:
-    :param hotword_folder: 热词文件夹名称
-    :return: 图片列表
-    """
-    # 确保 hotword_folder 是字符串类型
-    if isinstance(hotword_folder, list) and hotword_folder:
-        hotword_folder = hotword_folder[0]
-    elif not isinstance(hotword_folder, str):
-        return []
-
-    image_dir = hotword_folder
-    if not os.path.exists(hotword_folder):
-        return []
-    images = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(('.jpg', '.png'))]
-    return images
 
 
 if __name__ == "__main__":

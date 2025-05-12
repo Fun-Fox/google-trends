@@ -45,9 +45,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
             'tbody:nth-child(3) > tr:nth-child(n) > td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc')
     except Exception as e:
         logging.error(f'未找到 div 元素: {e}')
-    if not hot_words:
-        logging.error("未采样到找到热点词")
-        return None
+
     for i, div in enumerate(hot_words):
         text_content = await div.text_content()
         logging.info(f'div {i + 1} 的文本内容: {text_content}')
