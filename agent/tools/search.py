@@ -1,4 +1,5 @@
 from io import BytesIO
+from time import sleep
 
 from duckduckgo_search import DDGS
 import imagehash
@@ -83,6 +84,7 @@ def search_web(query, hot_word_path, logger,num_results=3):
         if api_key:
             global search_web_call_count
             search_web_call_count += 1
+            sleep(5)
             logger.info(f"[SearchWeb] 第 {search_web_call_count} 次调用，查询词: {query}")
 
             url = "https://google.serper.dev/search"
