@@ -17,6 +17,8 @@ proxies = {
     "http": f"{os.getenv('PROXY_URL')}",
     "https": f"{os.getenv('PROXY_URL')}",
 }
+
+search_web_call_count = 0
 #
 # class SearchTool:
 #     """Tool for performing web searches using SerpAPI"""
@@ -79,7 +81,9 @@ def search_web(query, hot_word_path, logger,num_results=5):
 
         api_key = os.getenv("SERPAPI_API_KEY", None)
         if api_key:
-            logger.info(f"使用SERPER Google付费搜索进行查询")
+            global search_web_call_count
+            search_web_call_count += 1
+            logger.info(f"[SearchWeb] 第 {search_web_call_count} 次调用，查询词: {query}")
 
             url = "https://google.serper.dev/search"
             headers = {

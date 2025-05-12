@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from pocketflow import Node
-from agent.utils import get_images,  call_llm
+from agent.utils import get_images, call_llm
 import yaml
 
 load_dotenv()
@@ -151,7 +151,10 @@ class EvaluateImage(Node):
         if len(images_list) > 8:  # //只评估8张图片
             images_list = images_list[:8]
         for image_path in images_list:
-            response = call_llm(prompt, logger,image_path)
+            response, success = call_llm(prompt, logger, image_path)
+            if not success:
+                logger.error("LLM 调用失败，请检查你的配置。")
+                return {"action": "finish", "reason": "LLM 调用失败"}
             logger.info(f"LLM 响应: {response}")
             if "```yaml" not in response:
                 logger.error("LLM 响应格式不正确，请检查你的响应格式。")
