@@ -83,7 +83,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
                     await image_util.download_and_resize_image(
                         logging,
                         img_url=src,
-                        task_dir=os.path.join(task_dir, text_content),  # 保存在任务文件夹中
+                        task_dir=os.path.join(task_dir, text_content,"new_images"),  # 保存在任务文件夹中
                         image_name=f"{text_content}_{index}.jpg"
                     )
                 else:
