@@ -1,6 +1,8 @@
 import gradio as gr
 from tabs import cookie_settings, trend_crawler, deep_search, voice_script_generation, voice_synthesis, digital_human, downloads
 
+from moviepy.editor import *
+
 with gr.Blocks(title="Google Trends 助手") as app:
     with gr.Tab("Cookie 设置"):
         cookie_settings.build_tab()

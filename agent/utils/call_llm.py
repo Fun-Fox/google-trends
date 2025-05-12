@@ -1,5 +1,5 @@
 import os
-
+from asyncio import sleep
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -15,6 +15,7 @@ def call_llm(prompt, logger=None, image_path='', ):
     if os.getenv("CLOUD_MODEL_NAME") != '' and image_path != "":
         # 只有视觉的模型调用云端模型
         logger.info(f"使用云端模型{os.getenv('CLOUD_MODEL_NAME')}")
+        sleep(5)
         response,success = call_cloud_model(prompt, logger, image_path)
         return response,success
     if 'gemma3' in os.getenv("LOCAL_MODEL_NAME") and image_path != "":
