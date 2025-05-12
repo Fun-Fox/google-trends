@@ -27,14 +27,15 @@ class DecideAction(Node):
         context = shared.get("context", "无先前搜索")
         # 从共享存储中获取问题
         hot_word = shared["hot_word"]
+        links_count = shared.get("links_count",0 )
         relation_news = shared["relation_news"]
         logger = shared["logger"]
         # 返回问题和上下文，供 exec 步骤使用
-        return hot_word, context, relation_news, logger
+        return hot_word, context, relation_news, links_count, logger
 
     def exec(self, inputs):
         """调用 LLM 决定是搜索还是回答。"""
-        hot_word, context, relation_news, logger = inputs
+        hot_word, context, relation_news, links_count, logger = inputs
 
         logger.info(f"代理正在决定下一步操作...")
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
@@ -67,7 +68,7 @@ class DecideAction(Node):
             {relation_news}
             
             - 先前的研究: 
-            研究中包含的链接如已经大于10条,则给出回答.
+            先前已进行了{links_count}条研究,如已经接近10条,请结束搜索,进行回答操作.
             
             {context}
 
@@ -137,6 +138,9 @@ class DecideAction(Node):
         return exec_res["action"]
 
 
+total_links_count = 0
+
+
 class SearchWeb(Node):
     def prep(self, shared):
         """从共享存储中获取搜索查询。"""
@@ -145,6 +149,7 @@ class SearchWeb(Node):
     def exec(self, inputs):
         """搜索网络上的给定查询。"""
         # 调用搜索实用函数
+        global total_links_count  # 声明使用全局变量
         search_query, hot_word_path, logger = inputs
         logger.info(f"🌐 在网络上搜索: {search_query}")
         sleep(5)
@@ -158,6 +163,8 @@ class SearchWeb(Node):
             logger.info(f"🌐 对搜索的内容进项深度扫描")
             logger.info(f"🌐 标题:{title}")
             logger.info(f"🌐 摘要:{snippet}")
+            # 统计链接数量
+            total_links_count += 1
             logger.info(f"🌐 源链接:{link}")
             content_list = WebCrawler(link, snippet=i['snippet']).crawl()
 
@@ -167,6 +174,7 @@ class SearchWeb(Node):
         for analyzed_result in analyzed_results:
             for content in analyzed_result:
                 print(content)
+
                 result = (f"标题：{content.get('title', '无')}\n" +
                           f"摘要：{content.get('snippet', '无')}\n" +
                           f"汇总：{content['analysis']['summary']}\n" +
@@ -175,15 +183,19 @@ class SearchWeb(Node):
                 print(result)
                 results.append(result)
 
-        return '\n\n'.join(results)
+        logger.info(f"✅ 当前已采集链接总数: {total_links_count}")
+
+        return '\n\n'.join(results), total_links_count
 
     def post(self, shared, prep_res, exec_res):
         """保存搜索结果并返回决策节点。"""
         # 将搜索结果添加到共享存储中的上下文中
+        results, links_count = exec_res
         previous = shared.get("context", "")
         # 搜索记忆功能
-        shared["context"] = previous + "\n\nSEARCH: " + shared["search_query"] + "\nRESULTS: " + exec_res
+        shared["context"] = previous + "\n\nSEARCH: " + shared["search_query"] + "\nRESULTS: " + results
         logger = shared["logger"]
+        shared["links_count"] = links_count
         logger.info(f"📚 找到信息，分析结果...")
 
         # 搜索后始终返回决策节点
@@ -197,7 +209,7 @@ class AnswerEditor(Node):
 
     def exec(self, inputs):
         """调用 LLM 编制草稿。"""
-        hot_word, context,  logger = inputs
+        hot_word, context, logger = inputs
 
         logger.info(f"编制草稿...")
 
