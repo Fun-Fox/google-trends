@@ -40,12 +40,8 @@ class DecideAction(Node):
         logger.info(f"代理正在决定下一步操作...")
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
         prompt = f"""
-            ## 上下文
-            
             你是一个可以搜索网络的热点新闻深度搜索助手
             现在给你一个时下网络流行热词，你需要参考查询维度、先前的研究进行深度搜索，深度思考并理解该热词对应的叙事内容。
-            
-            注意：如先前的研究条数大于10条，则结合已有的研究进行回答操作，不再进行深度搜索，
             
             ### 查询维度
             
@@ -58,9 +54,10 @@ class DecideAction(Node):
             - 公众反应 : 主流情绪倾向、典型评论
             - 关联事件 : 与此热点相关的历史/并行事件
             
+            并非所有查询条件都需满足，可使用优先级进行排序
             查询优先级：事件基本信息>事件发展脉络>社会影响范围>争议焦点>官方回应>公众反应>关联事件
             
-            ### 输入
+            ## 上下文
             - 时下流行热词: 
             
             {hot_word}
@@ -86,8 +83,11 @@ class DecideAction(Node):
 
             ### 下一步操作
             根据上下文、查询维度和可用操作决定下一步操作。
+            重要：请确保：
+            如先前的研究，总计大于10条，则结合已有的研究进行回答操作，不再进行深度搜索，
+            
             请以以下格式返回你的响应：
-
+            
             ```yaml
             thinking: |
                 <你的逐步推理过程>
@@ -116,10 +116,10 @@ class DecideAction(Node):
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
         try:
             yaml_str = response.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+            logger.info(f"LLM 响应: {yaml_str}")
+            decision = yaml.safe_load(yaml_str)
         except Exception as e:
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
-        logger.info(f"LLM 响应: {yaml_str}")
-        decision = yaml.safe_load(yaml_str)
 
         return decision
 
@@ -156,6 +156,9 @@ class SearchWeb(Node):
         sleep(5)
         _, results_dict = search_web(search_query, hot_word_path, logger)
         analyzed_results = []
+        if results_dict is None:
+            logger.info(f"🌐 深度搜索失败。")
+            return {"action": "finish", "reason": "搜索失败"}
         for i in results_dict:
             title = i['title']
             snippet = i['snippet']
@@ -175,11 +178,11 @@ class SearchWeb(Node):
         for analyzed_result in analyzed_results:
             for content in analyzed_result:
 
-                result = (f"原文标题：{content.get('title', '无')}\n" +
-                          f"原文链接：{content.get('url', '无')}\n" +
-                          f"内容汇总：{content['analysis']['summary']}\n" +
-                          f"相关话题：{content['analysis']['topics']}\n" +
-                          f"内容类型：{content['analysis']['content_type']}\n"
+                result = (f"标题：{content.get('title', '无')}\n" +
+                          f"链接：{content.get('url', '无')}\n" +
+                          f"汇总：{content['analysis']['summary']}\n" +
+                          f"话题：{content['analysis']['topics']}\n" +
+                          f"类型：{content['analysis']['content_type']}\n"
                           )
                 results.append(result)
 

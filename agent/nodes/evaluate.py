@@ -140,7 +140,8 @@ class EvaluateImage(Node):
         - 情感共鸣：图片是否能引发观众的情感共鸣。
 
         ## 下一步操作
-        请以下格式返回你的响应,无需其余信息：
+         重要：请确保：
+         严格以下格式返回你的响应,无需其余信息：
 
         ```yaml
         total_score: <总分>
@@ -173,10 +174,11 @@ class EvaluateImage(Node):
                 return {"action": "finish", "reason": "LLM 响应格式不正确"}
             try:
                 yaml_str = response.split("```yaml")[1].split("```")[0].strip()
+                decision = yaml.safe_load(yaml_str)
             except Exception as e:
                 logger.error(f"处理 LLM 响应时发生错误: {e}")
                 continue
-            decision = yaml.safe_load(yaml_str)
+
 
             if isinstance(decision, dict) and "total_score" in decision:
                 # 提取总分并重命名图片
