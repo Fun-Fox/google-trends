@@ -28,7 +28,7 @@ task_root_dir = os.getenv("TASK_DIR", "tasks")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-async def start_crawler(url, to_download_image, origin="", category="",nums=25):
+async def start_crawler(url, to_download_image, origin="", category="", nums=25):
     """
     启动采集任务
     :param to_download_image:
@@ -50,7 +50,7 @@ async def start_crawler(url, to_download_image, origin="", category="",nums=25):
 
     await crawl_google_trends_page(page, logger, origin=origin_code, category=category_code, url=url,
                                    task_dir=task_dir_file_name,
-                                   to_download_image=to_download_image,nums=nums)
+                                   to_download_image=to_download_image, nums=nums)
 
     # 关闭页面和上下文
     await page.close()
@@ -61,14 +61,14 @@ async def start_crawler(url, to_download_image, origin="", category="",nums=25):
 
 
 # 新增 Gradio Web 页面
-async def run_crawler(to_download_image, origin, category,nums=25):
+async def run_crawler(to_download_image, origin, category, nums=25):
     """
     运行采集任务
     :return: 爬取任务完成的消息
     """
     url = "https://trends.google.com/trending"
 
-    await start_crawler(url, to_download_image, origin=origin, category=category,nums=nums)
+    await start_crawler(url, to_download_image, origin=origin, category=category, nums=nums)
     return "热点采集任务已完成"
 
 
@@ -132,7 +132,7 @@ def get_hot_word_images_and_narratives(hot_word_folder):
     # 读取第一个 CSV 文件
     csv_path = csv_files[0]
     try:
-        df = pd.read_csv(csv_path,encoding=detect_encoding(csv_path))
+        df = pd.read_csv(csv_path, encoding=detect_encoding(csv_path))
         if 'hot_word' in df.columns and 'chinese' in df.columns and 'english' in df.columns:
             # 过滤出 hot_word 为 'hotword' 的行
             filtered_df = df[df['hot_word'] == hot_word]
@@ -228,7 +228,7 @@ def update_hot_word_folders(task_folder):
 
 # Gradio 接口
 with gr.Blocks(title="GT") as app:
-    gr.Markdown("# Google Trends 时下热词 采集、搜索、叙事风格撰写")
+    gr.Markdown("# Google Trends 时下热词 采集、搜索、口播文案生成、口播语音生成、数字人生成、定时批量任务")
 
     # 使用 Tab 方式组织界面
     with gr.Tab("Cookie 设置"):
@@ -302,7 +302,7 @@ with gr.Blocks(title="GT") as app:
                                        value="所有分类")
                 nums = gr.Slider(minimum=1, maximum=25, step=1, label="热词采集数量（最大25）", value=25)
                 button = gr.Button("开始采集")
-                button.click(fn=run_crawler, inputs=[to_download_image, origin, category,nums],
+                button.click(fn=run_crawler, inputs=[to_download_image, origin, category, nums],
                              outputs=gr.Textbox(label="采集结果"))
             task_log_textbox = gr.Textbox(label="采集日志", value=update_task_log_textbox, lines=10, max_lines=15,
                                           every=5)
@@ -436,7 +436,7 @@ with gr.Blocks(title="GT") as app:
                         label="选择叙事内容", choices=[], allow_custom_value=True)
                 csv_path = csv_file_path
                 try:
-                    df = pd.read_csv(csv_path,encoding=detect_encoding(csv_path))
+                    df = pd.read_csv(csv_path, encoding='utf-8-sig')
                     # 检查 'hot_word' 列是否存在
                     if 'hot_word' not in df.columns:
                         print(f"CSV 文件中缺少 'hot_word' 列: {csv_path}")
@@ -493,7 +493,7 @@ with gr.Blocks(title="GT") as app:
                 temp_file = csv_file_path + ".tmp"  # 使用临时文件避免写入失败导致数据丢失
 
                 try:
-                    with open(csv_file_path, mode='r', newline='', encoding='utf-8-sig') as csvfile:
+                    with open(csv_file_path, mode='r', newline='', encoding=detect_encoding(csv_file_path)) as csvfile:
                         reader = csv.DictReader(csvfile)
                         fieldnames = reader.fieldnames
 
@@ -528,6 +528,51 @@ with gr.Blocks(title="GT") as app:
                     return f"❌ 保存失败: {str(e)}"
 
 
+            def batch_gen_save_result(prompt, hot_word_csv_files_path):
+                if not hot_word_csv_files_path or not prompt:
+                    return "参数不完整，无法保存"
+
+                try:
+                    # 读取CSV文件
+                    df = pd.read_csv(hot_word_csv_files_path, encoding=detect_encoding(hot_word_csv_files_path))
+
+                    # 检查是否包含必要的列
+                    if 'hot_word' not in df.columns or 'chinese' not in df.columns:
+                        return "CSV文件缺少必要列（hot_word或chinese）"
+
+                    # 遍历每一行处理
+                    for index, row in df.iterrows():
+                        hot_word = row['hot_word']
+                        draft = row['chinese']
+
+                        if pd.isna(draft) or draft.strip() == "":
+                            continue  # 跳过空的chinese字段
+
+                        # 生成内容
+                        result = write_in_style(draft, prompt)
+                        if not result:
+                            continue  # 如果生成失败，跳过
+
+                        # 更新result列
+                        if 'result' in df.columns:
+                            # 如果已有result字段，则拼接新内容
+                            old_result = str(df.at[index, 'result']) if pd.notna(df.at[index, 'result']) else ""
+                            if old_result:
+                                df.at[index, 'result'] = f"{old_result}\n---\n{result}"
+                            else:
+                                df.at[index, 'result' ] = result
+                        else:
+                            # 添加新的result列并写入结果
+                            df.at[index, 'result'] = result
+
+                    # 写回CSV文件
+                    df.to_csv(hot_word_csv_files_path, index=False, encoding='utf-8-sig')
+                    return "✅ 批量生成并保存成功"
+                except Exception as e:
+                    print(f"批量生成和保存失败: {e}")
+                    return f"❌ 批量生成和保存失败: {str(e)}"
+
+
             with gr.Column():
                 prompt_button1 = gr.Button("生成结果")
                 result1 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
@@ -540,6 +585,13 @@ with gr.Blocks(title="GT") as app:
                 save_button1.click(
                     fn=save_result,
                     inputs=[result1, hot_word_csv_files_path, selected_row],
+                    outputs=gr.Textbox(label="", value="", interactive=False)
+                )
+
+                batch_button1 = gr.Button("批量生成并保存结果")
+                batch_button1.click(
+                    fn=batch_gen_save_result,
+                    inputs=[prompt_textbox1, hot_word_csv_files_path],
                     outputs=gr.Textbox(label="", value="", interactive=False)
                 )
 
@@ -559,6 +611,13 @@ with gr.Blocks(title="GT") as app:
                     outputs=gr.Textbox(label="", value="", interactive=False)
                 )
 
+                batch_button2 = gr.Button("批量生成并保存结果")
+                batch_button2.click(
+                    fn=batch_gen_save_result,
+                    inputs=[prompt_textbox2, hot_word_csv_files_path],
+                    outputs=gr.Textbox(label="", value="", interactive=False)
+                )
+
             with gr.Column():
                 prompt_button3 = gr.Button("生成结果")
                 result3 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
@@ -572,6 +631,13 @@ with gr.Blocks(title="GT") as app:
                 save_button3.click(
                     fn=save_result,
                     inputs=[result3, hot_word_csv_files_path, selected_row],
+                    outputs=gr.Textbox(label="", value="", interactive=False)
+                )
+
+                batch_button3 = gr.Button("批量生成并保存结果")
+                batch_button3.click(
+                    fn=batch_gen_save_result,
+                    inputs=[prompt_textbox3, hot_word_csv_files_path],
                     outputs=gr.Textbox(label="", value="", interactive=False)
                 )
 
@@ -637,7 +703,7 @@ with gr.Blocks(title="GT") as app:
                         allow_custom_value=True)
                 csv_path = csv_file_path
                 try:
-                    df = pd.read_csv(csv_path,encoding=detect_encoding(csv_path))
+                    df = pd.read_csv(csv_path, encoding='utf-8-sig')
                     # 检查 'hot_word' 列是否存在
                     if 'hot_word' not in df.columns:
                         print(f"CSV 文件中缺少 'hot_word' 列: {csv_path}")
@@ -701,7 +767,7 @@ with gr.Blocks(title="GT") as app:
                 content = "/".join(parts[2:])  # 获取实际文本部分，防止热词或序号中包含 '/'
 
                 if '\n' not in content.strip():
-                    speaker, text = content.replace("<","").replace(">","").strip().strip('\n').split(':', 1)
+                    speaker, text = content.replace("<", "").replace(">", "").strip().strip('\n').split(':', 1)
 
                     return [{"speaker": speaker.strip(), "text": text.strip()}]
 
@@ -737,7 +803,8 @@ with gr.Blocks(title="GT") as app:
             with gr.Row():
 
                 for speaker in speaker_list:
-                    speaker_audio = gr.Audio(label=f"请上传 {speaker} 的参考音频(要求60s-110s)", sources=["upload", "microphone"],
+                    speaker_audio = gr.Audio(label=f"请上传 {speaker} 的参考音频(要求60s-110s)",
+                                             sources=["upload", "microphone"],
                                              type="filepath")
                     speaker_audio_list.append(speaker_audio)
 
@@ -757,7 +824,8 @@ with gr.Blocks(title="GT") as app:
                 minutes = (total_seconds // 60) % 60
                 hours = total_seconds // 3600
                 return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
-            from  datetime import datetime
+
+            from datetime import datetime
             def synthesize_multiple_voices(*speaker_au_list):
                 output_files_by_speaker = {}
                 output_files_by_speaker_list = []
