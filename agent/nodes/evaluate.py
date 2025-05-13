@@ -52,7 +52,7 @@ class SupervisorNode(Node):
             relation_news = shared["relation_news"]
             search_history = shared["search_history"]
             current_path = os.path.dirname(os.path.dirname(os.path.dirname(__name__)))
-            hot_words_csv = os.path.join(current_path, os.path.dirname(hot_word_path), os.getenv("HOT_WORDS"))
+            hot_words_csv = os.path.join(current_path, os.path.dirname(hot_word_path), os.getenv("HOT_WORDS_FILE_NAME"))
             # 确保 hot_word_path 是有效的路径
             # 将 hot_word_path、hot_word 和 exec_res 写入 CSV 文件
             try:
@@ -62,7 +62,7 @@ class SupervisorNode(Node):
 
                 if file_exists:
                     # 读取现有数据
-                    with open(hot_words_csv, 'r', newline='', encoding=detect_encoding(hot_words_csv)) as csvfile:
+                    with open(hot_words_csv, 'r', newline='', encoding='utf-8-sig') as csvfile:
                         reader = csv.DictReader(csvfile)
                         # 检查是否包含 'final_article' 列
                         # 检查是否包含 'final_article' 列
@@ -87,11 +87,13 @@ class SupervisorNode(Node):
                             data.append(row_tmp)
                 else:
                     # 如果文件不存在，创建文件并写入表头
-                    data.append({'hot_word': hot_word, 'relation_news': relation_news,'search_history':search_history,'chinese': '', 'english': ''})
+                    data.append({'hot_word': hot_word, 'relation_news': relation_news, 'search_history': search_history,
+                                 'chinese': shared['chinese'], 'english': shared['english']})
+                logger.info(f"====CSV保存数据：{data}===")
 
                 # 写入数据
-                with open(hot_words_csv, 'w', newline='', encoding=detect_encoding(hot_words_csv)) as csvfile:
-                    fieldnames = ['hot_word', 'relation_news','search_history','chinese', "english"]
+                with open(hot_words_csv, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                    fieldnames = ['hot_word', 'relation_news', 'search_history', 'chinese', "english"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)

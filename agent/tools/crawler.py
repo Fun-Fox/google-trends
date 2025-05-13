@@ -17,7 +17,7 @@ class WebCrawler:
     - 限制最大爬取页数防止无限爬取
     """
 
-    def __init__(self, base_url: str, snippet="" ,max_pages: int = 0):
+    def __init__(self, base_url: str ,max_pages: int = 0):
         """初始化爬虫实例
 
         参数:
@@ -26,7 +26,6 @@ class WebCrawler:
         """
         self.base_url = base_url  # 初始访问地址
         self.max_pages = max_pages  # 最大爬取页面数量
-        self.snippet = snippet
         self.visited: Set[str] = set()  # 已访问的URL集合，避免重复爬取
 
     def is_valid_url(self, url: str) -> bool:
@@ -77,7 +76,6 @@ class WebCrawler:
                 "title": soup.title.string if soup.title else "",  # 页面标题
                 "text": soup.get_text(separator="\n", strip=True),  # 页面正文内容，用换行分隔并去除空白
                 # "links": []  # 存储提取到的链接
-                "snippet":self.snippet
             }
 
             # 遍历页面中的所有 <a> 标签，提取 href 属性

@@ -11,7 +11,7 @@ __all__ = ['crawl_google_trends_page']
 
 
 async def crawl_google_trends_page(page, logging, origin="", category=0, url="", task_dir=None,
-                                   to_download_image=False):
+                                   to_download_image=False,nums=25):
     """
     爬取 Google Trends 页面内容
     :param category:
@@ -41,8 +41,9 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
 
     # 第一次加载图片
     try:
-        hot_words = await page.query_selector_all(
+        elements = await page.query_selector_all(
             'tbody:nth-child(3) > tr:nth-child(n) > td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc')
+        hot_words = elements[:nums]  # ✅ 在 await 后进行切片
     except Exception as e:
         logging.error(f'未找到 div 元素: {e}')
 
@@ -93,7 +94,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
             logging.info(f"保存关键词：{text_content}成功")
 
         # 将 text_content 写入 CSV 文件
-        csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS"))
+        csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8') as csvfile:
             fieldnames = ['hot_word', "relation_news", "search_history" ,"chinese", "english"]

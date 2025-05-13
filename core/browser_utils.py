@@ -20,8 +20,30 @@ def parse_cookie_string(cookie_str: str) -> list:
 async def init_browser(logging):
     p = await async_playwright().__aenter__()
     headless = os.getenv('HEADLESS', 'True').lower() == 'true'
-    browser = await p.chromium.launch(headless=headless,proxy={"server": os.getenv("PROXY_URL", "127.0.0.1:7890")})
-    context = await browser.new_context()
+
+    # 获取代理配置
+    proxy_server = os.getenv("PROXY_URL", "127.0.0.1:7890")
+    proxy = {"server": proxy_server} if proxy_server else None
+
+    # 自定义浏览器参数
+    browser = await p.chromium.launch(
+        headless=headless,
+        proxy=proxy,
+        args=[
+            '--disable-blink-features=AutomationControlled',  # 隐藏自动化标志
+            f'--user-agent={os.getenv("USER_AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")}',
+        ]
+    )
+
+    context = await browser.new_context(
+        user_agent=os.getenv("USER_AGENT"),
+        extra_http_headers={
+            "Accept-Language": os.getenv("ACCEPT_LANGUAGE", "en-US,en;q=0.9"),
+            "Referer": os.getenv("REFERER", "https://www.google.com/"),
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        }
+    )
 
     # 解析并设置cookies
     if os.path.exists("setting.json"):

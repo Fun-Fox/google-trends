@@ -28,7 +28,7 @@ task_root_dir = os.getenv("TASK_DIR", "tasks")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-async def start_crawler(url, to_download_image, origin="", category=""):
+async def start_crawler(url, to_download_image, origin="", category="",nums=25):
     """
     启动采集任务
     :param to_download_image:
@@ -50,7 +50,7 @@ async def start_crawler(url, to_download_image, origin="", category=""):
 
     await crawl_google_trends_page(page, logger, origin=origin_code, category=category_code, url=url,
                                    task_dir=task_dir_file_name,
-                                   to_download_image=to_download_image)
+                                   to_download_image=to_download_image,nums=nums)
 
     # 关闭页面和上下文
     await page.close()
@@ -61,14 +61,14 @@ async def start_crawler(url, to_download_image, origin="", category=""):
 
 
 # 新增 Gradio Web 页面
-async def run_crawler(to_download_image, origin, category):
+async def run_crawler(to_download_image, origin, category,nums=25):
     """
     运行采集任务
     :return: 爬取任务完成的消息
     """
     url = "https://trends.google.com/trending"
 
-    await start_crawler(url, to_download_image, origin=origin, category=category)
+    await start_crawler(url, to_download_image, origin=origin, category=category,nums=nums)
     return "热点采集任务已完成"
 
 
@@ -300,8 +300,9 @@ with gr.Blocks(title="GT") as app:
                 origin = gr.Dropdown(label="地区", choices=list(choices_data['regions'].keys()), value="美国")
                 category = gr.Dropdown(label="分类", choices=list(choices_data['category_names'].keys()),
                                        value="所有分类")
+                nums = gr.Slider(minimum=1, maximum=25, step=1, label="热词采集数量（最大25）", value=25)
                 button = gr.Button("开始采集")
-                button.click(fn=run_crawler, inputs=[to_download_image, origin, category],
+                button.click(fn=run_crawler, inputs=[to_download_image, origin, category,nums],
                              outputs=gr.Textbox(label="采集结果"))
             task_log_textbox = gr.Textbox(label="采集日志", value=update_task_log_textbox, lines=10, max_lines=15,
                                           every=5)
@@ -363,7 +364,6 @@ with gr.Blocks(title="GT") as app:
                         except Exception as e:
                             print(f"正在处理热词：{hot_words_folders_path}发生异常，下一个热词")
                             continue
-                        sleep(5)
                         result.append(ret)
                     return result
 

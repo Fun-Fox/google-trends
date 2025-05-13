@@ -167,7 +167,7 @@ class SearchWeb(Node):
             # 统计链接数量
             total_links_count += 1
             logger.info(f"🌐 源链接:{link}")
-            content_list = WebCrawler(link, snippet=i['snippet']).crawl()
+            content_list = WebCrawler(link).crawl()
 
             analyzed_results.append(analyze_site(content_list, logger))
 
@@ -175,10 +175,10 @@ class SearchWeb(Node):
         for analyzed_result in analyzed_results:
             for content in analyzed_result:
 
-                result = (f"标题：{content.get('title', '无')}\n" +
-                          # f"摘要：{content.get('snippet', '无')}\n" +
-                          f"汇总：{content['analysis']['summary']}\n" +
-                          f"话题：{content['analysis']['topics']}\n" +
+                result = (f"原文标题：{content.get('title', '无')}\n" +
+                          f"原文链接：{content.get('url', '无')}\n" +
+                          f"内容汇总：{content['analysis']['summary']}\n" +
+                          f"相关话题：{content['analysis']['topics']}\n" +
                           f"内容类型：{content['analysis']['content_type']}\n"
                           )
                 results.append(result)
