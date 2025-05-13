@@ -193,7 +193,7 @@ class SearchWeb(Node):
         results, links_count = exec_res
         previous = shared.get("context", "")
         # 搜索记忆功能
-        shared["context"] = previous + "\n\nSEARCH: " + shared["search_query"] + "\nRESULTS: " + results
+        shared["context"] = previous + "\n\n搜索条件: " + shared["search_query"] + "\n搜索结果(多条):\n " + results
         logger = shared["logger"]
         shared["links_count"] = links_count
         logger.info(f"📚 找到信息，分析结果...")
