@@ -142,6 +142,7 @@ class EvaluateImage(Node):
         ## 下一步操作
          重要：请确保：
          严格以下格式返回你的响应,无需其余信息：
+         每个值不为空，且每个字段都包含一个整数值。
 
         ```yaml
         total_score: <总分>
@@ -178,7 +179,6 @@ class EvaluateImage(Node):
             except Exception as e:
                 logger.error(f"处理 LLM 响应时发生错误: {e}")
                 continue
-
 
             if isinstance(decision, dict) and "total_score" in decision:
                 # 提取总分并重命名图片
