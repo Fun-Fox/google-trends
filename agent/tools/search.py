@@ -103,7 +103,10 @@ def search_web(query, hot_word_path, logger,num_results=3):
                 results_str = "\n\n".join(
                     [f"标题: {r['title']}\n源链接: {r['link']}\n摘要: {r['snippet']}" for r in results])
                 results_dict = [{'title':r['title'],'snippet':r['snippet'],'link':r['link']}  for r in results]
-                search_image(query, hot_word_path, logger)
+                try:
+                    search_image(query, hot_word_path, logger)
+                except  Exception as e:
+                    logger.error(f"搜索图片时发生异常: {e}")
             else:
                 logger.error(f"错误: 无法获取搜索结果。状态码: {response.status_code}")
                 return "错误: 无法获取搜索结果。",None
