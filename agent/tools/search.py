@@ -124,7 +124,7 @@ def search_web(query, hot_word_path, logger,num_results=3):
         return results_str,results_dict
     except Exception as e:
         logger.error(f"搜索网络时发生异常: {e}")
-        return "错误: 搜索网络时发生异常。"
+        return "错误: 搜索网络时发生异常。",None
 
 
 def search_image(query, hot_word_path, logger,num_results=8):

@@ -468,12 +468,12 @@ with gr.Blocks(title="GT") as app:
 
         with gr.Row():
             prompt_textbox1 = gr.Textbox(label="请输入口播人设提示词 1",
-                                         value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 使用英文输出\n- 通过标点符号(-)在任意位置控制停顿""",
+                                         value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿""",
                                          lines=3)
 
-            prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 使用英文输出\n- 通过标点符号(-)在任意位置控制停顿
+            prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿
             """, lines=3)
-            prompt_textbox3 = gr.Textbox(label="请输入口播人设提示词 3", value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 使用英文输出\n- 通过标点符号(-)在任意位置控制停顿
+            prompt_textbox3 = gr.Textbox(label="请输入口播人设提示词 3", value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿
             """, lines=3)
 
         with gr.Row():
