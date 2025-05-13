@@ -5,6 +5,8 @@ import requests  # 用于发起 HTTP 请求获取网页内容
 from bs4 import BeautifulSoup  # 用于解析 HTML 页面结构
 from urllib.parse import urljoin, urlparse  # 用于处理 URL 拼接与解析
 from typing import Dict, List, Set, Any  # 类型提示，提高代码可读性
+from dotenv import load_dotenv
+load_dotenv()
 
 __all__=["WebCrawler"]
 class WebCrawler:
