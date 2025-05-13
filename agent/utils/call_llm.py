@@ -64,7 +64,6 @@ def call_local_llm(prompt, logger=None, image_path='', ):
 
 
 import os
-import json
 import requests
 from PIL import Image
 from io import BytesIO
@@ -121,13 +120,13 @@ def call_cloud_model(prompt, logger=None, image_path=''):
                         reasoning_content = message.get("reasoning_content", "无推理内容")  # 获取 reasoning_content 字段
 
                         logger.info(f"API 响应: Content={content}\n, Reasoning Content={reasoning_content}")
-                        return content  # 返回 content 字段
+                        return content,True  # 返回 content 字段
                     else:
                         logger.warning("API 响应中没有 choices 数据")
-                        return "无内容"
-                except KeyError as e:
-                    logger.error(f"JSON 解析错误: {e}")
-                    return "错误: JSON 解析失败"
+                        return "无内容", False
+                except Exception as e:
+                    logger.error(f"云端模型调用出现异常: {e}")
+                    return "云端模型调用出现异常",False
             logger.warning(f"第 {attempt + 1} 次尝试失败，状态码: {response.status_code}")
         except Exception as e:
             logger.warning(f"第 {attempt + 1} 次尝试失败: {str(e)}")
