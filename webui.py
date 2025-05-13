@@ -560,7 +560,7 @@ with gr.Blocks(title="GT") as app:
                             if old_result:
                                 df.at[index, 'result'] = f"{old_result}\n---\n{result}"
                             else:
-                                df.at[index, 'result' ] = result
+                                df.at[index, 'result'] = result
                         else:
                             # 添加新的result列并写入结果
                             df.at[index, 'result'] = result
@@ -772,11 +772,13 @@ with gr.Blocks(title="GT") as app:
                     return [{"speaker": speaker.strip(), "text": text.strip()}]
 
                 lines = content.strip().split('\n')
+                lines = [line for line in lines if line.strip()]
 
                 result = []
                 for line in lines:
-                    if '：' in line:
-                        speaker, text = line.split('：', 1)
+                    colon_pos = line.find(':') if ':' in line else line.find('：')
+                    if colon_pos != -1:
+                        speaker, text = line.split(line[colon_pos], 1)
                         result.append({"speaker": speaker.strip(), "text": text.strip()})
 
                 return result

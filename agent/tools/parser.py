@@ -91,7 +91,7 @@ def analyze_content(content: Dict,logger) -> Dict:
 内容: {content['text'][:2000]}  # 限制内容长度
 
 ## 请提供：
-1. 简要总结（2-3句话）
+1. 中文简要总结（2-3句话）
 2. 主题或关键词（最多5个）
 3. 内容类型（文章、产品页面等）
 
