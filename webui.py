@@ -700,8 +700,8 @@ with gr.Blocks(title="GT") as app:
 
                 content = "/".join(parts[2:])  # 获取实际文本部分，防止热词或序号中包含 '/'
 
-                if '\n' not in content.strip().strip('\n'):
-                    speaker, text = content.strip().strip('\n').split(':', 1)
+                if '\n' not in content.strip():
+                    speaker, text = content.replace("<","").replace(">","").strip().strip('\n').split(':', 1)
 
                     return [{"speaker": speaker.strip(), "text": text.strip()}]
 
