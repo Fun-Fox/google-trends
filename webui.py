@@ -493,7 +493,7 @@ with gr.Blocks(title="GT") as app:
                 temp_file = csv_file_path + ".tmp"  # 使用临时文件避免写入失败导致数据丢失
 
                 try:
-                    with open(csv_file_path, mode='r', newline='', encoding='utf-8') as csvfile:
+                    with open(csv_file_path, mode='r', newline='', encoding='utf-8-sig') as csvfile:
                         reader = csv.DictReader(csvfile)
                         fieldnames = reader.fieldnames
 
