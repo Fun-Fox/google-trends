@@ -105,4 +105,4 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
             logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
             await asyncio.sleep(5)
-        logging.info(f"地区编码：{origin}，分类编码：{category}，采集任务已完成，共采集了{len(hot_words)}个关键词")
+    logging.info(f"地区编码：{origin}，分类编码：{category}，采集任务已完成，共采集了{len(hot_words)}个关键词")
