@@ -16,7 +16,6 @@ from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
 
-from utils.file_encoding import detect_encoding
 
 load_dotenv()
 # 动态生成日志文件路径
@@ -132,7 +131,7 @@ def get_hot_word_images_and_narratives(hot_word_folder):
     # 读取第一个 CSV 文件
     csv_path = csv_files[0]
     try:
-        df = pd.read_csv(csv_path, encoding=detect_encoding(csv_path))
+        df = pd.read_csv(csv_path, encoding='utf-8-sig')
         if 'hot_word' in df.columns and 'chinese' in df.columns and 'english' in df.columns:
             # 过滤出 hot_word 为 'hotword' 的行
             filtered_df = df[df['hot_word'] == hot_word]
@@ -174,7 +173,7 @@ def update_task_log_textbox():
     start_str = "task_"
     latest_log_file = get_latest_log_file(log_dir, start_str)
     if latest_log_file:
-        with open(latest_log_file, 'r', encoding='utf-8') as f:
+        with open(latest_log_file, 'r', encoding='utf-8-sig') as f:
             log_content = f.read()
         return log_content
     return "暂无日志文件"
@@ -190,7 +189,7 @@ def update_agent_log_textbox():
     start_str = "agent_"
     latest_log_file = get_latest_log_file(log_dir, start_str)
     if latest_log_file:
-        with open(latest_log_file, 'r', encoding='utf-8') as f:
+        with open(latest_log_file, 'r', encoding='utf-8-sig') as f:
             log_content = f.read()
         return log_content
     return "暂无日志文件"
@@ -493,7 +492,7 @@ with gr.Blocks(title="GT") as app:
                 temp_file = csv_file_path + ".tmp"  # 使用临时文件避免写入失败导致数据丢失
 
                 try:
-                    with open(csv_file_path, mode='r', newline='', encoding=detect_encoding(csv_file_path)) as csvfile:
+                    with open(csv_file_path, mode='r', newline='', encoding='utf-8-sig') as csvfile:
                         reader = csv.DictReader(csvfile)
                         fieldnames = reader.fieldnames
 
@@ -504,7 +503,7 @@ with gr.Blocks(title="GT") as app:
                         if not has_result_field:
                             fieldnames.append('result')
 
-                        with open(temp_file, mode='w', newline='', encoding='utf-8') as tmpfile:
+                        with open(temp_file, mode='w', newline='', encoding='utf-8-sig') as tmpfile:
                             writer = csv.DictWriter(tmpfile, fieldnames=fieldnames)
                             writer.writeheader()
 
@@ -534,7 +533,7 @@ with gr.Blocks(title="GT") as app:
 
                 try:
                     # 读取CSV文件
-                    df = pd.read_csv(hot_word_csv_files_path, encoding=detect_encoding(hot_word_csv_files_path))
+                    df = pd.read_csv(hot_word_csv_files_path, encoding='utf-8-sig')
 
                     # 检查是否包含必要的列
                     if 'hot_word' not in df.columns or 'chinese' not in df.columns:
@@ -919,7 +918,7 @@ with gr.Blocks(title="GT") as app:
 
                 # 第三步 导出 SRT 字幕文件
                 srt_path = os.path.join(task_path, f"{hot_word}_{hot_word_index}_{formatted_time}.srt")
-                with open(srt_path, "w", encoding="utf-8") as f:
+                with open(srt_path, "w", encoding="utf-8-sig") as f:
                     for i, seg in enumerate(output_files_with_duration, start=1):
                         start = ms_to_srt_time(seg["start_time"])
                         end = ms_to_srt_time(seg["end_time"])

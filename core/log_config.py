@@ -67,7 +67,7 @@ def get_logger(name=__name__, log_file_path=''):
     )
 
     # 创建文件处理器
-    file_handler = logging.FileHandler(os.path.join("logs", log_file_path), encoding='utf-8')
+    file_handler = logging.FileHandler(os.path.join("logs", log_file_path), encoding='utf-8-sig')
     # if os.getenv("PLATFORM") == "local":
     #     file_handler.setFormatter(formatter)
     # 配置日志记录器

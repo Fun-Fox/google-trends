@@ -7,7 +7,6 @@ from pocketflow import Node
 from agent.utils import get_images, call_llm
 import yaml
 
-from utils.file_encoding import detect_encoding
 
 load_dotenv()
 
@@ -62,7 +61,7 @@ class SupervisorNode(Node):
 
                 if file_exists:
                     # 读取现有数据
-                    with open(hot_words_csv, 'r', newline='', encoding=detect_encoding(hot_words_csv)) as csvfile:
+                    with open(hot_words_csv, 'r', newline='', encoding='utf-8-sig') as csvfile:
                         reader = csv.DictReader(csvfile)
                         # 检查是否包含 'final_article' 列
                         # 检查是否包含 'final_article' 列
@@ -92,7 +91,7 @@ class SupervisorNode(Node):
                 logger.info(f"====CSV保存数据：{data}===")
 
                 # 写入数据
-                with open(hot_words_csv, 'w', newline='', encoding='utf-8') as csvfile:
+                with open(hot_words_csv, 'w', newline='', encoding='utf-8-sig') as csvfile:
                     fieldnames = ['hot_word', 'relation_news', 'search_history', 'chinese', "english"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
@@ -223,7 +222,7 @@ if __name__ == "__main__":
 
         if file_exists:
             # 读取现有数据
-            with open(hot_words_csv, 'r', newline='', encoding='utf-8') as csvfile:
+            with open(hot_words_csv, 'r', newline='', encoding='utf-8-sig') as csvfile:
                 reader = csv.DictReader(csvfile)
                 fieldnames = reader.fieldnames
                 # 检查是否包含 'final_article' 列
@@ -249,7 +248,7 @@ if __name__ == "__main__":
             data.append({'hot_word': hot_word, 'final_article': exec_res})
 
         # 写入数据
-        with open(hot_words_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(hot_words_csv, 'w', newline='', encoding='utf-8-sig') as csvfile:
             fieldnames = ['hot_word', 'final_article']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()

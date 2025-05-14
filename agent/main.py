@@ -1,7 +1,6 @@
 import os
 
 import pandas as pd
-from utils.file_encoding import detect_encoding
 # from fastapi import FastAPI, HTTPException
 from .flow import research_hot_word_flow, write_in_style_flow
 
@@ -33,7 +32,7 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
 
     try:
         # 读取 CSV 文件
-        df = pd.read_csv(csv_file_path, encoding=detect_encoding(csv_file_path))
+        df = pd.read_csv(csv_file_path, encoding="utf-8-sig")
 
         # 检查必要列是否存在
         if 'hot_word' not in df.columns or 'relation_news' not in df.columns:
