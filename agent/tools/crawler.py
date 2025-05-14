@@ -75,8 +75,8 @@ class WebCrawler:
             # 构建包含页面信息的字典
             content = {
                 "url": url,  # 当前页面 URL
-                "title": soup.title.string if soup.title else "",  # 页面标题
-                "text": soup.get_text(separator="\n", strip=True),  # 页面正文内容，用换行分隔并去除空白
+                "title": soup.title.string.replace(":", " ") if soup.title else "",  # 页面标题
+                "text": soup.get_text(separator="\n", strip=True).replace(":", " "),  # 页面正文内容，用换行分隔并去除空白
                 # "links": []  # 存储提取到的链接
             }
 

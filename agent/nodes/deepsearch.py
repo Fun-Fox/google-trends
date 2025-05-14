@@ -32,18 +32,20 @@ class DecideAction(Node):
         links_count = shared.get("links_count", 0)
         relation_news = shared["relation_news"]
         logger = shared["logger"]
+        language = shared["language"]
         # 返回问题和上下文，供 exec 步骤使用
-        return hot_word, context, relation_news, links_count, logger
+        return hot_word, context, relation_news, links_count,language, logger
 
     def exec(self, inputs):
         """调用 LLM 决定是搜索还是回答。"""
-        hot_word, context, relation_news, links_count, logger = inputs
+        hot_word, context, relation_news, links_count,language, logger = inputs
 
         logger.info(f"代理正在决定下一步操作...")
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
         prompt = f"""
             你是一个可以搜索网络的热点新闻深度搜索助手
             现在给你一个时下网络流行热词，你需要参考查询维度、先前的研究进行深度搜索，深度思考并理解该热词对应的叙事内容。
+            使用{language}回答
             
             ### 查询维度
             
@@ -246,11 +248,9 @@ class AnswerEditor(Node):
         ### 你的回答:
         结合热词对应的研究进行理解
         - 使用精炼维度撰写叙事文案
-        - 使用中文和英文。
         - 用简单易懂的语言解释想法
         - 使用日常语言，避免术语
-        
-        同时，请从相关研究中提取 **2个最相关的优质报道摘要**，包含：
+        同时，请从相关研究中提取 **2个最相关的优质报道摘要，翻译为中文**，包含：
         - 报道标题 (title) 翻译为中文
         - 内容摘要 (summary) 翻译为中文
         - 来源链接 (link)
@@ -258,17 +258,17 @@ class AnswerEditor(Node):
         请以以下格式返回你的响应：
         
         ```yaml
-        chinese: |
-            <中文叙事文案>
-        english: |
-            <英文叙事文案>
         highlights: 
           - title: <报道标题1> 
             summary: <摘要> 
             link: <来源链接>
           - title: <报道标题2> 
             summary: <摘要> 
-            link: <来源链接> 
+            link: <来源链接>
+        chinese: |
+            <中文叙事文案>
+        english: |
+            <英文叙事文案,注意此部分使用英文>
         ```
 
         重要：请确保：
