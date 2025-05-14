@@ -12,6 +12,8 @@ import yaml
 load_dotenv()
 __all__ = ["DecideAction", "SearchWeb", "AnswerEditor"]
 
+total_links_count = 0
+
 
 class DecideAction(Node):
     def prep(self, shared):
@@ -27,7 +29,7 @@ class DecideAction(Node):
         context = shared.get("context", "无先前搜索")
         # 从共享存储中获取问题
         hot_word = shared["hot_word"]
-        links_count = shared.get("links_count",0 )
+        links_count = shared.get("links_count", 0)
         relation_news = shared["relation_news"]
         logger = shared["logger"]
         # 返回问题和上下文，供 exec 步骤使用
@@ -133,24 +135,23 @@ class DecideAction(Node):
         else:
             shared["context"] = exec_res["answer"]
             logger.info(f"💡 代理决定回答问题")
+            global total_links_count
+            total_links_count = 0
 
         # 返回操作以确定流程中的下一个节点
         return exec_res["action"]
 
 
-total_links_count = 0
-
-
 class SearchWeb(Node):
     def prep(self, shared):
         """从共享存储中获取搜索查询。"""
-        return shared["search_query"], shared["hot_word_path"],shared["language"], shared["logger"]
+        return shared["search_query"], shared["hot_word_path"], shared["language"], shared["logger"]
 
     def exec(self, inputs):
         """搜索网络上的给定查询。"""
         # 调用搜索实用函数
         global total_links_count  # 声明使用全局变量
-        search_query, hot_word_path,language, logger = inputs
+        search_query, hot_word_path, language, logger = inputs
         logger.info(f"🌐 在网络上搜索: {search_query}")
         sleep(5)
         _, results_dict = search_web(search_query, hot_word_path, logger)
@@ -170,23 +171,24 @@ class SearchWeb(Node):
             logger.info(f"🌐 源链接:{link}")
             content_list = WebCrawler(link).crawl()
 
-            analyzed_results.append(analyze_site(content_list, logger,language))
+            analyzed_results.append(analyze_site(content_list, logger, language))
 
         results = []
         for analyzed_result in analyzed_results:
             for content in analyzed_result:
+                total_links_count += 1
 
                 result = (
-                          # f"标题：{content.get('title', '无')}\n" +
-                          # f"链接：{content.get('url', '无')}\n" +
-                          f"报道{total_links_count}：{content['analysis']['title']}\n" +
-                          f"内容摘要：{content['analysis']['summary']}\n" +
-                          f"内容话题：{content['analysis']['topics']}\n" +
-                          f"内容类型：{content['analysis']['content_type']}\n"
-                          )
+                    # f"标题：{content.get('title', '无')}\n" +
+                    # f"链接：{content.get('url', '无')}\n" +
+                        f"🌐 报道{total_links_count}\n {content['analysis']['title']}\n" +
+                        # f"类型：{content['analysis']['content_type']}\n" +
+                        # f"话题：{','.join(content['analysis']['topics'])}\n" +
+                        f"{content['analysis']['summary']}\n"
+
+                )
                 results.append(result)
                 # 统计链接数量
-                total_links_count += 1
 
         logger.info(f"✅ 当前已采集链接总数: {total_links_count}")
 
@@ -199,7 +201,8 @@ class SearchWeb(Node):
         previous = shared.get("context", "")
         search_history_previous = shared.get("search_history", "")
         # 搜索记忆功能
-        shared["context"] = previous + "\n\n搜索条件: " + shared["search_query"] + "\n搜索结果(多条):\n " + results.strip()
+        shared["context"] = previous + "\n\n搜索条件: " + shared[
+            "search_query"] + "\n搜索结果(多条):\n " + results.strip()
         shared["search_history"] = search_history_previous + results.strip()
         logger = shared["logger"]
         shared["links_count"] = links_count
