@@ -184,7 +184,7 @@ class SearchWeb(Node):
                         f"🌐 报道{total_links_count}: {content['analysis']['title']}\n" +
                         # f"类型：{content['analysis']['content_type']}\n" +
                         # f"话题：{','.join(content['analysis']['topics'])}\n" +
-                        f"{content['analysis']['summary']}\n"
+                        f"{content['analysis']['summary']}\n\n"
 
                 )
                 results.append(result)
