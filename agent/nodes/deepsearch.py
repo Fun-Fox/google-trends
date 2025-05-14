@@ -240,6 +240,7 @@ class AnswerEditor(Node):
         
         时下网络流行热词: {hot_word}
         相关研究: 
+        
         {context}
 
         ### 你的回答:
@@ -248,6 +249,11 @@ class AnswerEditor(Node):
         - 使用中文和英文。
         - 用简单易懂的语言解释想法
         - 使用日常语言，避免术语
+        
+        同时，请从相关研究中提取 **2个最相关的优质报道摘要**，包含：
+        - 报道标题 (title)
+        - 内容摘要 (summary)
+        - 来源链接 (link)
                 
         请以以下格式返回你的响应：
         
@@ -256,6 +262,13 @@ class AnswerEditor(Node):
             <中文叙事文案>
         english: |
             <英文叙事文案>
+        highlights: 
+          - title: <报道标题1> 
+            summary: <摘要> 
+            link: <来源链接>
+          - title: <报道标题2> 
+            summary: <摘要> 
+            link: <来源链接> 
         ```
 
         重要：请确保：
@@ -289,6 +302,15 @@ class AnswerEditor(Node):
         shared['draft'] = draft
         shared['chinese'] = response['chinese']
         shared['english'] = response['english']
+        highlights = response.get('highlights', [])
+        if highlights:
+            highlights_str = "\n".join([
+                f"报道{index}:\n{highlight['title']}\n摘要：\n{highlight['summary']}\n来源：\n{highlight['link']}\n\n"
+                for index, highlight in enumerate(highlights, start=1)
+            ])
+        else:
+            highlights_str = ""
+        shared['highlights'] = highlights_str  # 存入优质报道列表
         logger = shared["logger"]
         logger.info(f"✅ 草稿生成成功：\n{draft}")
 

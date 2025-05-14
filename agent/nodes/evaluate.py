@@ -7,7 +7,6 @@ from pocketflow import Node
 from agent.utils import get_images, call_llm
 import yaml
 
-
 load_dotenv()
 
 __all__ = ["SupervisorNode", "EvaluateImage"]
@@ -50,6 +49,7 @@ class SupervisorNode(Node):
             hot_word = shared["hot_word"]
             relation_news = shared["relation_news"]
             search_history = shared["search_history"]
+            highlights = shared['highlights']
             current_path = os.path.dirname(os.path.dirname(os.path.dirname(__name__)))
             hot_words_csv = os.path.join(current_path, os.path.dirname(hot_word_path), os.getenv("HOT_WORDS_FILE_NAME"))
             # 确保 hot_word_path 是有效的路径
@@ -74,6 +74,7 @@ class SupervisorNode(Node):
                                     'search_history': shared['search_history'],
                                     'chinese': shared['chinese'],
                                     'english': shared['english'],
+                                    'highlights': shared['highlights'],
                                 }
                             else:
                                 row_tmp = {
@@ -81,18 +82,20 @@ class SupervisorNode(Node):
                                     'relation_news': row['relation_news'],
                                     'search_history': row['search_history'],
                                     'chinese': row['chinese'],
-                                    'english': row['english']
+                                    'english': row['english'],
+                                    'highlights': row['highlights']
                                 }
                             data.append(row_tmp)
                 else:
                     # 如果文件不存在，创建文件并写入表头
                     data.append({'hot_word': hot_word, 'relation_news': relation_news, 'search_history': search_history,
+                                 'highlights': highlights,
                                  'chinese': shared['chinese'], 'english': shared['english']})
                 logger.info(f"====CSV保存数据：{data}===")
 
                 # 写入数据
                 with open(hot_words_csv, 'w', newline='', encoding='utf-8-sig') as csvfile:
-                    fieldnames = ['hot_word', 'relation_news', 'search_history', 'chinese', "english"]
+                    fieldnames = ['hot_word', 'relation_news', 'search_history', 'highlights', 'chinese', "english"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)

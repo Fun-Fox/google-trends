@@ -11,7 +11,7 @@ __all__ = ['crawl_google_trends_page']
 
 
 async def crawl_google_trends_page(page, logging, origin="", category=0, url="", task_dir=None,
-                                   to_download_image=False,nums=25):
+                                   to_download_image=False, nums=25):
     """
     爬取 Google Trends 页面内容
     :param category:
@@ -66,8 +66,6 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
             logging.info(f"关键词{text_content}：第{index + 1}个标题：{title_text}")
             title_new.append(title_text)
 
-
-
         if to_download_image:
             # 获取指定路径下的图片的 src 地址
             img_selector = 'div.EMz5P > div.k44Spe > div:nth-child(4) > div > div.jDtQ5 > div:nth-child(n) > a > div.yYagic > img'
@@ -84,7 +82,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
                     await image_util.download_and_resize_image(
                         logging,
                         img_url=src,
-                        task_dir=os.path.join(task_dir, text_content,"new_images"),  # 保存在任务文件夹中
+                        task_dir=os.path.join(task_dir, text_content, "new_images"),  # 保存在任务文件夹中
                         image_name=f"{text_content}_{index}.jpg"
                     )
                 else:
@@ -97,11 +95,14 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8-sig') as csvfile:
-            fieldnames = ['hot_word', "relation_news", "search_history" ,"chinese", "english"]
+            fieldnames = ['hot_word', "relation_news", "search_history", "highlights", "chinese", "english", ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
-            writer.writerow({'hot_word': text_content, "relation_news":'---'.join(title_new),"search_history":'', "chinese": '', "english": ''})
+            writer.writerow(
+                {'hot_word': text_content, "relation_news": '---'.join(title_new), "search_history": '',
+                 "highlights": "", "chinese": '',
+                 "english": '', })
             logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
             await asyncio.sleep(5)
