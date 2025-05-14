@@ -251,8 +251,8 @@ class AnswerEditor(Node):
         - 使用日常语言，避免术语
         
         同时，请从相关研究中提取 **2个最相关的优质报道摘要**，包含：
-        - 报道标题 (title)
-        - 内容摘要 (summary)
+        - 报道标题 (title) 翻译为中文
+        - 内容摘要 (summary) 翻译为中文
         - 来源链接 (link)
                 
         请以以下格式返回你的响应：
@@ -305,7 +305,7 @@ class AnswerEditor(Node):
         highlights = response.get('highlights', [])
         if highlights:
             highlights_str = "\n".join([
-                f"报道{index}:\n{highlight['title']}\n摘要：\n{highlight['summary']}\n来源：\n{highlight['link']}\n\n"
+                f"🌐报道{index}:\n{highlight['title']}\n摘要：\n{highlight['summary']}\n来源：\n{highlight['link']}\n\n"
                 for index, highlight in enumerate(highlights, start=1)
             ])
         else:
