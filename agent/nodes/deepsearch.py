@@ -246,24 +246,23 @@ class AnswerEditor(Node):
         {context}
 
         ### 你的回答:
-        结合热词对应的研究进行理解
-        - 使用精炼维度撰写叙事文案
-        - 用简单易懂的语言解释想法
-        - 使用日常语言，避免术语
-        同时，请从相关研究中提取 2个最相关的优质报道摘要，使用{language}，包含：
-        - 报道标题 (title) 
-        - 内容摘要 (summary)
-        - 来源链接 (link)
-                
-        请以以下格式返回你的响应：
+        1. 请根据研究内容撰写如下两部分叙事文案：
+           - 中文叙事 (`chinese`)
+           - 英文叙事 (`english`)
+           - 内容要求：
+             * 使用日常语言，避免术语
+             * 涵盖核心事实、舆情脉络、发酵点及趋势预判等维度
+             * 每段保持结构清晰，逻辑通顺
+        
+        2. 同时，请从研究内容中提取 **2个最相关的优质报道摘要**，并返回以下结构：
         
         ```yaml
         highlights: 
-          - title: <报道标题1,使用{language},不允许包含冒号> 
-            summary: <摘要,使用{language},不允许包含冒号> 
+          - title: <报道标题1,使用{language}> 
+            summary: <摘要,使用{language}> 
             link: <来源链接>
-          - title: <报道标题2,使用{language},不允许包含冒号> 
-            summary: <摘要,使用{language},不允许包含冒号> 
+          - title: <报道标题2,使用{language}> 
+            summary: <摘要,使用{language}> 
             link: <来源链接>
         chinese: |
             <中文叙事文案>
@@ -272,10 +271,13 @@ class AnswerEditor(Node):
         ```
 
         重要：请确保：
-        1. 使用|字符表示多行文本字段
-        2. 多行字段使用缩进（4个空格）
-        3. 单行字段不使用|字符
-        4. 保证 chinese 和 english 的缩进一致，并且 | 后的内容至少比键多一级缩进即可。
+        ⚠️ YAML 格式要求：
+       - 所有字段使用英文冒号 `:` + **一个空格** 开始值
+       - 多行字段使用 `|` 表示，并至少比键名多一级缩进（推荐 4 个空格）
+       - 列表项（`-`）需统一缩进
+       - 不允许在 `title:`、`summary:`、`link:` 后直接嵌套新结构
+       - 避免使用中文冒号 `：` 或省略空格
+       - 不要对 `chinese` 和 `english` 字段进行嵌套或添加额外结构
         """
         # 调用 LLM 生成草稿
         draft, success = call_llm(prompt, logger)
@@ -314,44 +316,8 @@ class AnswerEditor(Node):
         logger = shared["logger"]
         logger.info(f"✅ 草稿生成成功：\n{draft}")
 
-        # 我们完成了 - 不需要继续流程
-        # return "done"
 
 
-#
-# class AnalyzeResultsNode(Node):
-#     """使用LLM分析搜索结果"""
-#
-#     def prep(self, shared):
-#         return shared.get("query"), shared.get("search_results", [])
-#
-#     def exec(self, inputs):
-#         query, results = inputs
-#         if not results:
-#             return {
-#                 "summary": "没有搜索结果进项分析",
-#                 "key_points": [],
-#                 "follow_up_queries": []
-#             }
-#
-#         return analyze_results(query, results)
-#
-#     def post(self, shared, prep_res, exec_res):
-#         shared["analysis"] = exec_res
-#
-#         # Print analysis
-#         print("\n搜索结果:")
-#         print("\n汇总:", exec_res["summary"])
-#
-#         print("\n关键点:")
-#         for point in exec_res["key_points"]:
-#             print(f"- {point}")
-#
-#         print("\n推荐后续搜索内容:")
-#         for query in exec_res["follow_up_queries"]:
-#             print(f"- {query}")
-#
-#         return "default"
 
 
 if __name__ == "__main__":
