@@ -227,57 +227,57 @@ class AnswerEditor(Node):
 
         # 为 LLM 创建一个提示以基于网络研究内容编写草稿
         prompt = f"""
-        ## 上下文
-        
-        你是一个热点信息精炼助手，基于以下信息，回答问题。
-        
-        ### 精炼维度
-        
-        - 核心事实提取: 从海量信息中提取关键事实要素
-        - 舆情脉络梳理: 梳理公众情绪变化与讨论焦点转移路径
-        - 发酵点识别: 识别推动话题扩散的关键节点与触发因素
-        - 趋势预判: 基于现有信息预测话题可能的发展方向
-        
-        ### 输入格式:
-        
-        时下网络流行热词: {hot_word}
-        相关研究: 
-        
-        {context}
+## 上下文
 
-        ### 你的回答:
-        1. 请根据研究内容撰写如下两部分叙事文案：
-           - 中文叙事 (`chinese`)
-           - 英文叙事 (`english`)
-           - 内容要求：
-             * 使用日常语言，避免术语
-             * 涵盖核心事实、舆情脉络、发酵点及趋势预判等维度
-             * 每段保持结构清晰，逻辑通顺
-        
-        2. 同时，请从研究内容中提取 **2个最相关的优质报道摘要**，并返回以下结构：
-        
-        ```yaml
-        highlights: 
-          - title: <报道标题1,使用{language}> 
-            summary: <摘要,使用{language}> 
-            link: <来源链接>
-          - title: <报道标题2,使用{language}> 
-            summary: <摘要,使用{language}> 
-            link: <来源链接>
-        chinese: |
-            <中文叙事文案>
-        english: |
-            <英文叙事文案,注意此部分使用英文>
-        ```
+你是一个热点信息精炼助手，基于以下信息，回答问题。
 
-        重要：请确保：
-        ⚠️ YAML 格式要求：
-       - 所有字段使用英文冒号 `:` + **一个空格** 开始值
-       - 多行字段使用 `|` 表示，并至少比键名多一级缩进（推荐 4 个空格）
-       - 列表项（`-`）需统一缩进
-       - 不允许在 `title:`、`summary:`、`link:` 后直接嵌套新结构
-       - 避免使用中文冒号 `：` 或省略空格
-       - 不要对 `chinese` 和 `english` 字段进行嵌套或添加额外结构
+### 精炼维度
+
+- 核心事实提取: 从海量信息中提取关键事实要素
+- 舆情脉络梳理: 梳理公众情绪变化与讨论焦点转移路径
+- 发酵点识别: 识别推动话题扩散的关键节点与触发因素
+- 趋势预判: 基于现有信息预测话题可能的发展方向
+
+### 输入格式:
+
+时下网络流行热词: {hot_word}
+相关研究: 
+
+{context}
+
+### 你的回答:
+1. 请根据研究内容撰写如下两部分叙事文案：
+   - 中文叙事 (`chinese`)
+   - 英文叙事 (`english`)
+   - 内容要求：
+     * 使用日常语言，避免术语
+     * 涵盖核心事实、舆情脉络、发酵点及趋势预判等维度
+     * 每段保持结构清晰，逻辑通顺
+
+2. 同时，请从研究内容中提取 **2个最相关的优质报道摘要**，并返回以下结构：
+
+```yaml
+highlights: 
+  - title: <报道标题1,使用{language}> 
+    summary: <摘要,使用{language}> 
+    link: "<来源链接,链接使用引号>"
+  - title: <报道标题2,使用{language}> 
+    summary: <摘要,使用{language}> 
+    link: "<来源链接,链接使用引号>"
+chinese: |
+    <中文叙事文案>
+english: |
+    <英文叙事文案,注意此部分使用英文>
+```
+
+重要：请确保：
+⚠️ YAML 格式要求：
+- 所有字段使用英文冒号 `:` + **一个空格** 开始值
+- 多行字段使用 `|` 表示，并至少比键名多一级缩进（推荐 4 个空格）
+- 列表项（`-`）需统一缩进
+- 不允许在 `title:`、`summary:`、`link:` 后直接嵌套新结构
+- 避免使用中文冒号 `：` 或省略空格
+- 不要对 `chinese` 和 `english` 字段进行嵌套或添加额外结构
         """
         # 调用 LLM 生成草稿
         draft, success = call_llm(prompt, logger)
@@ -285,7 +285,7 @@ class AnswerEditor(Node):
             logger.error("LLM 响应格式不正确，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
         try:
-            yaml_str = draft.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+            yaml_str = draft.split("```yaml")[1].split("```")[0].strip()
         except Exception as e:
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
         logger.info(f"LLM 响应: \n {yaml_str}")
@@ -321,16 +321,25 @@ class AnswerEditor(Node):
 
 
 if __name__ == "__main__":
+    import re
     response = """
-    ```yaml
-thinking: |
-  The user is interested in RuPaul's initial response to Jiggly Caliente's death and the criticism that followed.  Several sources mention RuPaul's initial statement, but the details and the extent of the criticism aren't fully clear. A focused search about RuPaul's specific initial response and the subsequent backlash would clarify the situation.
-action: search
-reason: To gather more specific information about RuPaul's initial reaction and the associated criticism.
-search_query: "RuPaul initial response Jiggly Caliente death criticism"
+```yaml
+highlights:
+  - title: 《实习完美》安娜·坎普公开新恋情，甜蜜互动引发关注
+    summary: 美国演员安娜·坎普（Anna Camp）确认了与造型师Jade Whipkey的恋爱关系，她在Instagram上分享了两人甜蜜的约会照片，并配有爱心表情。Jade Whipkey的回应“她的笑容是诗”也进一步确认了关系的甜蜜。此次公开恋情引发了粉丝的祝福和关注。
+    link: "https://www.sohu.com/a/6726511775362662839"
+  - title: 《实习完美》女演员安娜·坎普恋爱了？甜蜜合影秀出新恋情
+    summary: 演员安娜·坎普（Anna Camp）公开了与造型师Jade Whipkey的恋情，她在Instagram上分享了与Jade Whipkey的合影，甜蜜互动引发了网络热议。她此前曾与演员Sylar Astin结婚，离婚近六年，这次是她离婚后的首次公开恋情。
+    link: "https://news.caijing.com.cn/20240120/1234648653.html"
 ```
     """
 
-    yaml_str = response.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
+    yaml_str = response.split("```yaml")[1].split("```")[
+        0].strip()
+    # 插入换行符，强制每行一个字段
+    yaml_str = re.sub(r":(\S)", r": \1", yaml_str)
+    # 强制为 YAML 标记字段添加换行
+    yaml_str = re.sub(r'(highlights:|chinese:|english:)', r'\n\1', yaml_str)
+
     print(f"LLM 响应: {yaml_str}")
     decision = yaml.safe_load(yaml_str)

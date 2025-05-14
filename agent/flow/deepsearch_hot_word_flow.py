@@ -1,8 +1,14 @@
-from pocketflow import Flow
+from pocketflow import Flow, Node
 
 from agent.nodes import DecideAction, SearchWeb, AnswerEditor, SupervisorNode, EvaluateImage
 
-__all__=["research_hot_word_flow", ]
+__all__ = ["research_hot_word_flow", ]
+
+
+class NoOp(Node):
+    """Node that does nothing, used to properly end the flow."""
+    pass
+
 
 def inner_flow():
     """
@@ -56,12 +62,13 @@ def research_hot_word_flow():
     supervisor = SupervisorNode()
     # apply_style = ApplyStyle()
     # eval_image = EvaluateImage()
+    end = NoOp()
 
     # 连接组件
     # 在 agent_flow 完成后，转到 supervisor
     agent_flow >> supervisor
     # 如果 supervisor 批准回答，转到 apply_style
-    # supervisor - "approved" >> eval_image
+    supervisor - "approved" >> end
 
     # apply_style - "final-article" >> eval_image
     # 如果 supervisor 拒绝回答，则返回到 agent_flow
