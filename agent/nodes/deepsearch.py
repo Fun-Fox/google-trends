@@ -217,11 +217,11 @@ class SearchWeb(Node):
 class AnswerEditor(Node):
     def prep(self, shared):
         """获取用于回答的问题和上下文。"""
-        return shared["hot_word"], shared.get("context"), shared["logger"]
+        return shared["hot_word"], shared.get("context"),shared.get("language"), shared["logger"]
 
     def exec(self, inputs):
         """调用 LLM 编制草稿。"""
-        hot_word, context, logger = inputs
+        hot_word, context, language,logger = inputs
 
         logger.info(f"编制草稿...")
 
@@ -250,20 +250,20 @@ class AnswerEditor(Node):
         - 使用精炼维度撰写叙事文案
         - 用简单易懂的语言解释想法
         - 使用日常语言，避免术语
-        同时，请从相关研究中提取 **2个最相关的优质报道摘要，翻译为中文**，包含：
-        - 报道标题 (title) 翻译为中文
-        - 内容摘要 (summary) 翻译为中文
+        同时，请从相关研究中提取 2个最相关的优质报道摘要，使用{language}，包含：
+        - 报道标题 (title) 
+        - 内容摘要 (summary)
         - 来源链接 (link)
                 
         请以以下格式返回你的响应：
         
         ```yaml
         highlights: 
-          - title: <报道标题1> 
-            summary: <摘要> 
+          - title: <报道标题1,使用{language},不允许包含冒号> 
+            summary: <摘要,使用{language},不允许包含冒号> 
             link: <来源链接>
-          - title: <报道标题2> 
-            summary: <摘要> 
+          - title: <报道标题2,使用{language},不允许包含冒号> 
+            summary: <摘要,使用{language},不允许包含冒号> 
             link: <来源链接>
         chinese: |
             <中文叙事文案>
