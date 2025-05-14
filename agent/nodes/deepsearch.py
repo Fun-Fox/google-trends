@@ -131,17 +131,17 @@ class DecideAction(Node):
         """保存决策并确定流程中的下一步。"""
         # 如果 LLM 决定搜索，则保存搜索查询
         logger = shared["logger"]
-        if exec_res["action"] == "search":
-            shared["search_query"] = exec_res["search_query"]
+        if exec_res["action"].strip() == "search":
+            shared["search_query"] = exec_res["search_query"].strip()
             logger.info(f"🔍 代理决定搜索: {exec_res['search_query']}")
         else:
-            shared["context"] = exec_res["answer"]
+            shared["context"] = exec_res["answer"].strip()
             logger.info(f"💡 代理决定回答问题")
             global total_links_count
             total_links_count = 0
 
         # 返回操作以确定流程中的下一个节点
-        return exec_res["action"]
+        return exec_res["action"].strip()
 
 
 class SearchWeb(Node):
