@@ -466,7 +466,7 @@ with gr.Blocks(title="GT") as app:
 
         with gr.Row():
             prompt_textbox1 = gr.Textbox(label="请输入口播人设提示词 1",
-                                         value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿""",
+                                         value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 使用中文输出\n- 直接切入内容，无需开场的问候\n- 通过标点符号(-)在任意位置控制停顿""",
                                          lines=3)
 
             prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿
@@ -554,8 +554,8 @@ with gr.Blocks(title="GT") as app:
                         # 更新result列
                         if 'result' in df.columns:
                             # 如果已有result字段，则拼接新内容
-                            tmp = df.at[index, 'result'].strip()
-                            old_result = str(tmp) if pd.notna(tmp) and tmp != "" else ""
+                            tmp = df.at[index, 'result']
+                            old_result = str(tmp).strip() if pd.notna(tmp) and tmp != "" else ""
                             if old_result is not None and old_result != "":
                                 df.at[index, 'result'] = f"{old_result}\n---\n{result}"
                             else:
@@ -785,8 +785,25 @@ with gr.Blocks(title="GT") as app:
 
             hot_word_csv_files_path.change(fn=read_result_csv_file, inputs=[hot_word_csv_files_path],
                                            outputs=[content_textbox, selected_row_tmp])
+        with gr.Row():
+            synthesize_button = gr.Button("开始合成语音", variant="primary")
+            clear_result_button = gr.Button("清空口播文案", variant="primary")
 
-        synthesize_button = gr.Button("开始合成语音", variant="primary")
+
+            def clear_result_button_click(hot_word_csv_files_path):
+                if hot_word_csv_files_path is None or hot_word_csv_files_path == '':
+                    return "请先选择文件"
+                csv_path = hot_word_csv_files_path
+                try:
+                    df = pd.read_csv(csv_path, encoding='utf-8-sig')
+                    df['result'] = ''
+                    df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+                except Exception as e:
+                    return "result列清空异常" + e
+                return "csv清空result列成功"
+
+
+            clear_result_button.click(clear_result_button_click, inputs=[hot_word_csv_files_path], outputs=gr.Textbox())
 
 
         @gr.render(inputs=selected_row_tmp)
