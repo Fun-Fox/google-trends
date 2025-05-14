@@ -33,7 +33,7 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
 
     try:
         # 读取 CSV 文件
-        df = pd.read_csv(csv_file_path,encoding=detect_encoding(csv_file_path))
+        df = pd.read_csv(csv_file_path, encoding=detect_encoding(csv_file_path))
 
         # 检查必要列是否存在
         if 'hot_word' not in df.columns or 'relation_news' not in df.columns:
@@ -55,6 +55,7 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
         print(f"relation_news_by_hot_word:读取 CSV 文件时发生错误: {e}")
         return None
 
+
 def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
     """处理"""
     try:
@@ -66,11 +67,12 @@ def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
         if not os.path.exists(hot_word_path):
             return "热词路径不存在"
 
-        relation_news ='\n'.join(get_relation_news_by_hot_word(hot_word_path).split('---'))
+        relation_news = '\n'.join(get_relation_news_by_hot_word(hot_word_path).split('---'))
 
         # 处理问题
         hot_word = os.path.basename(hot_word_path)
-        shared = {"hot_word": hot_word,"relation_news": relation_news,"hot_word_path": hot_word_path, "logger": logger}
+        shared = {"hot_word": hot_word, "relation_news": relation_news, "hot_word_path": hot_word_path,
+                  "logger": logger, "language": "中文"}
         logger.info(f"正在分析时下网络流行热词: {hot_word}")
         agent_flow.run(shared)
 
@@ -78,7 +80,7 @@ def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
         return "[热词深度搜索Agent任务完成]-[DONE]"
     except Exception as e:
         logger.error(f"处理热词时发生异常: {e}")
-        return "处理热词时发生异常。"
+        raise e
 
 
 def write_in_style_assistant(draft: str, prompt: str, logger) -> str | None:

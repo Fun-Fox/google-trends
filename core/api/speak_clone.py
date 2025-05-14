@@ -28,12 +28,3 @@ result = requests.post(url=base_url, json=data, headers=headers)
 # 直接返回二进制流，将二进制流写入文件中即可（至此语音克隆完成）：
 with open('./file/output.wav', 'wb') as file:
     file.write(result.content)
-————————————————
-
-版权声明：本文为博主原创文章，遵循
-CC
-4.0
-BY - SA
-版权协议，转载请附上原文出处链接和本声明。
-
-原文链接：https: // blog.csdn.net / qq_45383803 / article / details / 146387044

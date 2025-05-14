@@ -2,7 +2,8 @@ import re
 from typing import Dict, List
 from agent.utils.call_llm import call_llm
 
-__all__ = [ "analyze_content", "analyze_site"]
+__all__ = ["analyze_content", "analyze_site"]
+
 
 #
 # def analyze_results(query: str, results: List[Dict],logger) -> Dict:
@@ -74,7 +75,7 @@ __all__ = [ "analyze_content", "analyze_site"]
 #         }
 
 
-def analyze_content(content: Dict,logger) -> Dict:
+def analyze_content(content: Dict, logger, language="中文") -> Dict:
     """使用大语言模型分析网页内容
 
     参数:
@@ -91,12 +92,13 @@ def analyze_content(content: Dict,logger) -> Dict:
 内容: {content['text'][:2000]}  # 限制内容长度
 
 ## 请提供：
-1. 中文简要总结（2-3句话）
+1. 使用{language}进行简要总结（2-3句话）
 2. 主题或关键词（最多5个）
 3. 内容类型（文章、产品页面等）
 
 ## 请以下格式返回你的响应,无需其余信息：
 ```yaml
+title: <在这里填写标题>
 summary: 
     <在这里填写简要总结>
 topics: ["关键词1","关键词2"]
@@ -111,7 +113,7 @@ content_type: <填写内容类型>
 """
 
     try:
-        response,success = call_llm(prompt,logger=logger)
+        response, success = call_llm(prompt, logger=logger)
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")
             return {"action": "finish", "reason": "LLM 响应失败"}
@@ -128,6 +130,7 @@ content_type: <填写内容类型>
         assert "summary" in analysis
         assert "topics" in analysis
         assert "content_type" in analysis
+        assert "title" in analysis
         assert isinstance(analysis["topics"], list)
 
         return analysis
@@ -135,13 +138,14 @@ content_type: <填写内容类型>
     except Exception as e:
         print(f"分析网页内容时出错: {str(e)}")
         return {
+            "title": "未知",
             "summary": "分析网页内容时出错",
             "topics": [],
             "content_type": "未知"
         }
 
 
-def analyze_site(crawl_results: List[Dict],logger) -> List[Dict]:
+def analyze_site(crawl_results: List[Dict], logger, language) -> List[Dict]:
     """分析所有爬取的网页内容
 
     参数:
@@ -154,7 +158,7 @@ def analyze_site(crawl_results: List[Dict],logger) -> List[Dict]:
 
     for content in crawl_results:
         if content and content.get("text"):
-            analysis = analyze_content(content,logger)
+            analysis = analyze_content(content, logger, language=language)
             content["analysis"] = analysis
             analyzed_results.append(content)
 

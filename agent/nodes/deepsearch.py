@@ -51,11 +51,10 @@ class DecideAction(Node):
             - 社会影响范围 : 受众群体、地域影响、行业影响
             - 争议焦点 : 各方观点分歧、争论核心问题
             - 官方回应 : 相关权威机构/人物的正式表态
-            - 公众反应 : 主流情绪倾向、典型评论
             - 关联事件 : 与此热点相关的历史/并行事件
             
             并非所有查询条件都需满足，可使用优先级进行排序
-            查询优先级：事件基本信息>事件发展脉络>社会影响范围>争议焦点>官方回应>公众反应>关联事件
+            查询优先级：事件基本信息>事件发展脉络>社会影响范围>争议焦点>官方回应>关联事件
             
             ## 上下文
             - 时下流行热词: 
@@ -97,7 +96,8 @@ class DecideAction(Node):
             search_query: <具体的搜索查询如果操作是搜索>
             ```
             重要：请确保：
-
+            
+            如先前的研究，总计大于10条，则结合已有的研究进行回答操作，不再进行深度搜索，
             1. 使用|字符表示多行文本字段
             2. 多行字段使用缩进（4个空格）
             3. 单行字段不使用|字符
@@ -131,7 +131,6 @@ class DecideAction(Node):
             shared["search_query"] = exec_res["search_query"]
             logger.info(f"🔍 代理决定搜索: {exec_res['search_query']}")
         else:
-            shared["search_history"] = shared["context"]  # 保存上下文，如果 LLM 在不搜索的情况下给出回答。
             shared["context"] = exec_res["answer"]
             logger.info(f"💡 代理决定回答问题")
 
@@ -145,13 +144,13 @@ total_links_count = 0
 class SearchWeb(Node):
     def prep(self, shared):
         """从共享存储中获取搜索查询。"""
-        return shared["search_query"], shared["hot_word_path"], shared["logger"]
+        return shared["search_query"], shared["hot_word_path"],shared["language"], shared["logger"]
 
     def exec(self, inputs):
         """搜索网络上的给定查询。"""
         # 调用搜索实用函数
         global total_links_count  # 声明使用全局变量
-        search_query, hot_word_path, logger = inputs
+        search_query, hot_word_path,language, logger = inputs
         logger.info(f"🌐 在网络上搜索: {search_query}")
         sleep(5)
         _, results_dict = search_web(search_query, hot_word_path, logger)
@@ -167,24 +166,27 @@ class SearchWeb(Node):
             logger.info(f"🌐 对搜索的内容进项深度扫描")
             logger.info(f"🌐 标题:{title}")
             logger.info(f"🌐 摘要:{snippet}")
-            # 统计链接数量
-            total_links_count += 1
+
             logger.info(f"🌐 源链接:{link}")
             content_list = WebCrawler(link).crawl()
 
-            analyzed_results.append(analyze_site(content_list, logger))
+            analyzed_results.append(analyze_site(content_list, logger,language))
 
         results = []
         for analyzed_result in analyzed_results:
             for content in analyzed_result:
 
-                result = (f"标题：{content.get('title', '无')}\n" +
-                          f"链接：{content.get('url', '无')}\n" +
-                          f"汇总：{content['analysis']['summary']}\n" +
-                          f"话题：{content['analysis']['topics']}\n" +
-                          f"类型：{content['analysis']['content_type']}\n"
+                result = (
+                          # f"标题：{content.get('title', '无')}\n" +
+                          # f"链接：{content.get('url', '无')}\n" +
+                          f"报道{total_links_count}：{content['analysis']['title']}\n" +
+                          f"内容摘要：{content['analysis']['summary']}\n" +
+                          f"内容话题：{content['analysis']['topics']}\n" +
+                          f"内容类型：{content['analysis']['content_type']}\n"
                           )
                 results.append(result)
+                # 统计链接数量
+                total_links_count += 1
 
         logger.info(f"✅ 当前已采集链接总数: {total_links_count}")
 
@@ -195,8 +197,10 @@ class SearchWeb(Node):
         # 将搜索结果添加到共享存储中的上下文中
         results, links_count = exec_res
         previous = shared.get("context", "")
+        search_history_previous = shared.get("search_history", "")
         # 搜索记忆功能
-        shared["context"] = previous + "\n\n搜索条件: " + shared["search_query"] + "\n搜索结果(多条):\n " + results
+        shared["context"] = previous + "\n\n搜索条件: " + shared["search_query"] + "\n搜索结果(多条):\n " + results.strip()
+        shared["search_history"] = search_history_previous + results.strip()
         logger = shared["logger"]
         shared["links_count"] = links_count
         logger.info(f"📚 找到信息，分析结果...")
@@ -255,6 +259,7 @@ class AnswerEditor(Node):
         1. 使用|字符表示多行文本字段
         2. 多行字段使用缩进（4个空格）
         3. 单行字段不使用|字符
+        4. 保证 chinese 和 english 的缩进一致，并且 | 后的内容至少比键多一级缩进即可。
         """
         # 调用 LLM 生成草稿
         draft, success = call_llm(prompt, logger)
@@ -265,7 +270,7 @@ class AnswerEditor(Node):
             yaml_str = draft.replace("\"", "").replace("\'", "").split("```yaml")[1].split("```")[0].strip()
         except Exception as e:
             return {"action": "finish", "reason": "LLM 响应格式不正确"}
-        logger.info(f"LLM 响应: {yaml_str}")
+        logger.info(f"LLM 响应: \n {yaml_str}")
         response = yaml.safe_load(yaml_str)
         if not success:
             logger.error("LLM 响应失败，请检查你的响应格式。")

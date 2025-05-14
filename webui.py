@@ -357,8 +357,8 @@ with gr.Blocks(title="GT") as app:
                                          os.path.isdir(os.path.join(task_dir, d))]
 
                     result = []
+                    print(f"开始处理热词文件夹：{hot_words_folders}")
                     for hot_words_folders_path in hot_words_folders:
-                        print(f"正在处理热词文件夹：{hot_words_folders_path}")
                         try:
                             ret = hot_word_research_assistant(hot_words_folders_path, agent_logger)
                         except Exception as e:
