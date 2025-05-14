@@ -181,7 +181,7 @@ class SearchWeb(Node):
                 result = (
                     # f"标题：{content.get('title', '无')}\n" +
                     # f"链接：{content.get('url', '无')}\n" +
-                        f"🌐 报道{total_links_count}\n {content['analysis']['title']}\n" +
+                        f"🌐 报道{total_links_count}: {content['analysis']['title']}\n" +
                         # f"类型：{content['analysis']['content_type']}\n" +
                         # f"话题：{','.join(content['analysis']['topics'])}\n" +
                         f"{content['analysis']['summary']}\n"
@@ -199,11 +199,11 @@ class SearchWeb(Node):
         # 将搜索结果添加到共享存储中的上下文中
         results, links_count = exec_res
         previous = shared.get("context", "")
-        search_history_previous = shared.get("search_history", "")
+        search_history_previous = shared.get("search_history", "").strip()
         # 搜索记忆功能
         shared["context"] = previous + "\n\n搜索条件: " + shared[
             "search_query"] + "\n搜索结果(多条):\n " + results.strip()
-        shared["search_history"] = search_history_previous + results.strip()
+        shared["search_history"] = search_history_previous.strip() + results.strip()
         logger = shared["logger"]
         shared["links_count"] = links_count
         logger.info(f"📚 找到信息，分析结果...")
