@@ -14,7 +14,6 @@ from .animation import Segment_animations, Text_animation
 from .metadata import Font_type, Effect_meta
 from .metadata import Text_intro, Text_outro, Text_loop_anim
 
-
 class Text_style:
     """字体样式类"""
 
@@ -74,7 +73,6 @@ class Text_style:
         self.letter_spacing = letter_spacing
         self.line_spacing = line_spacing
 
-
 class Text_border:
     """文本描边的参数"""
 
@@ -107,7 +105,6 @@ class Text_border:
             },
             "width": self.width
         }
-
 
 class Text_background:
     """文本背景参数"""
@@ -167,7 +164,6 @@ class Text_background:
             "background_vertical_offset": self.vertical_offset,
         }
 
-
 class TextBubble:
     """文本气泡素材, 与滤镜素材本质上一致"""
 
@@ -193,7 +189,6 @@ class TextBubble:
             # 不导出path和request_id
         }
 
-
 class TextEffect(TextBubble):
     """文本花字素材, 与滤镜素材本质上也一致"""
 
@@ -202,7 +197,6 @@ class TextEffect(TextBubble):
         ret["type"] = "text_effect"
         ret["source_platform"] = 1
         return ret
-
 
 class Text_segment(Visual_segment):
     """文本片段类, 目前仅支持设置基本的字体样式"""
@@ -255,8 +249,7 @@ class Text_segment(Visual_segment):
     @classmethod
     def create_from_template(cls, text: str, timerange: Timerange, template: "Text_segment") -> "Text_segment":
         """根据模板创建新的文本片段, 并指定其文本内容"""
-        new_segment = cls(text, timerange, style=deepcopy(template.style),
-                          clip_settings=deepcopy(template.clip_settings),
+        new_segment = cls(text, timerange, style=deepcopy(template.style), clip_settings=deepcopy(template.clip_settings),
                           border=deepcopy(template.border), background=deepcopy(template.background))
         new_segment.font = deepcopy(template.font)
 

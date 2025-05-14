@@ -28,6 +28,7 @@ def tim(inp: Union[str, float]) -> int:
 
         total_time += float(inp[last_index:unit_index]) * factor
         last_index = unit_index + 1
+
     return int(round(total_time) * sign)
 
 class Timerange:

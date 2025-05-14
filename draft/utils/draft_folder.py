@@ -7,7 +7,6 @@ from typing import List
 
 from .script_file import Script_file
 
-
 class Draft_folder:
     """管理一个文件夹及其内的一系列草稿"""
 
@@ -23,7 +22,6 @@ class Draft_folder:
         Raises:
             `FileNotFoundError`: 路径不存在
         """
-        self.include_matting = None
         self.folder_path = folder_path
 
         if not os.path.exists(self.folder_path):
@@ -85,14 +83,12 @@ class Draft_folder:
 
         return Script_file.load_template(os.path.join(draft_path, "draft_content.json"))
 
-    def duplicate_as_template(self, template_name: str, new_draft_name: str,
-                              include_matting: bool = True, allow_replace: bool = False) -> Script_file:
+    def duplicate_as_template(self, template_name: str, new_draft_name: str, allow_replace: bool = False) -> Script_file:
         """复制一份给定的草稿, 并在复制出的新草稿上进行编辑
 
         Args:
             template_name (`str`): 原草稿名称
             new_draft_name (`str`): 新草稿名称
-            include_matting
             allow_replace (`bool`, optional): 是否允许覆盖与`new_draft_name`重名的草稿. 默认为否.
 
         Returns:
@@ -102,7 +98,6 @@ class Draft_folder:
             `FileNotFoundError`: 原始草稿不存在
             `FileExistsError`: 已存在与`new_draft_name`重名的草稿, 但不允许覆盖.
         """
-        self.include_matting = include_matting
         template_path = os.path.join(self.folder_path, template_name)
         new_draft_path = os.path.join(self.folder_path, new_draft_name)
         if not os.path.exists(template_path):
@@ -110,15 +105,8 @@ class Draft_folder:
         if os.path.exists(new_draft_path) and not allow_replace:
             raise FileExistsError(f"新草稿 {new_draft_name} 已存在且不允许覆盖")
 
-        def ignore_matting(dir_name, filenames, ):
-            """忽略 matting 文件夹,这个文件夹包含AI智能抠像,这个使用rap进行实现"""
-            if self.include_matting:
-                if 'matting' in dir_name.split(os.sep):
-                    return filenames  # 返回所有文件名，表示忽略整个文件夹
-            return []
-
         # 复制草稿文件夹
-        shutil.copytree(template_path, new_draft_path, dirs_exist_ok=allow_replace, ignore=ignore_matting)
+        shutil.copytree(template_path, new_draft_path, dirs_exist_ok=allow_replace)
 
         # 打开草稿
         return self.load_template(new_draft_name)
