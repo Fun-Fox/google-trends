@@ -55,13 +55,13 @@ def research_hot_word_flow():
     # 创建监督节点
     supervisor = SupervisorNode()
     # apply_style = ApplyStyle()
-    eval_image = EvaluateImage()
+    # eval_image = EvaluateImage()
 
     # 连接组件
     # 在 agent_flow 完成后，转到 supervisor
     agent_flow >> supervisor
     # 如果 supervisor 批准回答，转到 apply_style
-    supervisor - "approved" >> eval_image
+    # supervisor - "approved" >> eval_image
 
     # apply_style - "final-article" >> eval_image
     # 如果 supervisor 拒绝回答，则返回到 agent_flow

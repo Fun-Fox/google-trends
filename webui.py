@@ -16,7 +16,6 @@ from core import init_browser, close_browser, get_logger
 from core import crawl_google_trends_page
 import gradio as gr
 
-
 load_dotenv()
 # 动态生成日志文件路径
 task_date = datetime.datetime.now().strftime("%Y年%m月%d日%H时%M分")
@@ -555,8 +554,9 @@ with gr.Blocks(title="GT") as app:
                         # 更新result列
                         if 'result' in df.columns:
                             # 如果已有result字段，则拼接新内容
-                            old_result = str(df.at[index, 'result']) if pd.notna(df.at[index, 'result']) else ""
-                            if old_result:
+                            tmp = df.at[index, 'result'].strip()
+                            old_result = str(tmp) if pd.notna(tmp) and tmp != "" else ""
+                            if old_result is not None and old_result != "":
                                 df.at[index, 'result'] = f"{old_result}\n---\n{result}"
                             else:
                                 df.at[index, 'result'] = result
