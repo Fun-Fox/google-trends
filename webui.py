@@ -103,7 +103,7 @@ def get_hotword_folders(task_folder):
 
 def get_hot_word_images_and_narratives(hot_word_folder):
     """
-    获取图片列表并读取 CSV 文件中的 hotword 对应的 chinese 和 english 叙事
+    获取图片列表并读取 CSV 文件中的 hotword 对应的 chinese 和 output 叙事
     :param hot_word_folder: 热词文件夹名称
     :return: 图片列表和叙事内容
     """
@@ -131,13 +131,13 @@ def get_hot_word_images_and_narratives(hot_word_folder):
     csv_path = csv_files[0]
     try:
         df = pd.read_csv(csv_path, encoding='utf-8-sig')
-        if 'hot_word' in df.columns and 'chinese' in df.columns and 'english' in df.columns:
+        if 'hot_word' in df.columns and 'chinese' in df.columns and 'output' in df.columns:
             # 过滤出 hot_word 为 'hotword' 的行
             filtered_df = df[df['hot_word'] == hot_word]
             if not filtered_df.empty:
-                narratives = filtered_df[['chinese', 'english']].to_dict(orient='records')
+                narratives = filtered_df[['chinese', 'output']].to_dict(orient='records')
                 narratives_str = "\n".join(
-                    [f"===中文===\n{n['chinese']}\n===英文===\n {n['english']}\n" for n in narratives])
+                    [f"===中文===\n{n['chinese']}\n===英文===\n {n['output']}\n" for n in narratives])
                 return gr.Gallery(label="热词-对应图片信息", value=images, interactive=False, columns=5), gr.Textbox(
                     label="热词叙事", value=narratives_str, lines=5, interactive=False)
     except Exception as e:
@@ -322,29 +322,44 @@ with gr.Blocks(title="GT") as app:
                                allow_custom_value=True)
 
 
-        refresh_button.click(update_drop_down, outputs=task_folders)
+
 
         with gr.Row():
             with gr.Column():
+                refresh_button.click(update_drop_down, outputs=task_folders)
+                # 仅提供语言名称选项，不要编码
+                language_dropdown = gr.Dropdown(
+                    label="选择采样信息输出语言",
+                    choices=["简体中文", "繁体中文", "英文", "日文", "韩文", "俄文"],
+                    value="简体中文"
+                )
+
+                # 绑定事件：当用户选择语言时更新输出
+                language_dropdown.change(
+                    fn=lambda lang: lang,  # 直接返回选中的语言名称
+                    inputs=language_dropdown,
+                )
+            with gr.Column():
+
                 research_button = gr.Button("🤐特定-热词-网络搜索")
 
 
-                def research_hot_word(hot_words_folders_path):
+                def research_hot_word(hot_words_folders_path,language):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
                     agent_logger = get_logger(__name__, agent_log_file_path)
 
-                    ret = hot_word_research_assistant(hot_words_folders_path, agent_logger)
+                    ret = hot_word_research_assistant(hot_words_folders_path, language, agent_logger)
                     return ret
 
 
-                research_button.click(fn=research_hot_word, inputs=[hot_word_folders],
+                research_button.click(fn=research_hot_word, inputs=[hot_word_folders,language_dropdown],
                                       outputs=gr.Textbox(label=""))
             with gr.Column():
                 research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")
 
 
-                def research_all_hot_word(task_folders):
+                def research_all_hot_word(task_folders,language):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
                     agent_logger = get_logger(__name__, agent_log_file_path)
@@ -358,7 +373,7 @@ with gr.Blocks(title="GT") as app:
                     print(f"开始处理热词文件夹：{hot_words_folders}")
                     for hot_words_folders_path in hot_words_folders:
                         try:
-                            ret = hot_word_research_assistant(hot_words_folders_path, agent_logger)
+                            ret = hot_word_research_assistant(hot_words_folders_path, language, agent_logger)
                         except Exception as e:
                             print(f"正在处理热词：{hot_words_folders_path}发生异常，下一个热词")
                             continue
@@ -366,7 +381,7 @@ with gr.Blocks(title="GT") as app:
                     return result
 
 
-                research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders],
+                research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders,language_dropdown],
                                                   outputs=gr.Textbox(label=""))
         with gr.Row():
 
@@ -448,10 +463,10 @@ with gr.Blocks(title="GT") as app:
                         if pd.notna(hwc) and hwc != "":  # 判断中文叙事不为空
                             combined_choices.append(f"{hw}/{hwc}")
 
-                    for hw, hwc in zip(df['hot_word'], df['english']):
+                    for hw, hwc in zip(df['hot_word'], df['output']):
                         if pd.notna(hwc) and hwc != "":  # 判断英文叙事不为空
                             combined_choices.append(f"{hw}/{hwc}")
-                    return gr.DataFrame(df[['hot_word', 'chinese', 'english']], label="热词叙事内容显示(CSV文件)",
+                    return gr.DataFrame(df[['hot_word', 'chinese', 'output']], label="热词叙事内容显示(CSV文件)",
                                         column_widths=[20, 50, 50],
                                         max_height=150, max_chars=100), gr.Dropdown(
                         label="选择叙事文案", choices=combined_choices,

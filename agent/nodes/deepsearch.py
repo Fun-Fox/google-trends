@@ -34,11 +34,11 @@ class DecideAction(Node):
         logger = shared["logger"]
         language = shared["language"]
         # 返回问题和上下文，供 exec 步骤使用
-        return hot_word, context, relation_news, links_count,language, logger
+        return hot_word, context, relation_news, links_count, language, logger
 
     def exec(self, inputs):
         """调用 LLM 决定是搜索还是回答。"""
-        hot_word, context, relation_news, links_count,language, logger = inputs
+        hot_word, context, relation_news, links_count, language, logger = inputs
 
         logger.info(f"代理正在决定下一步操作...")
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
@@ -217,11 +217,11 @@ class SearchWeb(Node):
 class AnswerEditor(Node):
     def prep(self, shared):
         """获取用于回答的问题和上下文。"""
-        return shared["hot_word"], shared.get("context"),shared.get("language"), shared["logger"]
+        return shared["hot_word"], shared.get("context"), shared.get("language"), shared["logger"]
 
     def exec(self, inputs):
         """调用 LLM 编制草稿。"""
-        hot_word, context, language,logger = inputs
+        hot_word, context, language, logger = inputs
 
         logger.info(f"编制草稿...")
 
@@ -248,7 +248,7 @@ class AnswerEditor(Node):
 ### 你的回答:
 1. 请根据研究内容撰写如下两部分叙事文案：
    - 中文叙事 (`chinese`)
-   - 英文叙事 (`english`)
+   - {language}叙事 (`output`)
    - 内容要求：
      * 使用日常语言，避免术语
      * 涵盖核心事实、舆情脉络、发酵点及趋势预判等维度
@@ -266,8 +266,8 @@ highlights:
     link: "<来源链接,链接使用引号>"
 chinese: |
     <中文叙事文案>
-english: |
-    <英文叙事文案,注意此部分使用英文>
+output: |
+    <{language}叙事文案,注意此部分文案使用{language}>
 ```
 
 重要：请确保：
@@ -277,7 +277,7 @@ english: |
 - 列表项（`-`）需统一缩进
 - 不允许在 `title:`、`summary:`、`link:` 后直接嵌套新结构
 - 避免使用中文冒号 `：` 或省略空格
-- 不要对 `chinese` 和 `english` 字段进行嵌套或添加额外结构
+- 不要对 `chinese` 和 `output` 字段进行嵌套或添加额外结构
         """
         # 调用 LLM 生成草稿
         draft, success = call_llm(prompt, logger)
@@ -303,7 +303,7 @@ english: |
         draft, response = exec_res
         shared['draft'] = draft
         shared['chinese'] = response['chinese']
-        shared['english'] = response['english']
+        shared['output'] = response['output']
         highlights = response.get('highlights', [])
         if highlights:
             highlights_str = "\n".join([
@@ -317,11 +317,9 @@ english: |
         logger.info(f"✅ 草稿生成成功：\n{draft}")
 
 
-
-
-
 if __name__ == "__main__":
     import re
+
     response = """
 ```yaml
 highlights:
@@ -339,7 +337,7 @@ highlights:
     # 插入换行符，强制每行一个字段
     yaml_str = re.sub(r":(\S)", r": \1", yaml_str)
     # 强制为 YAML 标记字段添加换行
-    yaml_str = re.sub(r'(highlights:|chinese:|english:)', r'\n\1', yaml_str)
+    yaml_str = re.sub(r'(highlights:|chinese:|output:)', r'\n\1', yaml_str)
 
     print(f"LLM 响应: {yaml_str}")
     decision = yaml.safe_load(yaml_str)

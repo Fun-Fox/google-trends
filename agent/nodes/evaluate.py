@@ -73,7 +73,7 @@ class SupervisorNode(Node):
                                     'relation_news': row['relation_news'],
                                     'search_history': shared['search_history'],
                                     'chinese': shared['chinese'],
-                                    'english': shared['english'],
+                                    'output': shared['output'],
                                     'highlights': shared['highlights'],
                                 }
                             else:
@@ -82,7 +82,7 @@ class SupervisorNode(Node):
                                     'relation_news': row['relation_news'],
                                     'search_history': row['search_history'],
                                     'chinese': row['chinese'],
-                                    'english': row['english'],
+                                    'output': row['output'],
                                     'highlights': row['highlights']
                                 }
                             data.append(row_tmp)
@@ -90,12 +90,12 @@ class SupervisorNode(Node):
                     # 如果文件不存在，创建文件并写入表头
                     data.append({'hot_word': hot_word, 'relation_news': relation_news, 'search_history': search_history,
                                  'highlights': highlights,
-                                 'chinese': shared['chinese'], 'english': shared['english']})
+                                 'chinese': shared['chinese'], 'output': shared['output']})
                 logger.info(f"====CSV保存数据：{data}===")
 
                 # 写入数据
                 with open(hot_words_csv, 'w', newline='', encoding='utf-8-sig') as csvfile:
-                    fieldnames = ['hot_word', 'relation_news', 'search_history', 'highlights', 'chinese', "english"]
+                    fieldnames = ['hot_word', 'relation_news', 'search_history', 'highlights', 'chinese', "output"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)

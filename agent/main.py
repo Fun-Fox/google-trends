@@ -55,7 +55,7 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
         return None
 
 
-def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
+def hot_word_research_assistant(hot_word_path: str, language,logger) -> str | None:
     """处理"""
     try:
         if hot_word_path == [] or hot_word_path == "" or hot_word_path is None:
@@ -71,7 +71,7 @@ def hot_word_research_assistant(hot_word_path: str, logger) -> str | None:
         # 处理问题
         hot_word = os.path.basename(hot_word_path)
         shared = {"hot_word": hot_word, "relation_news": relation_news, "hot_word_path": hot_word_path,
-                  "logger": logger, "language": "中文"}
+                  "logger": logger, "language": language}
         logger.info(f"正在分析时下网络流行热词: {hot_word}")
         agent_flow.run(shared)
 
