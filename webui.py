@@ -137,7 +137,7 @@ def get_hot_word_images_and_narratives(hot_word_folder):
             if not filtered_df.empty:
                 narratives = filtered_df[['chinese', 'output']].to_dict(orient='records')
                 narratives_str = "\n".join(
-                    [f"===中文===\n{n['chinese']}\n===英文===\n {n['output']}\n" for n in narratives])
+                    [f"===中文===\n{n['chinese']}\n===其他语言===\n {n['output']}\n" for n in narratives])
                 return gr.Gallery(label="热词-对应图片信息", value=images, interactive=False, columns=5), gr.Textbox(
                     label="热词叙事", value=narratives_str, lines=5, interactive=False)
     except Exception as e:
