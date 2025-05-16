@@ -19,7 +19,7 @@ with gr.Blocks(title="GT") as app:
     with gr.Tab("时下热词-采集"):
         trend_crawler.build_tab()
 
-    with gr.Tab("时下热词-深度搜索"):
+    with gr.Tab("优质报道-深度搜索"):
         deep_search.build_tab()
 
     with gr.Tab("口播文案生成"):
