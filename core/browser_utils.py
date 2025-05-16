@@ -20,6 +20,7 @@ def parse_cookie_string(cookie_str: str) -> list:
 async def init_browser(logging):
     p = await async_playwright().__aenter__()
     headless = os.getenv('HEADLESS', 'True').lower() == 'true'
+    cookie_str = os.getenv('COOKIE_STRING')
 
     # 获取代理配置
     proxy_server = os.getenv("PROXY_URL", "127.0.0.1:7890")
@@ -46,12 +47,11 @@ async def init_browser(logging):
     )
 
     # 解析并设置cookies
-    if os.path.exists("setting.json"):
-        with open("setting.json", "r") as f:
-            settings = json.load(f)
-        cookie_str = settings.get("COOKIE_STRING")
-    else:
-        cookie_str = os.getenv('COOKIE_STRING')
+    # if os.path.exists("setting.json"):
+    #     with open("setting.json", "r") as f:
+    #         settings = json.load(f)
+    #     cookie_str = settings.get("COOKIE_STRING")
+    # else:
 
     if cookie_str:
         cookies = parse_cookie_string(cookie_str)

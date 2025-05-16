@@ -282,7 +282,7 @@ with gr.Blocks(title="GT") as app:
 
                 def load_choices():
                     config = configparser.ConfigParser()
-                    with open('conf.ini', encoding='utf-8') as config_file:
+                    with open('webui/conf.ini', encoding='utf-8') as config_file:
                         config.read_file(config_file)
 
                     regions = {k: v for k, v in config['regions'].items()}
@@ -548,16 +548,15 @@ with gr.Blocks(title="GT") as app:
                     df = pd.read_csv(hot_word_csv_files_path, encoding='utf-8-sig')
 
                     # 检查是否包含必要的列
-                    if 'hot_word' not in df.columns or 'chinese' not in df.columns:
-                        return "CSV文件缺少必要列（hot_word或chinese）"
+                    if 'hot_word' not in df.columns or 'output' not in df.columns:
+                        return "CSV文件缺少必要列（hot_word或output）"
 
                     # 遍历每一行处理
                     for index, row in df.iterrows():
-                        hot_word = row['hot_word']
-                        draft = row['chinese']
+                        draft = row['output']
 
                         if pd.isna(draft) or draft.strip() == "":
-                            continue  # 跳过空的chinese字段
+                            continue  # 跳过空的output字段
 
                         # 生成内容
                         result = write_in_style(draft, prompt)
@@ -1083,7 +1082,7 @@ with gr.Blocks(title="GT") as app:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=7864, help='Gradio 应用监听的端口号')
+    parser.add_argument('--port', type=int, default=7865, help='Gradio 应用监听的端口号')
     args = parser.parse_args()
     app.queue(20)
     if os.getenv('PLATFORM', '') == 'local':
@@ -1091,10 +1090,10 @@ if __name__ == '__main__':
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), "tts", os.getenv('TASK_DIR', ''),
                                   "tmp",
                                   os.path.join(os.getcwd(), 'Log')],
-                   server_port=args.port, favicon_path="favicon.ico")
+                   server_port=args.port, favicon_path="webui/favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
         app.launch(share=False, server_name="0.0.0.0",
                    allowed_paths=[os.getenv('ROOT', ''), os.getenv('ZIP_DIR', ''), "tts", os.getenv('TASK_DIR', ''),
                                   "tmp",
                                   os.path.join(os.getcwd(), 'Log')],
-                   server_port=args.port, favicon_path="favicon.ico")
+                   server_port=args.port, favicon_path="webui/favicon.ico")

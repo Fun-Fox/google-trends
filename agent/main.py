@@ -22,7 +22,7 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
 
     # 查找该任务目录下的所有 .csv 文件
     csv_files = [f for f in os.listdir(task_dir) if f.endswith('.csv')]
-
+    # print(csv_files)
     if not csv_files:
         print(f"未找到 CSV 文件在目录: {task_dir}")
         return None
@@ -48,6 +48,7 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
 
         # 返回 relation_news 字段内容
         relation_news = row.iloc[0]['relation_news']
+        print(f"relation_news: {relation_news}")
         return str(relation_news) if pd.notna(relation_news) else None
 
     except Exception as e:

@@ -9,7 +9,32 @@ load_dotenv()
 current_path = os.path.dirname(os.path.abspath(__file__))
 __all__ = ['crawl_google_trends_page']
 
+async def query_selector_with_retry(page, logging,selector, max_retries=3, delay=2):
+    """
+    带重试机制的 query_selector_all 封装
+    :param page: Playwright 页面对象
+    :param selector: CSS 选择器
+    :param max_retries: 最大重试次数
+    :param delay: 每次重试间隔时间（秒）
+    :return: 元素列表或空列表
+    """
+    for attempt in range(max_retries):
+        try:
+            elements = await page.query_selector_all(selector)
+            if elements:
+                logging.debug(f"成功找到元素：{selector}")
+                return elements
+            else:
+                logging.warning(f"第 {attempt + 1} 次尝试未找到元素：{selector}")
+        except Exception as e:
+            logging.error(f"查询 {selector} 出错: {e}")
 
+        if attempt < max_retries - 1:
+            logging.info(f"等待 {delay} 秒后重试...")
+            await asyncio.sleep(delay)
+
+    logging.error(f"经过 {max_retries} 次尝试仍未找到元素：{selector}")
+    return []
 async def crawl_google_trends_page(page, logging, origin="", category=0, url="", task_dir=None,
                                    to_download_image=False, nums=25):
     """
@@ -37,11 +62,11 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
     else:
         logging.error("页面已关闭，无法导航")
         return
-    await page.query_selector_all('div.VfPpkd-dgl2Hf-ppHlrf-sM5MNb > div')
+    await query_selector_with_retry(page,logging,'div.VfPpkd-dgl2Hf-ppHlrf-sM5MNb > div', max_retries=3, delay=2)
 
     # 第一次加载图片
     try:
-        elements = await page.query_selector_all(
+        elements = await query_selector_with_retry(page,logging,
             'tbody:nth-child(3) > tr:nth-child(n) > td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc')
         hot_words = elements[:nums]  # ✅ 在 await 后进行切片
     except Exception as e:
@@ -58,8 +83,8 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         except Exception as e:
             logging.error(f'点击 div {i + 1} 时出错: {e}')
 
-        new_titles_selector = 'div.EMz5P > div.k44Spe > div:nth-child(4) > div > div.jDtQ5 > div:nth-child(n) > a > div.MEJ15 > div.QbLC8c'
-        new_titles = await page.query_selector_all(new_titles_selector)
+        new_titles_selector = 'div.jDtQ5 > div:nth-child(n) > a > div.MEJ15 > div.QbLC8c'
+        new_titles = await query_selector_with_retry(page,logging,new_titles_selector)
         title_new = []
         for index, title in enumerate(new_titles):
             title_text = await title.text_content()
@@ -68,8 +93,8 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
 
         if to_download_image:
             # 获取指定路径下的图片的 src 地址
-            img_selector = 'div.EMz5P > div.k44Spe > div:nth-child(4) > div > div.jDtQ5 > div:nth-child(n) > a > div.yYagic > img'
-            img_src_list = await page.query_selector_all(img_selector)
+            img_selector = 'div.jDtQ5 > div:nth-child(n) > a > div.yYagic > img'
+            img_src_list = await query_selector_with_retry(page,logging,img_selector)
             logging.info(f"关键词{text_content}：图片数量：{len(img_src_list)}")
             if len(img_src_list) < 3:
                 logging.warning(f"关键词{text_content}：图片数量不足3张，请注意")
