@@ -322,8 +322,6 @@ with gr.Blocks(title="GT") as app:
                                allow_custom_value=True)
 
 
-
-
         with gr.Row():
             with gr.Column():
                 refresh_button.click(update_drop_down, outputs=task_folders)
@@ -344,7 +342,7 @@ with gr.Blocks(title="GT") as app:
                 research_button = gr.Button("🤐特定-热词-网络搜索")
 
 
-                def research_hot_word(hot_words_folders_path,language):
+                def research_hot_word(hot_words_folders_path, language):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
                     agent_logger = get_logger(__name__, agent_log_file_path)
@@ -353,13 +351,13 @@ with gr.Blocks(title="GT") as app:
                     return ret
 
 
-                research_button.click(fn=research_hot_word, inputs=[hot_word_folders,language_dropdown],
+                research_button.click(fn=research_hot_word, inputs=[hot_word_folders, language_dropdown],
                                       outputs=gr.Textbox(label=""))
             with gr.Column():
                 research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")
 
 
-                def research_all_hot_word(task_folders,language):
+                def research_all_hot_word(task_folders, language):
                     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
                     agent_logger = get_logger(__name__, agent_log_file_path)
@@ -381,7 +379,7 @@ with gr.Blocks(title="GT") as app:
                     return result
 
 
-                research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders,language_dropdown],
+                research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders, language_dropdown],
                                                   outputs=gr.Textbox(label=""))
         with gr.Row():
 
@@ -459,9 +457,9 @@ with gr.Blocks(title="GT") as app:
 
                     # 获取 'hot_word' 列的内容
                     combined_choices = []
-                    for hw, hwc in zip(df['hot_word'], df['chinese']):
-                        if pd.notna(hwc) and hwc != "":  # 判断中文叙事不为空
-                            combined_choices.append(f"{hw}/{hwc}")
+                    # for hw, hwc in zip(df['hot_word'], df['chinese']):
+                    #     if pd.notna(hwc) and hwc != "":  # 判断中文叙事不为空
+                    #         combined_choices.append(f"{hw}/{hwc}")
 
                     for hw, hwc in zip(df['hot_word'], df['output']):
                         if pd.notna(hwc) and hwc != "":  # 判断英文叙事不为空
@@ -480,13 +478,13 @@ with gr.Blocks(title="GT") as app:
                                            outputs=[content_textbox, selected_row])
 
         with gr.Row():
-            prompt_textbox1 = gr.Textbox(label="请输入口播人设提示词 1",
+            prompt_textbox1 = gr.Textbox(label="请输入口播人设提示词 1(可编辑)",
                                          value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 使用中文输出\n- 直接切入内容，无需开场的问候\n- 通过标点符号(-)在任意位置控制停顿""",
                                          lines=3)
 
-            prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿
+            prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2(可编辑)", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 使用英文输出\n- 通过标点符号(-)在任意位置控制停顿
             """, lines=3)
-            prompt_textbox3 = gr.Textbox(label="请输入口播人设提示词 3", value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿
+            prompt_textbox3 = gr.Textbox(label="请输入口播人设提示词 3(可编辑)", value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿
             """, lines=3)
 
         with gr.Row():
