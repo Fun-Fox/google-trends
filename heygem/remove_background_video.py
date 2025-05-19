@@ -5,7 +5,7 @@ from PIL import Image
 import cv2
 import os
 import glob
-from moviepy.editor import ImageSequenceClip
+from moviepy import ImageSequenceClip
 
 
 def remove_bg_pil(image: Image.Image, model_name="u2net"):
