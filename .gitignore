@@ -1,6 +1,5 @@
 *.db
 *.json
-*.log
 *.xlsx
 *.csv
 *.spec
@@ -18,6 +17,5 @@ __pycache__
 *.zip
 .env
 *.bak
-*.wav
 /tts
 /heygem/deploy/ssh
