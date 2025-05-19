@@ -20,3 +20,4 @@ __pycache__
 *.bak
 *.wav
 /tts
+/heygem/deploy/ssh

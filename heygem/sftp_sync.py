@@ -12,6 +12,8 @@ def create_ssh_client():
         ssh.connect(
             hostname=os.getenv('HEY_GEN_IP'),
             port=22,
+            username="root",
+            password="password",
             timeout=10  # 设置为10秒
         )
         return ssh
