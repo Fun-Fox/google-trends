@@ -1,5 +1,6 @@
 # 主流程
 import os
+import uuid
 
 from heygem.easy_submit import call_easy_submit, query_easy_status
 from heygem.remove_background_video import remove_background
@@ -39,7 +40,7 @@ ffmpeg -loglevel warning -i /code/data/temp/热点词_カローラツーリン�
 
 
 def digital_human_pipeline(audio_url, video_url, hot_word_path):
-    code = os.path.splitext(audio_url)[0]
+    code = str(uuid.uuid4())
 
     # 创建 SSH 连接（复用）
     ssh = create_ssh_client()
@@ -62,9 +63,10 @@ def digital_human_pipeline(audio_url, video_url, hot_word_path):
     print("🎉 合成结果:", result)
 
     remote_file = f"{code}-r.mp4"
+    local_file = os.path.splitext(os.path.basename(audio_url))[0]
     os.makedirs(f"{hot_word_path}/video", exist_ok=True)
     if remote_path_exists(ssh, remote_file):
-        download_file(f"{remote_dir}/{remote_file}", f"{hot_word_path}/video/{remote_file}", ssh)
+        download_file(f"{remote_dir}/{remote_file}", f"{hot_word_path}/video/{local_file}.mp4", ssh)
     else:
         print(f"⚠️ 文件不存在: {remote_file}")
 
