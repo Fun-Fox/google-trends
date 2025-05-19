@@ -8,11 +8,16 @@ def create_ssh_client():
     """创建 SSH 客户端连接"""
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(
-        hostname=os.getenv('HEY_GEN_IP'),
-        port=int(os.getenv('SSH_PORT', '22'))
-    )
-    return ssh
+    try:
+        ssh.connect(
+            hostname=os.getenv('HEY_GEN_IP'),
+            port=22,
+            timeout=10  # 设置为10秒
+        )
+        return ssh
+    except paramiko.ssh_exception.SSHException as e:
+        print(f"SSH 连接失败: {e}")
+        return None
 
 
 def progress(filename, size, sent):

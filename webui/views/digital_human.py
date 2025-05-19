@@ -1,36 +1,76 @@
 import os
 import gradio as gr
+from ffmpeg import output
 
 from webui.func.folder import get_task_folders, update_hot_word_folders
+from heygem.digital_human_pipeline import digital_human_pipeline
 
 
 def build_tab():
-    gr.Markdown("选择生成的配音以及参考数字人，生成数字人")
-    with gr.Row():
-        task_folders = gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
-                                   allow_custom_value=True)
+    """构建数字人生成页面 UI"""
 
-        hot_word_folders = gr.Dropdown(label="热词", multiselect=False,
-                                       allow_custom_value=True)
+    gr.Markdown("选择生成的配音以及参考数字人，生成数字人")
+
+    # ======================
+    # 第一行：任务记录 & 热词目录
+    # ======================
+    with gr.Row():
+        task_folders = gr.Dropdown(
+            label="任务记录",
+            multiselect=False,
+            choices=[''] + get_task_folders(),
+            allow_custom_value=True
+        )
+        hot_word_folders = gr.Dropdown(
+            label="热词目录",
+            multiselect=False,
+            allow_custom_value=True
+        )
+
     refresh_button = gr.Button("刷新任务记录")  # 新增刷新按钮
 
-    def update_drop_down():
-        return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
-                           allow_custom_value=True)
-    refresh_button.click(update_drop_down, outputs=task_folders)
+    # ======================
+    # 按钮事件绑定
+    # ======================
+
+    def refresh_task_dropdown():
+        return gr.Dropdown.update(choices=[''] + get_task_folders())
+
+    refresh_button.click(fn=refresh_task_dropdown, outputs=task_folders)
     task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hot_word_folders)
 
+    # ======================
+    # 第二行：音频 & 视频选择器
+    # ======================
     with gr.Row():
-        tts_audio_selector = gr.Dropdown(label="选择角色配音(wav文件)", multiselect=False,allow_custom_value=True)
-        video_selector = gr.Dropdown(label="选择角色参考数字人", multiselect=False, allow_custom_value=True)
+        tts_audio_selector = gr.Dropdown(
+            label="选择角色配音 (WAV 文件)",
+            multiselect=False,
+            allow_custom_value=True
+        )
 
-    def get_tts_wav_audio(hot_word_path):
+        def get_ref_video_files():
+            """
+            获取 doc/数字人/参考视频 目录下的所有 .mp4 文件
+            """
+            video_dir = os.path.join("doc", "数字人", "参考视频")
+            if not os.path.exists(video_dir):
+                return []
+
+            return [''] + [f for f in os.listdir(video_dir) if f.endswith(".mp4")]
+
+        video_selector = gr.Dropdown(
+            label="选择角色参考视频 (MP4 文件)",
+            multiselect=False,
+            choices=get_ref_video_files(),
+            allow_custom_value=True
+        )
+
+    def update_tts_wav_options(hot_word_path: str):
         """
-        根据热词路径，读取其下 tts 文件夹中的 .wav 文件
-        :param hot_word_path: 热词文件夹路径
-        :return: 包含 .wav 文件名的列表，用于 Dropdown 显示
+        根据热词路径加载 tts 文件夹中的 wav 文件
         """
-        if not hot_word_path or not os.path.exists(hot_word_path):
+        if not hot_word_path or not os.path.isdir(hot_word_path):
             return []
 
         tts_dir = os.path.join(hot_word_path, "tts")
@@ -38,19 +78,34 @@ def build_tab():
             return []
 
         wav_files = [f for f in os.listdir(tts_dir) if f.endswith(".wav")]
-        return wav_files
+        return gr.Dropdown(
+            label="选择角色配音 (WAV 文件)",
+            multiselect=False,
+            choices=[''] + wav_files,
+            allow_custom_value=True
+        )
 
-    hot_word_folders.change(fn=get_tts_wav_audio, inputs=[hot_word_folders],
-                            outputs=tts_audio_selector)
+    # ======================
+    # 事件绑定
+    # ======================
 
-    # 生成按钮
+    hot_word_folders.change(
+        fn=update_tts_wav_options,
+        inputs=[hot_word_folders],
+        outputs=tts_audio_selector
+    )
+
+    # ======================
+    # 生成按钮与执行函数
+    # ======================
     generate_button = gr.Button("生成数字人")
 
-    from heygem.digital_human_pipeline import digital_human_pipeline
-    def gen_digital_human(tts_audio_url, video_url, hot_word_path):
-        print(tts_audio_url, video_url, hot_word_path)
-        digital_human_pipeline(tts_audio_url, video_url, hot_word_path)
+    def gen_digital_human(tts_audio_file: str, video_file: str, hot_word_path: str):
+        print(f"TTS Audio: {tts_audio_file}, 视频: {video_file}, 热词路径: {hot_word_path}")
+        return digital_human_pipeline(tts_audio_file, video_file, hot_word_path)
 
-    generate_button.click(fn=gen_digital_human, inputs=[tts_audio_selector, video_selector, hot_word_folders])
-
-
+    generate_button.click(
+        fn=gen_digital_human,
+        inputs=[tts_audio_selector, video_selector, hot_word_folders],
+        outputs=[gr.Textbox(label="生成结果")]
+    )

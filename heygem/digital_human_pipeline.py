@@ -43,6 +43,9 @@ def digital_human_pipeline(audio_url, video_url, hot_word_path):
 
     # 创建 SSH 连接（复用）
     ssh = create_ssh_client()
+    if ssh is None:
+        print("SSH 连接失败")
+        return "SSH 连接失败,请检查"
     remote_dir = "code/data/temp"
 
     # 1. 测试上传音频文件
