@@ -57,7 +57,7 @@ def build_tab():
             if not os.path.exists(video_dir):
                 return []
 
-            return [''] + [f for f in os.listdir(video_dir) if f.endswith(".mp4")]
+            return [''] + [os.path.join(video_dir, f) for f in os.listdir(video_dir) if f.endswith(".mp4")]
 
         video_selector = gr.Dropdown(
             label="选择角色参考视频 (MP4 文件)",
@@ -76,8 +76,8 @@ def build_tab():
         tts_dir = os.path.join(hot_word_path, "tts")
         if not os.path.isdir(tts_dir):
             return []
+        wav_files = [os.path.join(tts_dir, f) for f in os.listdir(tts_dir) if f.endswith(".wav")]
 
-        wav_files = [f for f in os.listdir(tts_dir) if f.endswith(".wav")]
         return gr.Dropdown(
             label="选择角色配音 (WAV 文件)",
             multiselect=False,
@@ -101,7 +101,7 @@ def build_tab():
     generate_button = gr.Button("生成数字人")
 
     def gen_digital_human(tts_audio_file: str, video_file: str, hot_word_path: str):
-        print(f"TTS Audio: {tts_audio_file}, 视频: {video_file}, 热词路径: {hot_word_path}")
+        print(f"口播音频: {tts_audio_file}\n 参考视频: {video_file}\n 热词路径: {hot_word_path}")
         return digital_human_pipeline(tts_audio_file, video_file, hot_word_path)
 
     generate_button.click(

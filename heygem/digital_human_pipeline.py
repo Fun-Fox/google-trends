@@ -54,6 +54,7 @@ def digital_human_pipeline(audio_url, video_url, hot_word_path):
         upload_files([audio_url, video_url], remote_dir, ssh)
     else:
         print(f"⚠️ 合成音频或参考视频文件不存在: {audio_url}、{video_url}")
+        return f"⚠️ 合成音频或参考视频文件不存在: {audio_url}、{video_url}"
 
     call_easy_submit(audio_url, video_url, code)
 
