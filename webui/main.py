@@ -44,7 +44,6 @@ def start():
                    allowed_paths=[os.path.join(root_dir, os.getenv('ROOT', '')),
                                   os.path.join(root_dir, os.getenv('ZIP_DIR', '')),
                                   os.path.join(root_dir, os.getenv('TASK_DIR', '')),
-                                  os.path.join(root_dir, "tmp"),
                                   os.path.join(root_dir, 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
@@ -53,6 +52,5 @@ def start():
                                   os.path.join(root_dir, os.getenv('ZIP_DIR', '')),
                                   os.path.join(root_dir, os.getenv('TASK_DIR', '')),
                                   os.path.join(root_dir, "doc"),
-                                  os.path.join(root_dir, "tmp"),
                                   os.path.join(root_dir, 'Log')],
                    server_port=args.port, favicon_path="favicon.ico")

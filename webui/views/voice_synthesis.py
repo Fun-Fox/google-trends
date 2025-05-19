@@ -49,7 +49,6 @@ def build_tab():
         audios = [f for f in os.listdir(audio_dir) if f.lower().endswith(('.wav', '.mp3'))]
         return [os.path.join(audio_dir, audio) for audio in audios]
 
-
     @gr.render(inputs=selected_row_tmp)
     def render_audio_inputs(selected_row_tmp_value):
         if not selected_row_tmp_value:
@@ -77,6 +76,7 @@ def build_tab():
                         value='',
                         allow_custom_value=True
                     )
+
                     # 使用 .state() 来传递当前状态到函数，并选择最终使用的路径
                     def select_audio(dropdown_val, audio_val):
                         return dropdown_val if dropdown_val else audio_val
@@ -135,7 +135,7 @@ def build_tab():
                 if not speaker_audio_path or not content:
                     return None
                 print(f"参考音频数据:角色：{speaker_name},路径:{speaker_audio_path}")
-                output_path = os.path.join(task_root_dir, "tts/tmp", f"{i}_{speaker_name}_{formatted_time}.wav")
+                output_path = os.path.join(task_root_dir, "tmp", f"{i}_{speaker_name}_{formatted_time}.wav")
                 progress(i / text_length * 0.6, f"第{i}段文本的语音生成成功")
                 tts.infer_fast(speaker_audio_path, content, output_path)
                 output_files.append(output_path)
@@ -163,8 +163,8 @@ def build_tab():
             # 第二步：对每个 speaker 的音频按 i 升序排序并拼接
             progress(0.7, f"开始按角色进行独立音轨拼接（含等待静音）")
             hot_word = selected_row_tmp_value.split("/")[0]
-            hot_word_index = selected_row_tmp_value.split("/")[1]
-            task_path = os.path.join(task_root_dir, "tts", os.path.basename(task_folders.value))
+            results_id = selected_row_tmp_value.split("/")[1]
+            task_path = os.path.join(task_root_dir, os.path.basename(task_folders.value), hot_word, "tts" )
 
             for speaker_name in set(seg["speaker"] for seg in output_files_with_duration):
                 # 筛选当前 speaker 的语音段
@@ -197,15 +197,15 @@ def build_tab():
                 os.makedirs(task_path, exist_ok=True)
 
                 final_output_path = os.path.join(
-                    task_path,
-                    f"{hot_word}_{hot_word_index}_{speaker_name}_{formatted_time}.wav"
+                    task_path, hot_word,
+                    f"热点词/{hot_word}_口播稿ID/{results_id}_角色/{speaker_name}_{formatted_time}.wav"
                 )
                 combined_audio.export(final_output_path, format="wav")
                 output_files_by_speaker[speaker_name] = final_output_path
             progress(0.8, f"角色独立音轨拼接完成")
 
             # 第三步 导出 SRT 字幕文件
-            srt_path = os.path.join(task_path, f"{hot_word}_{hot_word_index}_{formatted_time}.srt")
+            srt_path = os.path.join(task_path, f"{hot_word}_{results_id}_{formatted_time}.srt")
             with open(srt_path, "w", encoding="utf-8-sig") as f:
                 for i, seg in enumerate(output_files_with_duration, start=1):
                     start = ms_to_srt_time(seg["start_time"])
@@ -217,7 +217,7 @@ def build_tab():
             progress(1, f"SRT 字幕已经生成")
 
             # 清空零时文件夹
-            tmp_folder = os.path.join(task_root_dir, "tts/tmp")
+            tmp_folder = os.path.join(task_root_dir, "tmp")
             if os.path.exists(tmp_folder):
                 for file in os.listdir(tmp_folder):
                     file_path = os.path.join(tmp_folder, file)

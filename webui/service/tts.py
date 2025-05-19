@@ -29,7 +29,6 @@ def init_tts():
     tts = IndexTTS(model_dir=os.path.join(root_dir,"index-tts/checkpoints"), cfg_path=os.path.join(root_dir,"index-tts/checkpoints/config.yaml"),
                    device="cuda:0",
                    use_cuda_kernel=True)
-    os.makedirs(os.path.join(task_root_dir, "tts/tmp"), exist_ok=True)
     return  tts,i18n
 
 
