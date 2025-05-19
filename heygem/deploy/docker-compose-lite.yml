@@ -11,6 +11,8 @@ services:
     privileged: true
     volumes:
       - d:/heygem_data/face2face:/code/data
+      # 可选：挂载 SSH 配置目录，持久化设置
+      - ./ssh:/etc/ssh
     environment:
       - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
     deploy:
@@ -22,6 +24,15 @@ services:
     ports:
       - '8383:8383'
       - '22:22'
-    command: python /code/app_local.py
+    command: >
+      sh -c "
+      apt update &&
+      apt install -y openssh-server &&
+      mkdir -p /var/run/sshd &&
+      echo 'root:password' | chpasswd &&
+      sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config &&
+      /usr/sbin/sshd &&
+      python /code/app_local.py
+      "
     networks:
       - ai_network
