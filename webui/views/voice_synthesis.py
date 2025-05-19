@@ -197,15 +197,15 @@ def build_tab():
                 os.makedirs(task_path, exist_ok=True)
 
                 final_output_path = os.path.join(
-                    task_path, hot_word,
-                    f"热点词/{hot_word}_口播稿ID/{results_id}_角色/{speaker_name}_{formatted_time}.wav"
+                    task_path,
+                    f"热点词_{hot_word}_口播稿ID_{results_id}_角色_{speaker_name}_{formatted_time}.wav"
                 )
                 combined_audio.export(final_output_path, format="wav")
                 output_files_by_speaker[speaker_name] = final_output_path
             progress(0.8, f"角色独立音轨拼接完成")
 
             # 第三步 导出 SRT 字幕文件
-            srt_path = os.path.join(task_path, f"{hot_word}_{results_id}_{formatted_time}.srt")
+            srt_path = os.path.join(task_path, f"热点词_{hot_word}__口播稿ID_{results_id}_{formatted_time}_字幕.srt")
             with open(srt_path, "w", encoding="utf-8-sig") as f:
                 for i, seg in enumerate(output_files_with_duration, start=1):
                     start = ms_to_srt_time(seg["start_time"])
