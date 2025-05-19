@@ -21,6 +21,7 @@ services:
     shm_size: '8g'
     ports:
       - '8383:8383'
+      - '22:22'
     command: python /code/app_local.py
     networks:
       - ai_network

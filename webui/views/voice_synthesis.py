@@ -164,7 +164,7 @@ def build_tab():
             progress(0.7, f"开始按角色进行独立音轨拼接（含等待静音）")
             hot_word = selected_row_tmp_value.split("/")[0]
             results_id = selected_row_tmp_value.split("/")[1]
-            task_path = os.path.join(task_root_dir, os.path.basename(task_folders.value), hot_word, "tts" )
+            task_path = os.path.join(task_root_dir, os.path.basename(task_folders.value), hot_word)
 
             for speaker_name in set(seg["speaker"] for seg in output_files_with_duration):
                 # 筛选当前 speaker 的语音段
@@ -194,18 +194,20 @@ def build_tab():
 
                 # 保存最终拼接文件
 
-                os.makedirs(task_path, exist_ok=True)
+                os.makedirs(task_path, "tts", exist_ok=True)
 
                 final_output_path = os.path.join(
-                    task_path,
+                    task_path, "tts",
                     f"热点词_{hot_word}_口播稿ID_{results_id}_角色_{speaker_name}_{formatted_time}.wav"
                 )
                 combined_audio.export(final_output_path, format="wav")
                 output_files_by_speaker[speaker_name] = final_output_path
             progress(0.8, f"角色独立音轨拼接完成")
 
+            os.makedirs(task_path, "srt", exist_ok=True)
             # 第三步 导出 SRT 字幕文件
-            srt_path = os.path.join(task_path, f"热点词_{hot_word}__口播稿ID_{results_id}_{formatted_time}_字幕.srt")
+            srt_path = os.path.join(task_path, "srt",
+                                    f"热点词_{hot_word}__口播稿ID_{results_id}_{formatted_time}_字幕.srt")
             with open(srt_path, "w", encoding="utf-8-sig") as f:
                 for i, seg in enumerate(output_files_with_duration, start=1):
                     start = ms_to_srt_time(seg["start_time"])

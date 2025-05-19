@@ -21,9 +21,11 @@ def build_tab():
         return gr.Dropdown(label="任务记录", multiselect=False, choices=[''] + get_task_folders(),
                            allow_custom_value=True)
 
+    refresh_button.click(update_drop_down, outputs=task_folders)
+
     with gr.Row():
         with gr.Column():
-            refresh_button.click(update_drop_down, outputs=task_folders)
+
             # 仅提供语言名称选项，不要编码
             language_dropdown = gr.Dropdown(
                 label="选择采样信息输出语言",

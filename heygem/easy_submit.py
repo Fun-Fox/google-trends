@@ -28,24 +28,34 @@ def call_easy_submit(audio_url, video_url, code):
 # 4. 每隔 5 秒调用 /easy/query 接口查询进度
 def query_easy_status(task_code):
     url = f"http://{HEY_GEN_IP}:8383/easy/query?code={task_code}"
-    max_retries = 10
+    max_retries = 30  # 增加最大重试次数以应对长时间任务
     attempt = 0
 
     while attempt < max_retries:
-        response = requests.get(url)
-        attempt += 1
-        if response.status_code == 200:
-            result = response.json()
-            print(f"第 {attempt} 次查询结果:", result)
-            if result.get("status") == "completed":
-                print("任务已完成！")
-                return True  # 成功返回
-        else:
-            print(f"第 {attempt} 次查询失败: {response.status_code}, {response.text}")
+        try:
+            response = requests.get(url, timeout=10)  # 添加超时
+            attempt += 1
+
+            if response.status_code == 200:
+                result = response.json()
+
+                print(f"第 {attempt} 次查询结果: {result}")
+
+                if result.get("code") == 10000:
+                    data = result.get("data", {})
+                    if data.get("status") == 2 and data.get("progress") == 100:
+                        video_path = data.get("result")
+                        print(f"✅ 任务已完成！合成视频路径：{video_path}")
+                        return video_path  # 返回视频路径
+            else:
+                print(f"第 {attempt} 次查询失败: {response.status_code}, {response.text}")
+
+        except requests.RequestException as e:
+            print(f"第 {attempt} 次请求异常: {e}")
 
         if attempt < max_retries:
             print(f"等待 5 秒后进行第 {attempt + 1} 次查询...")
-            time.sleep(5)
+            time.sleep(60)
 
-    print("已达到最大查询次数，任务可能仍在处理中。")
-    return False  # 超时未完成
+    print("❌ 已达到最大查询次数，任务可能仍在处理中或接口异常。")
+    return None  # 超时未完成或出错
