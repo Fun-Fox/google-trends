@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from webui.func.constant import root_dir
 from webui.views import cookie_settings, trend_crawler, deep_search, voice_script_generation, voice_synthesis, \
-    digital_human, downloads
+    digital_human, downloads,crontab_tasks
 
 load_dotenv()
 
@@ -30,6 +30,9 @@ with gr.Blocks(title="GT") as app:
 
     with gr.Tab("多角色数字人合成"):
         digital_human.build_tab()
+
+    with gr.Tab("定时任务"):
+        crontab_tasks.build_tab()
 
     with gr.Tab("下载"):
         downloads.build_tab()
