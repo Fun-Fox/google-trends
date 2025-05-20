@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from webui.func.constant import root_dir
 from webui.views import cookie_settings, trend_crawler, deep_search, voice_script_generation, voice_synthesis, \
-    digital_human, downloads,crontab_tasks
+    digital_human, downloads, crontab_tasks, markdown2img
 
 load_dotenv()
 
@@ -16,11 +16,17 @@ with gr.Blocks(title="GT") as app:
     with gr.Tab("Cookie 设置"):
         cookie_settings.build_tab()
 
-    with gr.Tab("时下热词-采集"):
+    with gr.Tab("时下热词.采集"):
         trend_crawler.build_tab()
 
-    with gr.Tab("优质报道-深度搜索"):
+    with gr.Tab("优质报道.深度搜索"):
         deep_search.build_tab()
+
+    with gr.Tab("优质报道.刊物生成"):
+        markdown2img.build_tab()
+
+    with gr.Tab("热点.定时任务"):
+        crontab_tasks.build_tab()
 
     with gr.Tab("口播文案生成"):
         voice_script_generation.build_tab()
@@ -31,8 +37,7 @@ with gr.Blocks(title="GT") as app:
     with gr.Tab("多角色数字人合成"):
         digital_human.build_tab()
 
-    with gr.Tab("定时任务"):
-        crontab_tasks.build_tab()
+
 
     with gr.Tab("下载"):
         downloads.build_tab()
