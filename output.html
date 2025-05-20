@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Markdown Poster</title>
+    <style>
+        
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background-color: #f2f2f2;
+        display: flex;
+        justify-content: center;
+        align-items: start;
+        overflow-y: auto;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+    }
+
+    .markdown-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        text-align: justify;
+        animation: fadeIn 1.2s ease-in-out;
+        color: #333;
+        overflow-y: auto; /* 内容过长时允许内部滚动 */
+        max-height: 90vh; /* 设置最大高度 */
+        width: 800px; /* 固定宽度 */
+        margin: 0 auto; /* 水平居中 */
+        word-wrap: break-word; /* 自动换行 */
+        overflow-x: hidden; /* 禁止横向滚动 */
+    }
+    /*  > 引用块（blockquotes）*/
+    .markdown-content blockquote {
+        font-size: 18px;      /* 比 h1 小一点 */
+        font-weight: 500;     /* 不加粗 */
+        color: #555;          /* 淡化文字颜色 */
+        background-color: #f9f9f9; /* 浅灰色背景 */
+        border-left: 4px solid #007BFF; /* 左边蓝色条 */
+        padding: 16px 20px;
+        margin: 20px 0;
+        border-radius: 6px;
+        box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.03);
+        font-style: italic;   /* 斜体，突出引用风格 */
+    }
+    
+    /* 悬浮标题 */
+    .markdown-content h1:first-of-type {
+        position: sticky;
+        top: -30px;
+        background: white;
+        padding-top: 10px;
+        z-index: 999;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid #007BFF;
+        padding-left: 12px;
+        margin-left: -12px;
+    }
+    
+    /* 滚动条隐藏（桌面） */
+    .markdown-content::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* 图片处理 */
+    .markdown-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+    }
+    
+    
+    /* 代码块美化 */
+    .markdown-content code {
+        background-color: #f8f8f8;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        color: #d63384;
+    }
+
+    .markdown-content pre {
+        background-color: #f1f1f1;
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
+        font-size: 15px;
+        font-family: 'Courier New', monospace;
+        color: #333;
+    }
+    
+    /* 动画效果 */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* 表格样式 */
+    .markdown-content table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 20px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .markdown-content th, .markdown-content td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .markdown-content tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    /* 引用样式 */
+    .markdown-content blockquote {
+        border-left: 4px solid #007bff;
+        margin: 20px 0;
+        padding: 10px 20px;
+        background-color: #f9f9f9;
+        font-style: italic;
+        color: #555;
+    }
+    
+    /* 列表样式增强 */
+    .markdown-content ul, .markdown-content ol {
+        padding-left: 20px;
+    }
+    
+    .markdown-content li {
+        margin: 6px 0;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 820px) {
+        .background-frame {
+            width: calc(100% + 20px);
+            max-width: 100%;
+            padding: 15px;
+        }
+    
+        .markdown-content {
+            width: 100%;
+            max-width: 100%;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+    
+        .markdown-content h1 {
+            font-size: 24px;
+        }
+    
+        .markdown-content h2 {
+            font-size: 20px;
+        }
+    
+        .markdown-content img {
+            border-radius: 8px;
+        }
+    }
+    
+
+        .background-frame {
+            width: calc(100% + 60px); /* 比内容区宽 40px */
+            max-width: 860px;         /* 卡片宽 800px + 左右各 20px 边距 */
+            margin: 0 auto;
+            padding: 30px;
+            # box-sizing: border-box;
+            background-image: url("/webui/bg/Cute.webp");
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+body { font-family: 'YourCustomFont', sans-serif; }
+
+    </style>
+</head>
+<body>
+     <div class="background-frame">
+        <div class="markdown-content">
+            <h1>Google Trends 时下热词叙事风格撰写</h1>
+
+<h2>项目简介</h2>
+
+<p>本项目是一个基于Playwright(网页自动化)、pocketflow(Agent框架) 的 Google Trends 时下热词采集、搜索、叙事撰写、叙事配图评分、叙事撰写（人设测试）工具。
+支持本地模型与云端模型。本地模型（多模态）基于gemma3，云模型（多模态）基于deepseek-ai/deepseek-vl2</p>
+
+<h2>流程</h2>
+
+<p>热点->深度查询->叙事->叙事配图->配图评分->叙事撰写（人设测试）</p>
+
+<p>基于Python 11</p>
+
+<h2>开发计划</h2>
+
+<table>
+<thead>
+<tr>
+  <th>功能</th>
+  <th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>时下热词采集</td>
+  <td>[x] 已完成</td>
+</tr>
+<tr>
+  <td>深度搜索</td>
+  <td>[x] 已完成</td>
+</tr>
+<tr>
+  <td>口播文案</td>
+  <td>[x] 已完成</td>
+</tr>
+<tr>
+  <td>定制口播提示词</td>
+  <td>[x] 已完成</td>
+</tr>
+<tr>
+  <td>集成tts</td>
+  <td>[x] 已完成</td>
+</tr>
+<tr>
+  <td>基于多角色生成口播音频</td>
+  <td>[x] 已完成</td>
+</tr>
+<tr>
+  <td>集成heyGen数字人api</td>
+  <td>[ ] 未完成</td>
+</tr>
+<tr>
+  <td>完善定时任务</td>
+  <td>[ ] 未完成</td>
+</tr>
+<tr>
+  <td>完善批量操作</td>
+  <td>[ ] 未完成</td>
+</tr>
+</tbody>
+</table>
+
+<h2>系统运行截图及过程例子</h2>
+
+<h3>时下热词采集</h3>
+
+<p>采集google trends 全球不同地区不同分类的热词数据，并且还可以下载推荐的新闻热图</p>
+
+<p><img src="doc/1.png" alt="image" /></p>
+
+<h3>深度搜索</h3>
+
+<p>由网络搜索决策者，决定进行深度搜索，最终则到满足要求的结果</p>
+
+<p><img src="doc/2.png" alt="image" /></p>
+
+<p>可以查看样例日志文件，查看最近完整执行过程
+<a href="doc/agent执行过程-样例.log">agent执行日志文件</a></p>
+
+<h3>口播文案</h3>
+
+<p>这部分可以在界面上选择时下热词-叙事自定义提示词，进行人设设置，然后进行测试</p>
+
+<p><img src="doc/3.png" alt="image" />
+<img src="doc/4.png" alt="image" /></p>
+
+<h3>口播音频</h3>
+
+<p>支持多角色的各自独立音频轨道生成</p>
+
+<p><img src="doc/6.png" alt="image" />
+<img src="doc/7.png" alt="image" /></p>
+
+<h3>多角色的数字人合成</h3>
+
+<h3>素材下载</h3>
+
+<p>可以下载时下热词，并且还有搜索后的初稿以及素材下载，并且对图片进行的评分(与内容相关性的评分)</p>
+
+<p><img src="doc/5.png" alt="image" /></p>
+
+<h2>它是如何工作的？</h2>
+
+<h4>深度搜索工作流：research_hot_word_flow</h4>
+
+<p>节点说明：</p>
+
+<ul>
+<li>DecideAction：决策节点，判断是否继续深度搜索，如果继续则继续深度搜索，如果结束则结束深度搜索</li>
+<li>SearchWeb：网页搜索（热词相关文本及图片）</li>
+<li>AnswerEditor：根据最终结果进行LLM写初稿</li>
+<li>SupervisorNode：对初稿内容进行审核</li>
+<li>EvaluateImage：评估符合热词叙事的配图，对图片进行多维度评分</li>
+</ul>
+
+<pre><code>graph TD
+    A[DecideAction] --&gt;|"search"| B[SearchWeb]
+    A --&gt;|"answer"| C[AnswerEditor]
+    C --&gt;D[SupervisorNode]
+    D --&gt;|"approved"|E[EvaluateImage]
+    D --&gt;|"retry"| A
+    B --&gt;|"decide"| A
+
+</code></pre>
+
+<h4>提示词</h4>
+
+<blockquote>
+  <p>DecideAction</p>
+</blockquote>
+
+<pre><code>
+    ## 上下文
+
+    你是一个可以搜索网络的热点新闻深度查询助手
+    现在给你一个时下网络流行热词，你需要进行深度查询，确保最终理解并能够全面的回答该热词对应的叙事内容。
+
+    ### 查询维度
+
+    - 发生时间：最近48小时内
+    - 事件基本信息 : 确认热词对应的具体事件、时间、地点、主要人物
+    - 事件发展脉络 : 事件起因、关键节点、最新进展
+    - 社会影响范围 : 受众群体、地域影响、行业影响
+    - 争议焦点 : 各方观点分歧、争论核心问题
+    - 官方回应 : 相关权威机构/人物的正式表态
+    - 公众反应 : 主流情绪倾向、典型评论
+    - 专业解读 : 权威专家/媒体的分析观点
+    - 传播特点 : 传播路径、关键推手、发酵速度
+    - 关联事件 : 与此热点相关的历史/并行事件
+
+    ### 输入
+    时下流行热词: {hot_word}
+    先前的研究: 
+    {context}
+
+    ## 操作空间
+    [1] search
+      描述: 在网络上查找更多信息
+      参数:
+        - query (str): 搜索内容
+
+    [2] answer
+      描述: 用当前知识回答问题
+      参数:
+        - answer (str): 问题的最终回答
+
+    ### 下一步操作
+    根据上下文、查询维度和可用操作决定下一步操作。
+    请以以下格式返回你的响应：
+
+    ```yaml
+    thinking: |
+        &lt;你的逐步推理过程&gt;
+    action: search OR answer
+    reason: &lt;为什么选择这个操作&gt;
+    answer: &lt;如果操作是回答&gt;
+    search_query: &lt;具体的搜索查询如果操作是搜索&gt;
+   
+</code></pre>
+
+<pre><code>重要：请确保：
+
+1. 使用|字符表示多行文本字段
+   2. 多行字段使用缩进（4个空格）
+   3. 单行字段不使用|字符
+   4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
+</code></pre>
+
+<pre><code>
+&gt; AnswerEditor
+
+</code></pre>
+
+<pre><code>## 上下文
+
+你是一个热点信息精炼助手，基于以下信息，回答问题。
+
+### 精炼维度
+
+- 核心事实提取: 从海量信息中提取关键事实要素
+  - 舆情脉络梳理: 梳理公众情绪变化与讨论焦点转移路径
+  - 发酵点识别: 识别推动话题扩散的关键节点与触发因素
+  - 趋势预判: 基于现有信息预测话题可能的发展方向
+
+### 输入格式:
+
+时下网络流行热词: {hot_word}
+研究: 
+{context}
+
+### 你的回答:
+结合热词对应的研究进行理解，
+- 使用精炼维度撰写叙事文案
+  - 使用中文和英文。
+  - 用简单易懂的语言解释想法
+  - 使用日常语言，避免术语
+
+请以以下格式返回你的响应：
+&lt;pre&gt;&lt;code&gt;chinese: |
+    &lt;中文叙事文案&gt;
+english: |
+    &lt;英文叙事文案&gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+重要：请确保：
+1. 使用|字符表示多行文本字段
+2. 多行字段使用缩进（4个空格）
+3. 单行字段不使用|字符
+</code></pre>
+
+<pre><code>
+&gt; EvaluateImage
+
+</code></pre>
+
+<pre><code>## 上下文
+你是一个内容配图评分助手
+
+## 操作空间
+请根据以下指标对内容的配图进行评分
+内容：{draft}
+
+评分指标（每个指标1-10分 整数）：
+- 相关性：图片是否与文章内容相关。
+- 吸引力：图片是否能吸引用户眼球。
+- 视觉效果：图片的色彩、构图和清晰度如何。
+- 情感共鸣：图片是否能引发观众的情感共鸣。
+
+## 下一步操作
+请以下格式返回你的响应,无需其余信息：
+&lt;pre&gt;&lt;code&gt;total_score: &lt;总分&gt;
+relevance: &lt;相关性-指标分数&gt;
+attractiveness: &lt;吸引力-指标分数&gt;
+visual: &lt;视觉效果-指标分数&gt;
+emotional: &lt;情感共鸣-指标分数&gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+重要：请确保：
+1. 对所有多行字段使用适当的缩进（4个空格）
+2. 使用|字符表示多行文本字段
+3. 保持单行字段不使用|字符
+4. 正确使用YAML字符串格式
+</code></pre>
+
+<pre><code>
+### 风格撰写工作流：write_in_style_flow
+
+节点说明：
+
+- WriteInStyle：根据不同的风格Prompt，结合初稿进行LLM写最终稿
+- WriteSupervisorNode：对初稿内容进行审核
+
+```mermaid
+graph TD
+    A[WriteInStyle] --&gt;|"final_article"| B[WriteSupervisorNode]
+    B --&gt;|"retry"| A  
+
+</code></pre>
+
+<h4>提示词</h4>
+
+<p>这部分可以在界面上选择时下热词-叙事自定义提示词，进行人设设置，然后进行测试</p>
+
+<h2>快速开始</h2>
+
+<h2>部署</h2>
+
+<pre><code>git https://github.com/Fun-Fox/google-trends.git
+git submodule update --init --recursive
+pip install -r requirements.txt
+playwright install chromium
+cd index-tts
+pip install -r requirements.txt
+set HF_ENDPOINT=https://hf-mirror.com
+huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir /checkpoints
+</code></pre>
+
+<h2>模型文件</h2>
+
+<ul>
+<li>bigvgan_generator.pth</li>
+<li>bpe.model</li>
+<li><p>gpt.pth</p>
+
+<h2>安装ffmpeg</h2></li>
+<li><p>windows: conda  install ffmpeg</p></li>
+<li>linux： apt-get install ffmpeg</li>
+</ul>
+
+        </div>
+    </div>
+</body>
+</html>
