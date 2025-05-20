@@ -5,7 +5,8 @@ from typing import Dict
 from agent.utils import call_llm
 
 
-def generate_news_summary_report(highlights: str, output: str, hot_word_path: str, logger, language: str = "中文") -> Dict:
+def generate_news_summary_report(highlights: str, output: str, hot_word_path: str, logger,
+                                 language: str = "中文") -> Dict:
     """
     这是一个由AI驱动的虚拟新闻报道师，能够基于事件说明和优质报道内容，
     自动生成结构清晰的 Markdown 新闻总结报告，并插入相关图片。
@@ -99,14 +100,15 @@ def _insert_random_image(markdown_content: str, image_dir: str) -> str:
         return markdown_content
 
     random_image = random.choice(image_files)
-    image_markdown = f"![图片]({os.path.join(image_dir, random_image)})\n"
+    image_path = os.path.join(image_dir, random_image).replace('\\', '/')
+    image_markdown = f"![图片]({image_path})\n"
     return f"{title_line}\n{image_markdown}{rest_lines}"
 
 
 def _write_to_markdown_file(content: str, output_dir: str) -> str:
     """将 Markdown 内容写入指定目录下的 hot_word.md 文件"""
     md_dir = os.path.join(output_dir, "md")
-    base_name= os.path.basename(output_dir)
+    base_name = os.path.basename(output_dir)
     os.makedirs(md_dir, exist_ok=True)
     file_path = os.path.join(md_dir, f"{base_name}_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.md")
 
