@@ -182,8 +182,8 @@ class SearchWeb(Node):
 
                 result = (
                     # f"标题：{content.get('title', '无')}\n" +
-                    # f"链接：{content.get('url', '无')}\n" +
                         f"🌐 报道{total_links_count}: {content['analysis']['title']}\n" +
+                        f"链接：{content.get('url', '无')}\n" +
                         # f"类型：{content['analysis']['content_type']}\n" +
                         # f"话题：{','.join(content['analysis']['topics'])}\n" +
                         f"{content['analysis']['summary']}\n\n"

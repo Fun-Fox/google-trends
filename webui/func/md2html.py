@@ -321,7 +321,7 @@ def convert_md_to_output(md_path, html_path, image_path=None, background_image=N
         # 输出图像（如果提供路径）
         if image_path:
             # 使用 playwright 截图
-            html_to_image_with_playwright(html_path, output_image,mobile=True)
+            html_to_image_with_playwright(html_path, image_path,mobile=True)
 
     except FileNotFoundError as e:
         print(f"❌ 文件未找到: {e}")
