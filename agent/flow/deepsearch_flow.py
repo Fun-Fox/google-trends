@@ -1,8 +1,8 @@
 from pocketflow import Flow, Node
 
-from agent.nodes import DecideAction, SearchWeb, AnswerEditor, SupervisorNode, EvaluateImage
+from agent.nodes import DecideAction, SearchWeb, ContentSummarizer, SupervisorNode, ImageMatchScorer
 
-__all__ = ["research_hot_word_flow", ]
+__all__ = ["deepsearch_flow", ]
 
 
 class NoOp(Node):
@@ -17,7 +17,7 @@ def inner_flow():
     流程如下：
     1. DecideAction 节点决定是搜索还是回答
     2. 如果选择搜索，转到 SearchWeb 节点
-    3. 如果选择回答，转到 AnswerQuestion 节点
+    3. 如果选择回答，转到 ContentSummarizer 内容汇总节点
     4. SearchWeb 完成后，返回 DecideAction
     
     返回:
@@ -26,14 +26,14 @@ def inner_flow():
     # 创建每个节点的实例
     decide = DecideAction()
     search = SearchWeb()
-    answer = AnswerEditor()
+    summary = ContentSummarizer()
 
     # 连接节点
     # 如果 DecideAction 返回 "search"，转到 SearchWeb
     decide - "search" >> search
 
     # 如果 DecideAction 返回 "answer"，转到 AnswerQuestion
-    decide - "answer" >> answer
+    decide - "answer" >> summary
 
     # SearchWeb 完成后返回 "decide"，回到 DecideAction
     search - "decide" >> decide
@@ -42,7 +42,7 @@ def inner_flow():
     return Flow(start=decide)
 
 
-def research_hot_word_flow():
+def deepsearch_flow():
     """
     创建一个带有监督的代理流程，将整个代理流程视为一个节点，并将监督节点放在其外部。
 

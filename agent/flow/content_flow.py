@@ -1,9 +1,9 @@
 from pocketflow import Flow
 
-from agent.nodes import WriteInStyle, WriteSupervisorNode
+from agent.nodes import ContentParaphraser, WriteSupervisorNode
 
-__all__ = ["write_in_style_flow"]
-def write_in_style_flow():
+__all__ = ["content_flow"]
+def content_flow():
     """
     创建一个带有监督的代理流程，将整个代理流程视为一个节点，并将监督节点放在其外部。
 
@@ -11,7 +11,7 @@ def write_in_style_flow():
         Flow: 一个带有监督的完整研究代理流程
     """
 
-    write_in_style= WriteInStyle()
+    write_in_style= ContentParaphraser()
     # 创建监督节点
     supervisor = WriteSupervisorNode()
 

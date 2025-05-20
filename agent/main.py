@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 # from fastapi import FastAPI, HTTPException
-from .flow import research_hot_word_flow, write_in_style_flow
+from .flow import deepsearch_flow, content_flow
 
 # app = FastAPI()
 __all__ = ["hot_word_research_assistant", "write_in_style_assistant"]
@@ -62,7 +62,7 @@ def hot_word_research_assistant(hot_word_path: str, language,logger) -> str | No
         if hot_word_path == [] or hot_word_path == "" or hot_word_path is None:
             return "请输入热词"
         # 创建代理流程
-        agent_flow = research_hot_word_flow()
+        agent_flow = deepsearch_flow()
         # 检查 hot_word_path 是否为有效的路径
         if not os.path.exists(hot_word_path):
             return "热词路径不存在"
@@ -88,7 +88,7 @@ def write_in_style_assistant(draft: str, prompt: str, logger) -> str | None:
         shared = {
             "draft": draft, "prompt": prompt, "logger": logger
         }
-        agent_flow = write_in_style_flow()
+        agent_flow = content_flow()
         logger.info(f"\n 正在结合时下热点叙事进行撰写:\n {draft}")
         agent_flow.run(shared)
         final_article = shared.get("final_article", "No answer found")

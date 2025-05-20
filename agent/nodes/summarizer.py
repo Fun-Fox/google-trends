@@ -4,23 +4,134 @@ from time import sleep
 
 from dotenv import load_dotenv
 from pocketflow import Node
+
+from agent.tools.summary import generate_news_summary_report
 from agent.utils import get_images, call_llm
 import yaml
 
 load_dotenv()
 
-__all__ = ["SupervisorNode", "EvaluateImage"]
+__all__ = ["SupervisorNode", "ImageMatchScorer", "ContentSummarizer"]
+
+
+class ContentSummarizer(Node):
+    def prep(self, shared):
+        """获取用于回答的问题和上下文。"""
+        return shared["hot_word"], shared.get("context"), shared.get("language"), shared["logger"]
+
+    def exec(self, inputs):
+        """调用 LLM 编制草稿。"""
+        hot_word, context, language, logger = inputs
+
+        logger.info(f"编制草稿...")
+
+        # 为 LLM 创建一个提示以基于网络研究内容编写草稿
+        prompt = f"""
+## 上下文
+
+你是一个热点信息精炼助手，基于以下信息，回答问题。
+
+### 精炼维度
+
+- 核心事实提取: 从海量信息中提取关键事实要素
+- 舆情脉络梳理: 梳理公众情绪变化与讨论焦点转移路径
+- 发酵点识别: 识别推动话题扩散的关键节点与触发因素
+- 趋势预判: 基于现有信息预测话题可能的发展方向
+
+### 输入格式:
+
+时下网络流行热词: {hot_word}
+相关研究: 
+
+{context}
+
+### 你的回答:
+1. 请根据研究内容撰写如下两部分叙事文案：
+   - 中文叙事 (`chinese`)
+   - {language}叙事 (`output`)
+   - 内容要求：
+     * 使用日常语言，避免术语
+     * 涵盖核心事实、舆情脉络、发酵点及趋势预判等维度
+     * 每段保持结构清晰，逻辑通顺
+
+2. 同时，请从研究内容中提取 **2个最相关的优质报道摘要**，并返回以下结构：
+
+```yaml
+highlights: 
+  - title: <报道标题1,使用{language}> 
+    summary: <摘要,使用{language}> 
+    link: "<来源链接,链接使用引号>"
+  - title: <报道标题2,使用{language}> 
+    summary: <摘要,使用{language}> 
+    link: "<来源链接,链接使用引号>"
+chinese: |
+    <中文叙事文案>
+output: |
+    <{language}叙事文案,注意此部分文案使用{language}>
+```
+
+重要：请确保：
+⚠️ YAML 格式要求：
+- 所有字段使用英文冒号 `:` + **一个空格** 开始值
+- 多行字段使用 `|` 表示，并至少比键名多一级缩进（推荐 4 个空格）
+- 列表项（`-`）需统一缩进
+- 不允许在 `title:`、`summary:`、`link:` 后直接嵌套新结构
+- 避免使用中文冒号 `：` 或省略空格
+- 不要对 `chinese` 和 `output` 字段进行嵌套或添加额外结构
+        """
+        # 调用 LLM 生成草稿
+        search_data, success = call_llm(prompt, logger)
+        if "```yaml" not in search_data:
+            logger.error("LLM 响应格式不正确，请检查你的响应格式。")
+            return {"action": "finish", "reason": "LLM 响应格式不正确"}
+        try:
+            yaml_str = search_data.split("```yaml")[1].split("```")[0].strip()
+        except Exception as e:
+            return {"action": "finish", "reason": "LLM 响应格式不正确"}
+        logger.info(f"LLM 响应: \n {yaml_str}")
+        response = yaml.safe_load(yaml_str)
+        if not success:
+            logger.error("LLM 响应失败，请检查你的响应格式。")
+            return {"action": "finish", "reason": "LLM 响应失败"}
+
+        return search_data, response
+
+    def post(self, shared, prep_res, exec_res):
+        """保存最终回答并完成流程。"""
+        # 在共享存储中保存回答
+
+        search_data, response = exec_res
+        shared['chinese'] = response['chinese']
+        output = response['output']
+        shared['output'] = output
+        highlights = response.get('highlights', [])
+        if highlights:
+            highlights_str = "\n".join([
+                f"🌐报道{index}:\n{highlight['title']}\n摘要：\n{highlight['summary']}\n来源：\n{highlight['link']}\n\n"
+                for index, highlight in enumerate(highlights, start=1)
+            ])
+        else:
+            highlights_str = ""
+        shared['highlights'] = highlights_str  # 存入优质报道列表
+        logger = shared["logger"]
+        shared['search_data'] = search_data
+
+        logger.info(f"✅ 优质新闻提取成功{highlights_str}")
+
+        generate_news_summary_report(highlights_str, output, shared['hot_word_path'], logger, shared['language'])
+
+        logger.info(f"✅ 生成markdown汇总文档{highlights_str}")
 
 
 # 监督节点
 class SupervisorNode(Node):
     def prep(self, shared):
         """获取当前回答以进行评估。"""
-        return shared["draft"], shared["logger"]
+        return shared["search_data"], shared["logger"]
 
     def exec(self, inputs):
         """检查回答是否有效或无意义。"""
-        draft, logger = inputs
+        search_data, logger = inputs
         logger.info(f"监督员正在检查回答质量...")
 
         # 检查无意义回答的明显标记
@@ -33,11 +144,12 @@ class SupervisorNode(Node):
         ]
 
         # 检查回答是否包含任何无意义标记
-        is_nonsense = any(marker in draft for marker in nonsense_markers)
+        is_nonsense = any(marker in search_data for marker in nonsense_markers)
 
         if is_nonsense:
             return {"valid": False, "reason": "回答似乎无意义或无帮助"}
         else:
+
             return {"valid": True, "reason": "回答似乎是合法的"}
 
     def post(self, shared, prep_res, exec_res):
@@ -115,25 +227,25 @@ class SupervisorNode(Node):
             return "retry"
 
 
-class EvaluateImage(Node):
+class ImageMatchScorer(Node):
     def prep(self, shared):
         """
         从共享数据中获取最终文章和热词路径
         """
-        return shared["draft"], shared["hot_word_path"], shared["logger"]
+        return shared["chinese"], shared["hot_word_path"], shared["logger"]
 
     def exec(self, inputs):
         """
         对文章应用特定风格
         """
-        draft, hot_word_path, logger = inputs
+        chinese, hot_word_path, logger = inputs
         prompt = f"""
         ## 上下文
         你是一个内容配图评分助手
 
         ## 操作空间
         请根据以下指标对内容的配图进行评分
-        内容：{draft}
+        内容：{chinese}
 
         评分指标（每个指标1-10分 整数）：
         - 相关性：图片是否与文章内容相关。

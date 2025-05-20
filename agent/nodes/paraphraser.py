@@ -2,11 +2,11 @@ from dotenv import load_dotenv
 from pocketflow import Node
 from agent.utils import call_llm
 
-__all__ = ["WriteInStyle", "WriteSupervisorNode"]
+__all__ = ["ContentParaphraser", "WriteSupervisorNode"]
 load_dotenv()
 
 
-class WriteInStyle(Node):
+class ContentParaphraser(Node):
     def prep(self, shared):
         """
         从共享数据中获取草稿
