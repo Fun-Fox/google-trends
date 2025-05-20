@@ -6,34 +6,35 @@ import markdown2
 from webui.func.constant import root_dir
 
 
-
-def rewrite_images(html_content):
+def rewrite_images(html_content, md_path):
     """
     将 HTML 内容中的 <img> 标签替换为 Base64 数据
     :param html_content: HTML 字符串
     :param base_dir: 本地图片基础目录（用于解析相对路径）
     :return: 新的 HTML 内容
     """
-    def replace_img(match):
-        src = match.group(1)
 
+    def replace_img(match, md_path):
+        src = match.group(1)
         # 相对路径转为绝对路径
-        full_path = os.path.join(root_dir, src)
+        print(f"md文件路径：{md_path},图片路径:{src}")
+        full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.stript("../"))
+        print(f"图片全路径:{full_path}")
         if not os.path.exists(full_path):
-           print(f"图片路径不存在：{full_path}")
+            print(f"图片路径不存在：{full_path}")
         # print(full_path)
         new_src = get_image_as_base64(full_path.replace("\\", "/"))
-
 
         return f'<img src="{new_src}" alt="Embedded Image" style="max-width:100%; height:auto; border-radius:10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin: 20px 0;">'
 
     # 正则匹配 <img> 标签中的 src 属性
     img_pattern = r'<img.*?src="(.*?)".*?>'
-    rewritten_html = re.sub(img_pattern, lambda m: replace_img(m), html_content)
+    rewritten_html = re.sub(img_pattern, lambda m: replace_img(m, md_path), html_content)
 
     return rewritten_html
 
-def md_to_html(md_text, background_image=None, custom_font=None):
+
+def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     """
     将 Markdown 字符串转换为 HTML 字符串，并应用自定义样式
     :param md_text: Markdown 格式文本
@@ -59,7 +60,7 @@ def md_to_html(md_text, background_image=None, custom_font=None):
     )
 
     # 重写图片 src 为 Base64
-    html = rewrite_images(html, )
+    html = rewrite_images(html, md_path)
 
     # 构建自定义 CSS
     css = """
@@ -272,10 +273,12 @@ def md_to_html(md_text, background_image=None, custom_font=None):
 
     return template
 
+
 def get_base64_image(path):
     with open(path, "rb") as image_file:
         encoded = base64.b64encode(image_file.read()).decode("utf-8")
     return f"data:image/webp;base64,{encoded}"
+
 
 def get_image_as_base64(full_path):
     """
@@ -290,7 +293,7 @@ def get_image_as_base64(full_path):
             encoded = base64.b64encode(image_file.read()).decode("utf-8")
             ext = os.path.splitext(full_path)[1].lower()
             mime = "image/png" if ext == ".png" else "image/webp" if ext == ".webp" else "image/jpeg"
-            base64_data= f"data:{mime};base64,{encoded}"
+            base64_data = f"data:{mime};base64,{encoded}"
             # image_data = base64.b64decode(encoded)
             #
             # with open("test_image.png", "wb") as img_file:
@@ -298,6 +301,8 @@ def get_image_as_base64(full_path):
             return base64_data
     except Exception as e:
         print(f"⚠️ 获取图片失败: {e}")
+
+
 def save_html(html_content, output_path):
     """保存 HTML 到指定路径"""
     with open(output_path, "w", encoding="utf-8") as f:
@@ -313,7 +318,7 @@ def convert_md_to_output(md_path, html_path, image_path=None, background_image=N
         with open(md_path, "r", encoding="utf-8") as f:
             md_text = f.read()
 
-        html_content = md_to_html(md_text, background_image, custom_font)
+        html_content = md_to_html(md_text, md_path, background_image, custom_font)
 
         # 输出 HTML
         save_html(html_content, html_path)
@@ -321,12 +326,13 @@ def convert_md_to_output(md_path, html_path, image_path=None, background_image=N
         # 输出图像（如果提供路径）
         if image_path:
             # 使用 playwright 截图
-            html_to_image_with_playwright(html_path, image_path,mobile=True)
+            html_to_image_with_playwright(html_path, image_path, mobile=True)
 
     except FileNotFoundError as e:
         print(f"❌ 文件未找到: {e}")
     except Exception as e:
         print(f"❌ 发生错误: {e}")
+
 
 def get_random_bg_image(bg_folder_path):
     """
@@ -353,6 +359,7 @@ def get_random_bg_image(bg_folder_path):
     # 返回相对路径或用于 HTML 的 URL 路径（根据你项目结构决定）
     return full_path  # 或者返回 "/webui/bg/xxx.webp" 格式
 
+
 from playwright.sync_api import sync_playwright
 import os
 
@@ -374,7 +381,7 @@ def html_to_image_with_playwright(html_path, image_path, mobile=False):
 
         if mobile:
             # 设置为 iPhone 12 视口 + 移动端 UA
-            page.set_viewport_size({"width": 330*3, "height": 944*2})
+            page.set_viewport_size({"width": 330 * 3, "height": 944 * 2})
             page.add_init_script("""
                 Object.defineProperty(navigator, 'userAgent', {
                     value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.4 (KHTML, like Gecko) Version/14.0 Mobile/15A5370a Safari/604.1',
@@ -387,7 +394,6 @@ def html_to_image_with_playwright(html_path, image_path, mobile=False):
         else:
             # 桌面视口
             page.set_viewport_size({"width": 900, "height": 1080})
-
 
         # 等待页面渲染完成（尤其是图片、字体等资源）
         page.wait_for_timeout(2000)

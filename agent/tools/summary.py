@@ -100,8 +100,8 @@ def _insert_random_image(markdown_content: str, image_dir: str) -> str:
         return markdown_content
 
     random_image = random.choice(image_files)
-    image_path = os.path.join(image_dir, random_image).replace('\\', '/')
-    image_markdown = f"![图片]({image_path})\n"
+    # image_path = os.path.join(image_dir, random_image).replace('\\', '/')
+    image_markdown = f"![图片](../{random_image})\n"
     return f"{title_line}\n{image_markdown}{rest_lines}"
 
 
