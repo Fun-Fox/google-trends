@@ -63,7 +63,7 @@ def run_schedule_in_background():
 
 
 # ========== 设置定时任务 ==========
-def set_scheduled_task(run_time, to_download_image, origin, category, nums, language="zh"):
+def set_scheduled_task(run_time, to_download_image, origin, category, nums, language="简体中文"):
     global _SCHEDULE_STARTED
     try:
         # 清除已有任务
@@ -109,7 +109,8 @@ def build_tab():
                                    value="所有分类")
             nums = gr.Slider(minimum=1, maximum=25, step=1, label="热词采集数量（最大25）", value=25)
             time_input = gr.Textbox(label="请输入执行时间（格式：HH:MM）", value="08:00")
-            lang_dropdown = gr.Dropdown(label="选择语言", choices=["zh", "en"], value="zh")
+            lang_dropdown = gr.Dropdown(label="选择语言",  choices=["简体中文", "繁体中文", "英文", "日文", "韩文", "俄文"],
+                value="简体中文")
             set_button = gr.Button("设置定时任务")
             stop_button = gr.Button("停止定时任务", variant="secondary")
         output_text = gr.Textbox(label="状态输出")
