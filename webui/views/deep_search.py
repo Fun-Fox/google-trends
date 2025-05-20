@@ -43,7 +43,6 @@ def build_tab():
             research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")
 
 
-
             research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders, language_dropdown],
                                               outputs=gr.Textbox(label=""))
     with gr.Row():
@@ -53,7 +52,7 @@ def build_tab():
         image_gallery = gr.Gallery(label="热词-对应图片信息", value=[], interactive=False, columns=5)
 
     # 修改回调函数，正确更新 hotword_folders 的选项
-    task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hot_word_folders)
+    task_folders.change(fn=update_hot_word_folders, inputs=[task_folders], outputs=hot_word_folders)
     hot_word_folders.change(fn=get_hot_word_images_and_narratives, inputs=[hot_word_folders],
                             outputs=[image_gallery, narratives_textbox])
     # 修改get_images 增加获取hotword_folders 文件下的csv文件读取csv中hotword列对应的hotword 对应的chinese、english叙事，显示在textbox中

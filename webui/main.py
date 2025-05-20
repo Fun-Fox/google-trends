@@ -5,8 +5,16 @@ import gradio as gr
 from dotenv import load_dotenv
 
 from webui.func.constant import root_dir
-from webui.views import cookie_settings, trend_crawler, deep_search, voice_script_generation, voice_synthesis, \
-    digital_human, downloads, crontab_tasks, markdown2img
+from webui.views import (
+                        cookie_settings,
+                         trend_crawler,
+                         crontab_tasks,
+                         voice_script_generation,
+                         voice_synthesis,
+                        digital_human,
+                        deep_search,
+                         downloads
+                         )
 
 load_dotenv()
 
@@ -22,33 +30,32 @@ with gr.Blocks(title="GT") as app:
     with gr.Tab("优质报道.深度搜索"):
         deep_search.build_tab()
 
-    with gr.Tab("优质报道.刊物生成"):
-        markdown2img.build_tab()
-
     with gr.Tab("热点.定时任务"):
         crontab_tasks.build_tab()
 
     with gr.Tab("口播文案生成"):
-        voice_script_generation.build_tab()
+        try:
+            voice_script_generation.build_tab()
+        except Exception as e:
+            gr.Markdown(f"⚠️ 加载失败: {str(e)}")
 
     with gr.Tab("口播音频生成"):
         voice_synthesis.build_tab()
-
+    #
     with gr.Tab("多角色数字人合成"):
         digital_human.build_tab()
-
-
-
+    #
     with gr.Tab("下载"):
         downloads.build_tab()
 
+
 def start():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=7866, help='Gradio 应用监听的端口号')
+    parser.add_argument('--port', type=int, default=7865, help='Gradio 应用监听的端口号')
     args = parser.parse_args()
     app.queue(20)
     if os.getenv('PLATFORM', '') == 'local':
-        app.launch(share=False,
+        app.launch(debug=True,share=False,
                    allowed_paths=[os.path.join(root_dir, os.getenv('ROOT', '')),
                                   os.path.join(root_dir, os.getenv('ZIP_DIR', '')),
                                   os.path.join(root_dir, os.getenv('TASK_DIR', '')),

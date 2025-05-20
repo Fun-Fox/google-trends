@@ -40,9 +40,10 @@ async def scheduled_task(to_download_image, origin, category, nums, language="zh
     # 获取最新任务文件夹
     latest_folder = get_latest_task_folder()
     if latest_folder:
-        print(f"📁 最新任务文件夹: {latest_folder}")
+        print(f"📁 开始任务深度搜索: {latest_folder}")
         # 执行热词研究
         research_all_hot_word(latest_folder, language)
+        print(f"📁 结束任务深度搜索+: {latest_folder}")
     else:
         print("⚠️ 未找到任务文件夹")
 
@@ -94,7 +95,6 @@ def stop_scheduled_task():
     except Exception as e:
         return f"❌ 停止定时任务失败: {e}"
 
-
 # ===== 新增 Gradio UI 组件 =====
 def build_tab():
     gr.Markdown("## ⏰ 设置定时任务（每日执行）")
@@ -122,5 +122,5 @@ def build_tab():
                       inputs=[],
                       outputs=output_text)
 
-# 启动后台定时器
-run_schedule_in_background()
+# # 启动后台定时器
+# run_schedule_in_background()

@@ -1,19 +1,11 @@
-# md2html.py
 import base64
-import os.path
 import random
 import re
-from urllib.parse import urlparse
-
 import markdown2
-import sys
-import io
-
 
 from webui.func.constant import root_dir
 
-# 设置标准输出编码为 UTF-8
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 
 def rewrite_images(html_content):
     """
