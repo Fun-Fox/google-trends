@@ -122,5 +122,5 @@ def build_tab():
                       inputs=[],
                       outputs=output_text)
 
-# # 启动后台定时器
-# run_schedule_in_background()
+# 启动后台定时器
+run_schedule_in_background()
