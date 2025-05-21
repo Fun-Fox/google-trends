@@ -115,20 +115,26 @@ def run_schedule_in_background():
     thread.daemon = True
     thread.start()
 
-
+_SCHEDULE_STARTED = False
+_CURRENT_TASK = None
 # ========== 设置定时任务 ==========
 def set_scheduled_task(run_time, to_download_image, origin, category, nums, language="简体中文"):
-    global _SCHEDULE_STARTED
+    global _SCHEDULE_STARTED, _CURRENT_TASK
     try:
-        # 清除已有任务
         schedule.clear()
 
-        # 构建带参数的异步任务
-        job_func = lambda: asyncio.run(
-            scheduled_task(to_download_image, origin, category, nums, language)
-        )
+        async def wrapped_task():
+            try:
+                await scheduled_task(to_download_image, origin, category, nums, language)
+            except asyncio.CancelledError:
+                print("⚠️ 当前任务已被取消")
+                return "⏹️ 当前任务已被取消"
 
-        # 设置每日定时任务
+        def job_func():
+            loop = asyncio.get_event_loop()
+            task = loop.create_task(wrapped_task())
+            _CURRENT_TASK = task
+
         schedule.every().day.at(run_time).do(job_func)
         _SCHEDULE_STARTED = True
 
@@ -138,16 +144,34 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
 
 
 # ========== 停止定时任务 ==========
+# ========== 修改 stop_scheduled_task 函数 ==========
 def stop_scheduled_task():
-    global _SCHEDULE_STARTED
+    global _SCHEDULE_STARTED, _CURRENT_TASK
     try:
-        # 清除所有定时任务
         schedule.clear()
         setattr(run_schedule_in_background, "is_running", False)
         _SCHEDULE_STARTED = False
-        return "⏹️ 定时任务已停止"
+
+        if _CURRENT_TASK and asyncio.iscoroutine(_CURRENT_TASK):
+            # 如果是原始协程，无需取消
+            _CURRENT_TASK = None
+            return "⏹️ 定时任务已停止（检测到协程未包装为 Task）"
+
+        elif _CURRENT_TASK and isinstance(_CURRENT_TASK, asyncio.Task):
+            if not _CURRENT_TASK.done():
+                _CURRENT_TASK.cancel()
+                try:
+                    asyncio.get_event_loop().run_until_complete(_CURRENT_TASK)
+                except asyncio.CancelledError:
+                    pass
+            _CURRENT_TASK = None
+            return "⏹️ 定时任务已停止，并终止了当前运行的任务"
+        else:
+            _CURRENT_TASK = None
+            return "⏹️ 定时任务已停止"
     except Exception as e:
         return f"❌ 停止定时任务失败: {e}"
+
 
 # ===== 新增 Gradio UI 组件 =====
 def build_tab():
