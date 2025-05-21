@@ -1,9 +1,26 @@
 import base64
 import random
 import re
+import time
+
 import markdown2
 
 from webui.func.constant import root_dir
+
+
+class CustomMarkdown(markdown2.Markdown):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def image(self, match, prefix=''):
+        # 获取原始的 image 方法
+        original_image = super().image(match, prefix)
+
+        # 移除包裹的 <p> 标签
+        if original_image.startswith('<p>') and original_image.endswith('</p>'):
+            original_image = original_image[3:-4]
+
+        return original_image
 
 
 def rewrite_images(html_content, md_path):
@@ -21,7 +38,7 @@ def rewrite_images(html_content, md_path):
         if '../' in src:
             full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.split("../")[1]).replace("\\", "/")
         else:
-            full_path = src
+            full_path = os.path.join(root_dir, src).replace("\\", "/")
         # print(f"图片全路径:{full_path}")
         if not os.path.exists(full_path):
             print(f"图片路径不存在：{full_path}")
@@ -96,8 +113,10 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     html = html.replace("<h1>", '<h1 class="color-flow">') \
         .replace("<h2>", '<h2 class="color-flow">') \
         .replace("<h3>", '<h3 class="color-flow">')
-
-    # 构建自定义 CSS
+    # 替换<img> 默认被<p>包裹
+    html = html.replace("></p>", '>') \
+        .replace("<p><img", '<img') \
+        # 构建自定义 CSS
     css = """
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -190,16 +209,11 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
         color: #333;
     }
     /*  段落逐字显示动画 */
-    .markdown-content p {
-        opacity: 0;
-        animation: fadeInText 1s ease-in forwards;
-        animation-delay: calc(0.1s * var(--i));
-        background-color: #fffbea;
-    }
     
     .typing-text {
+        /* 移除 white-space: nowrap; 允许文本自动换行 */
+        /* white-space: nowrap; */
         overflow: hidden; /* 隐藏超出内容 */
-        white-space: nowrap; /* 禁止换行 */
         border-right: 2px solid #333; /* 显示光标方便观察 */
         animation: typing 5s steps(40, end), blink-caret 0.75s step-end infinite;
     }
@@ -355,15 +369,33 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
         {f'<audio autoplay loop style="display:none;"><source src="{bgm_data}" type="audio/mpeg"></audio>' if bgm_data else ''}
 
         <script>
-           document.addEventListener("DOMContentLoaded", function () {{
+            function typeText(element, index) {{
+                const text = element.innerText;
+                let charIndex = 0;
+            
+                element.innerHTML = ''; // 清空元素内容
+            
+                const interval = setInterval(() => {{
+                    if (charIndex < text.length) {{
+                        element.innerHTML += text.charAt(charIndex);
+                        charIndex++;
+                    }} else {{
+                        clearInterval(interval); // 结束定时器
+                    }}
+                }}, 100); // 每 100ms 打印一个字符
+            }}
+            document.addEventListener("DOMContentLoaded", function () {{
                 const paragraphs = document.querySelectorAll(".markdown-content p");
             
                 paragraphs.forEach((p, index) => {{
-                    // 添加类名触发逐字动画
-                    p.classList.add("typing-text");
-            
-                    // 设置不同的动画延迟（按顺序）
-                    p.style.animationDelay = `${{index * 3.1}}s`; // 每段间隔3.1秒
+                     // 移除 .typing-text 类的自动添加，改为手动控制
+                // p.classList.add("typing-text");
+        
+                // 设置不同的动画延迟（按顺序）
+                p.style.animationDelay = `${{index * 1}}s`; // 每段间隔1秒
+
+                // 手动触发逐字打印效果
+                typeText(p, index);
                 }});
             }});
             document.querySelectorAll(".markdown-content p, .markdown-content li, .markdown-content code").forEach((el, idx) => {{
@@ -535,12 +567,16 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
         # 关闭资源
         context.close()
         browser.close()
+        # time.sleep(3)
 
         # 👇 新增：裁剪最后 1 秒
-        process_video_with_first_frame(image_path,video_path)
+        process_video_with_first_frame(image_path, video_path)
 
-from moviepy import ImageClip, VideoFileClip, concatenate_videoclips
+
+from moviepy import *
 import os
+
+
 def process_video_with_first_frame(image_path, video_path, output_path=None):
     """
     使用 MoviePy 将 image_path 的图片作为视频第一帧，并裁剪最后 1 秒。
@@ -550,7 +586,7 @@ def process_video_with_first_frame(image_path, video_path, output_path=None):
     """
     image_clip = None
     video_clip = None
-    final_clip = None
+    trimmed_clip = None
 
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"找不到图片文件: {image_path}")
@@ -558,39 +594,62 @@ def process_video_with_first_frame(image_path, video_path, output_path=None):
         raise FileNotFoundError(f"找不到视频文件: {video_path}")
 
     if not output_path:
-        output_path = os.path.splitext(video_path)[0] + "_processed.mp4"
+        output_path = os.path.splitext(video_path)[0] + '_p.mp4'  # 直接覆盖原视频文件
 
     try:
         # Step 1: 加载图片并生成 2 秒的图片视频片段
-        print("🖼️ 正在生成首帧视频...")
-        image_clip = ImageClip(image_path)
-        image_clip.duration=2
-        image_clip.resized(new_size=(1080, 1920))
+        # print("🖼️ 正在生成首帧视频...")
+        # image_clip = ImageClip(image_path)
+        # image_clip.duration = 2
+        # image_clip.resized(new_size=(1080, 1920))
 
         # Step 2: 加载原始视频
         print("🎥 正在加载原始视频...")
         video_clip = VideoFileClip(video_path)
 
-        # Step 3: 裁剪最后 1 秒
+        # Step 3: 裁剪第2秒到最后 1 秒
         if video_clip.duration > 1:
-            trimmed_clip = video_clip.subclipped(0, video_clip.duration - 1)
+            trimmed_clip = video_clip.subclipped(2, video_clip.duration - 1)
         else:
             print("⚠️ 视频太短，无法裁剪最后 1 秒")
             trimmed_clip = video_clip
 
         # Step 4: 拼接图片片段和视频片段
-        print("🔗 正在拼接首帧与原始视频...")
-        final_clip = concatenate_videoclips([image_clip, trimmed_clip])
+        # print("🔗 正在拼接首帧与原始视频...")
+        # final_clip = concatenate_videoclips([image_clip, trimmed_clip])
+        # # Step 5: 静音视频（移除原始音频）
+        # final_clip = final_clip.without_audio()
+
+        # Step 6: 获取随机背景音乐文件
+        bgm_folder = os.path.join(root_dir, "webui", "bgm")  # ⚠️ 替换为你的 bgm 文件夹路径
+        bgm_files = [
+            f for f in os.listdir(bgm_folder)
+            if f.lower().endswith((".mp3", ".ogg"))
+        ]
+        if not bgm_files:
+            print("⚠️ 未找到可用背景音乐文件")
+        else:
+            selected_bgm = random.choice(bgm_files)
+            bgm_path = os.path.join(bgm_folder, selected_bgm)
+            print(f"🎵 正在加载背景音乐: {bgm_path}")
+
+            # 加载音频并设置为循环播放
+            music = AudioFileClip(bgm_path)
+            # AudioLoop())  # 循环播放音频
+            audio = music.with_effects([afx.AudioLoop(duration=trimmed_clip.duration)])
+            # 合并音频到视频
+            trimmed_clip.with_audio(audio)
 
         # Step 5: 输出最终视频
         print("✅ 正在编码最终视频...")
-        final_clip.write_videofile(
+        trimmed_clip.write_videofile(
             output_path,
             codec="libx264",
-            audio_codec="aac",
+            audio_codec="aac",  # 推荐使用更通用的 aac 编码
             fps=24,
             preset="fast",
-            bitrate="5000k"
+            bitrate="5000k",
+            audio_bitrate="192k"
         )
 
         print(f"🎉 视频处理完成: {output_path}")
@@ -602,9 +661,8 @@ def process_video_with_first_frame(image_path, video_path, output_path=None):
             image_clip.close()
         if video_clip is not None:
             video_clip.close()
-        if final_clip is not None:
-            final_clip.close()
-
+        if trimmed_clip is not None:
+            trimmed_clip.close()
 
 
 if __name__ == "__main__":
