@@ -6,6 +6,7 @@ import schedule
 import gradio as gr
 
 from webui.func.conf import load_regions_choices
+from webui.func.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
 from webui.service.search import research_all_hot_word
 
@@ -166,7 +167,13 @@ def build_tab():
                 value="简体中文")
             set_button = gr.Button("设置定时任务")
             stop_button = gr.Button("停止定时任务", variant="secondary")
-        output_text = gr.Textbox(label="状态输出")
+        with gr.Column():
+            output_text = gr.Textbox(label="状态输出")
+            gr.Textbox(label="采集日志", value=update_task_log_textbox, lines=10, max_lines=15,
+                       every=5)
+            gr.Textbox(label="深度搜索-执行记录", value=update_agent_log_textbox, lines=9,
+                       max_lines=15,
+                       every=5)
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, lang_dropdown],
