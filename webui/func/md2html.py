@@ -283,7 +283,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     }
     
     /* 响应式设计 */
-    @media (max-width: 820px) {
+    @media (max-width: 1000px) {
         .background-frame {
             width: calc(100% + 20px);
             max-width: 100%;
@@ -318,7 +318,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
 
         .background-frame {{
             width: calc(100% + 60px); /* 比内容区宽 40px */
-            max-width: 860px;         /* 卡片宽 800px + 左右各 20px 边距 */
+            max-width: 900px;         /* 卡片宽 800px + 左右各 20px 边距 */
             margin: 0 auto;
             padding: 30px;
             # box-sizing: border-box;
@@ -549,6 +549,9 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
         # 截图
         page.screenshot(path=image_path, full_page=True)
 
+
+
+
         # 如果指定了视频路径，则保存视频（注意顺序）
         if video_path:
             page.close()  # 🔥 先关闭页面
@@ -571,6 +574,81 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
 
         # 👇 新增：裁剪最后 1 秒
         process_video_with_first_frame(image_path, video_path)
+        # 图片裁剪
+        crop_image_with_gray_area(image_path, image_path)
+
+
+from PIL import Image
+
+
+def hex_to_rgb(hex_color):
+    """
+    将十六进制颜色值转换为 RGB 格式。
+    :param hex_color: 十六进制颜色值（例如：'#f2f2f2'）
+    :return: RGB 格式（例如：(242, 242, 242)）
+    """
+    # 去掉开头的 '#' 号
+    hex_color = hex_color.lstrip('#')
+
+    # 将十六进制字符串每两个字符一组，转换为十进制
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+
+    return (r, g, b)
+
+
+def find_gray_area_height(image_path):
+    """
+    找到图像最底部中间区域的灰色部分高度。
+    """
+    # 打开图像
+    img = Image.open(image_path)
+    width, height = img.size
+
+    # 定义灰色的阈值范围
+    hex_color = "#f2f2f2"
+    rgb_color = hex_to_rgb(hex_color)
+    gray_threshold = rgb_color
+    tolerance = 50  # 灰色值的容差范围
+
+    # 遍历图像的每一行，从底部向上找到灰色区域的起始位置
+    for y in range(height - 1, -1, -1):
+        gray_row = True
+        for x in range(width // 4, width * 3 // 4):  # 只检查中间区域
+            pixel = img.getpixel((x, y))
+            if not (gray_threshold[0] - tolerance <= pixel[0] <= gray_threshold[0] + tolerance and
+                    gray_threshold[1] - tolerance <= pixel[1] <= gray_threshold[1] + tolerance and
+                    gray_threshold[2] - tolerance <= pixel[2] <= gray_threshold[2] + tolerance):
+                gray_row = False
+                break
+        if not gray_row:
+            return height - y - 1  # 返回灰色区域的高度
+
+    return 0  # 如果没有找到灰色区域，返回 0
+
+
+def crop_image_with_gray_area(image_path, output_path):
+    """
+    根据灰色区域的高度裁剪图像，并预留 20px 的距离。
+    """
+    # 打开图像
+    img = Image.open(image_path)
+    width, height = img.size
+
+    # 找到灰色区域的高度
+    gray_height = find_gray_area_height(image_path)
+
+    # 确定裁剪的底部位置（预留 20px）
+    crop_bottom = height - gray_height + 20
+
+    # 裁剪图像
+    cropped_img = img.crop((0, 0, width, crop_bottom))
+
+    # 保存裁剪后的图像
+    cropped_img.save(output_path)
+
+
 
 
 from moviepy import *
