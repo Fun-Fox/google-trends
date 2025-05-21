@@ -148,7 +148,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     }
     /*  > 引用块（blockquotes）*/
     .markdown-content blockquote {
-        font-size: 18px;      /* 比 h1 小一点 */
+        font-size: 20px;      /* 比 h1 小一点 */
         font-weight: 500;     /* 不加粗 */
         color: #555;          /* 淡化文字颜色 */
         background-color: #f9f9f9; /* 浅灰色背景 */
@@ -162,6 +162,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     
     /* 悬浮标题 */
     .markdown-content h1:first-of-type {
+        font-size: 30px;
         position: sticky;
         top: -30px;
         background: white;
@@ -271,45 +272,18 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     
     /* 列表样式增强 */
     .markdown-content ul, .markdown-content ol {
-        padding-left: 20px;
+        padding-left: 22px;
     }
     
-    .markdown-content li {
-        margin: 6px 0;
+    .markdown-content li, .markdown-content p{
+        margin: 8px 0;
+        font-size: 22px; /* 调整为你需要的字体大小 */
     }
     /*CSS 渐变动效 + 背景裁剪\应用到标题或段落*/
     .color-flow {
         color: #4e54c8; /* 默认颜色 */
     }
     
-    /* 响应式设计 */
-    @media (max-width: 1000px) {
-        .background-frame {
-            width: calc(100% + 20px);
-            max-width: 100%;
-            padding: 15px;
-        }
-    
-        .markdown-content {
-            width: 100%;
-            max-width: 100%;
-            padding: 20px;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-    
-        .markdown-content h1 {
-            font-size: 24px;
-        }
-    
-        .markdown-content h2 {
-            font-size: 20px;
-        }
-    
-        .markdown-content img {
-            border-radius: 8px;
-        }
-    }
     """
 
     # # 添加背景图片（如果提供）
