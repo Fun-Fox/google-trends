@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import random
 import re
@@ -435,7 +436,8 @@ def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, b
         # 输出图像（如果提供路径）
         if image_path:
             # 使用 playwright 截图
-            html_to_image_with_playwright(html_path, image_path, video_path, mobile=True)
+            # 修改为异步调用方式：
+            asyncio.run(html_to_image_with_playwright(html_path, image_path, video_path, mobile=True))
 
     except FileNotFoundError as e:
         print(f"❌ 文件未找到: {e}")
@@ -469,11 +471,10 @@ def get_random_bg_image(bg_folder_path):
     return full_path  # 或者返回 "/webui/bg/xxx.webp" 格式
 
 
-from playwright.sync_api import sync_playwright
-import os
+from playwright.async_api import async_playwright
 
 
-def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile=False):
+async def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile=False):
     """
     使用 Playwright 将 HTML 内容转为 PNG 图像并录制视频
     :param html_path: HTML 文件路径
@@ -483,9 +484,9 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
     """
     abs_html_path = os.path.abspath(html_path)
 
-    with sync_playwright() as p:
+    async with async_playwright() as p:
         # 启动浏览器（headless=True 用于无头模式）
-        browser = p.chromium.launch(headless=True)
+        browser =await p.chromium.launch(headless=True)
 
         # 设置上下文（启用录屏）
         context_args = {}
@@ -497,16 +498,16 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
             )
 
         # 创建带录屏功能的上下文
-        context = browser.new_context(**context_args)
-        page = context.new_page()
+        context =await browser.new_context(**context_args)
+        page =await context.new_page()
 
         # 加载 HTML 页面
-        page.goto(f"file://{abs_html_path}")
+        await page.goto(f"file://{abs_html_path}")
 
         if mobile:
             # 设置为 iPhone 12 视口 + 移动端 UA
-            page.set_viewport_size({"width": 1080, "height": 1920})
-            page.add_init_script("""
+            await page.set_viewport_size({"width": 1080, "height": 1920})
+            await page.add_init_script("""
                 Object.defineProperty(navigator, 'userAgent', {
                     value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.4 (KHTML, like Gecko) Version/14.0 Mobile/15A5370a Safari/604.1',
                     configurable: false,
@@ -515,21 +516,21 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
                 })
             """)
         else:
-            page.set_viewport_size({"width": 900, "height": 1080})
+            await page.set_viewport_size({"width": 900, "height": 1080})
 
         # 增加 10s 停顿再开始录制
-        page.wait_for_timeout(10000)
+        await page.wait_for_timeout(10000)
 
         # 截图
-        page.screenshot(path=image_path, full_page=True)
+        await page.screenshot(path=image_path, full_page=True)
 
 
         # 如果指定了视频路径，则保存视频（注意顺序）
         if video_path:
-            page.close()  # 🔥 先关闭页面
+            await page.close()  # 🔥 先关闭页面
             video = page.video
             if video:
-                video.save_as(video_path)
+                await video.save_as(video_path)
                 print(f"🎥 已生成{'移动端' if mobile else '桌面'}视频文件: {video_path}")
                 directory = os.path.dirname(video_path)
                 for f in os.listdir(directory):
@@ -540,14 +541,14 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
                         except Exception as e:
                             print(f"❌ 清理失败: {f}, 错误: {e}")
         # 关闭资源
-        context.close()
-        browser.close()
+        await context.close()
+        await browser.close()
         # time.sleep(3)
 
-        # 👇 新增：裁剪最后 1 秒
-        process_video_with_first_frame(image_path, video_path)
-        # 图片裁剪
-        crop_image_with_gray_area(image_path, image_path)
+    # 👇 新增：裁剪最后 1 秒
+    process_video_with_first_frame(image_path, video_path)
+    # 图片裁剪
+    crop_image_with_gray_area(image_path, image_path)
 
 
 from PIL import Image
