@@ -594,7 +594,7 @@ def process_video_with_first_frame(image_path, video_path, output_path=None):
         raise FileNotFoundError(f"找不到视频文件: {video_path}")
 
     if not output_path:
-        output_path = os.path.splitext(video_path)[0] + '_p.mp4'  # 直接覆盖原视频文件
+        output_path = video_path  # 直接覆盖原视频文件
 
     try:
         # Step 1: 加载图片并生成 2 秒的图片视频片段
