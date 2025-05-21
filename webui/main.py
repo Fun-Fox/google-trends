@@ -51,7 +51,7 @@ with gr.Blocks(title="GT") as app:
 
 def start():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=7865, help='Gradio 应用监听的端口号')
+    parser.add_argument('--port', type=int, default=7866, help='Gradio 应用监听的端口号')
     args = parser.parse_args()
     app.queue(20)
     if os.getenv('PLATFORM', '') == 'local':

@@ -577,7 +577,7 @@ from moviepy import *
 import os
 
 
-def process_video_with_first_frame(image_path, video_path, output_path=None):
+def process_video_with_first_frame(image_path, video_path):
     """
     使用 MoviePy 将 image_path 的图片作为视频第一帧，并裁剪最后 1 秒。
     :param image_path: 图片路径 (用于作+为首帧)
@@ -593,8 +593,7 @@ def process_video_with_first_frame(image_path, video_path, output_path=None):
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"找不到视频文件: {video_path}")
 
-    if not output_path:
-        output_path = video_path  # 直接覆盖原视频文件
+    output_path = os.path.splitext(video_path)[0]+"_p.mp4"  # 直接覆盖原视频文件
 
     try:
         # Step 1: 加载图片并生成 2 秒的图片视频片段
