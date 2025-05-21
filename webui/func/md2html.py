@@ -231,7 +231,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     .markdown-content code,
     .markdown-content li {
         opacity: 0;
-        animation: fadeIn 1s ease-in forwards;
+        animation: fadeIn 4s ease-in forwards;
         animation-delay: calc(0.1s * var(--i));
     }
     
