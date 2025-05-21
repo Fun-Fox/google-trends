@@ -517,13 +517,11 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
         else:
             page.set_viewport_size({"width": 900, "height": 1080})
 
-        # 增加 30s 停顿再开始录制
-        page.wait_for_timeout(30000)
+        # 增加 10s 停顿再开始录制
+        page.wait_for_timeout(10000)
 
         # 截图
         page.screenshot(path=image_path, full_page=True)
-
-
 
 
         # 如果指定了视频路径，则保存视频（注意顺序）
@@ -665,12 +663,6 @@ def process_video_with_first_frame(image_path, video_path):
             print("⚠️ 视频太短，无法裁剪最后 1 秒")
             trimmed_clip = video_clip
 
-        # Step 4: 拼接图片片段和视频片段
-        # print("🔗 正在拼接首帧与原始视频...")
-        # final_clip = concatenate_videoclips([image_clip, trimmed_clip])
-        # # Step 5: 静音视频（移除原始音频）
-        # final_clip = final_clip.without_audio()
-
         # Step 6: 获取随机背景音乐文件
         bgm_folder = os.path.join(root_dir, "webui", "bgm")  # ⚠️ 替换为你的 bgm 文件夹路径
         bgm_files = [
@@ -689,7 +681,7 @@ def process_video_with_first_frame(image_path, video_path):
             # AudioLoop())  # 循环播放音频
             audio = music.with_effects([afx.AudioLoop(duration=trimmed_clip.duration)])
             # 合并音频到视频
-            trimmed_clip.with_audio(audio)
+            trimmed_clip.audio =audio
 
         # Step 5: 输出最终视频
         print("✅ 正在编码最终视频...")
@@ -699,8 +691,6 @@ def process_video_with_first_frame(image_path, video_path):
             audio_codec="aac",  # 推荐使用更通用的 aac 编码
             fps=24,
             preset="fast",
-            bitrate="5000k",
-            audio_bitrate="192k"
         )
 
         print(f"🎉 视频处理完成: {output_path}")

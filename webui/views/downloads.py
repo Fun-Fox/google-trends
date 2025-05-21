@@ -7,7 +7,7 @@ from webui.func.constant import task_root_dir, root_dir
 
 
 def build_tab():
-    gr.Markdown("### 查看历史记录\n支持单个文件夹或多个文件压缩后下载。")
+    gr.Markdown("### 视频整合和素材下载。")
     with gr.Row():
         with gr.Column():
             file_explorer = gr.FileExplorer(

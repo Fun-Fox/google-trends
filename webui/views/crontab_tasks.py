@@ -23,6 +23,40 @@ def get_latest_task_folder():
     latest = max(folders, key=os.path.getmtime)
     return os.path.basename(latest)
 
+def find_mp4_files(directory):
+    """
+    递归扫描指定目录下的所有 .mp4 文件
+    :param directory: 要搜索的根目录
+    :return: 包含所有 .mp4 文件路径的列表
+    """
+    mp4_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.lower().endswith(".mp4"):
+                mp4_files.append(os.path.join(root, file))
+    return mp4_files
+
+from moviepy import VideoFileClip, concatenate_videoclips
+
+def merge_videos(video_paths, output_path):
+    """
+    拼接多个视频并保存为一个新文件
+    :param video_paths: 视频文件路径列表
+    :param output_path: 输出文件路径（包括文件名）
+    """
+    if not video_paths:
+        print("⚠️ 没有找到可拼接的视频文件")
+        return None
+
+    clips = [VideoFileClip(v) for v in video_paths]
+    final_clip = concatenate_videoclips(clips, method="compose")
+
+    # 写入最终视频
+    final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+    final_clip.close()
+
+    print(f"🎥 视频已成功合并至：{output_path}")
+    return output_path
 
 async def scheduled_task(to_download_image, origin, category, nums, language="zh"):
     """
@@ -40,12 +74,31 @@ async def scheduled_task(to_download_image, origin, category, nums, language="zh
     # 获取最新任务文件夹
     latest_folder = get_latest_task_folder()
     if latest_folder:
+        task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
+
         print(f"📁 开始任务深度搜索: {latest_folder}")
         # 执行热词研究
         research_all_hot_word(latest_folder, language)
         print(f"📁 结束任务深度搜索+: {latest_folder}")
+
+        # 新增：整合 MP4 文件
+        print(f"📼 正在扫描 {task_dir} 中的 MP4 文件...")
+        mp4_files = find_mp4_files(task_dir)
+
+        if mp4_files:
+            output_video = os.path.join(task_dir, f"{latest_folder}_merged.mp4")
+            merged_result = merge_videos(mp4_files, output_video)
+            if merged_result:
+                print(f"✅ 视频已成功合并到 {merged_result}")
+            else:
+                print("❌ 视频合并失败")
+        else:
+            print("ℹ️ 未发现任何 MP4 文件，跳过合并步骤")
+
     else:
         print("⚠️ 未找到任务文件夹")
+
+
 
 
 # ========== 后台调度器线程 ==========
@@ -122,6 +175,7 @@ def build_tab():
     stop_button.click(fn=stop_scheduled_task,
                       inputs=[],
                       outputs=output_text)
+
 
 # 启动后台定时器
 run_schedule_in_background()

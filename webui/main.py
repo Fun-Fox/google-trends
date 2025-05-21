@@ -45,7 +45,7 @@ with gr.Blocks(title="GT") as app:
     with gr.Tab("多角色数字人合成"):
         digital_human.build_tab()
     #
-    with gr.Tab("下载"):
+    with gr.Tab(" 整合及下载"):
         downloads.build_tab()
 
 
