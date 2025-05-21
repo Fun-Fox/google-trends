@@ -40,6 +40,10 @@ def research_hot_word(hot_words_folders_path, language):
     agent_logger = get_logger(__name__, agent_log_file_path)
 
     ret = hot_word_research_assistant(hot_words_folders_path, language, agent_logger)
+    print(f"热词处理成功：{hot_words_folders_path}")
+    print(f"查询md汇总文件,：{hot_words_folders_path}")
+    input_md_path = load_summary_and_paths(hot_words_folders_path)
+    convert_to_img(input_md_path)
     return ret
 
 

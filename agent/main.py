@@ -2,8 +2,6 @@ import os
 
 import pandas as pd
 
-from webui.service.search import convert_to_img, load_summary_and_paths
-# from fastapi import FastAPI, HTTPException
 from .flow import deepsearch_flow, content_flow
 
 # app = FastAPI()
@@ -79,11 +77,7 @@ def hot_word_research_assistant(hot_word_path: str, language,logger) -> str | No
         agent_flow.run(shared)
 
         logger.info(f"[热词深度搜索Agent任务完成]-[DONE] ")
-        print(f"查询md汇总文件,：{hot_word_path}")
-        input_md_path = load_summary_and_paths(hot_word_path)
-        print(f"md生成成功：{input_md_path}")
-        convert_to_img(input_md_path)
-        print(f"md转图片\转视频\转网页成功")
+
         return "[热词深度搜索Agent任务完成]-[DONE]"
     except Exception as e:
         logger.error(f"处理热词时发生异常: {e}")
