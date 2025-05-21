@@ -420,13 +420,14 @@ def save_html(html_content, output_path):
     print(f"✅ 已生成 HTML 文件: {output_path}")
 
 
-def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, background_image=None, custom_font=None):
+async def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, background_image=None, custom_font=None):
     """
     统一接口：将 Markdown 转为 HTML 并可选输出图像
     """
     try:
         with open(md_path, "r", encoding="utf-8") as f:
             md_text = f.read()
+        print(f"正在读取md文件: {md_path}")
 
         html_content = md_to_html(md_text, md_path, background_image, custom_font)
 
@@ -437,13 +438,12 @@ def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, b
         if image_path:
             # 使用 playwright 截图
             # 修改为异步调用方式：
-            asyncio.run(html_to_image_with_playwright(html_path, image_path, video_path, mobile=True))
+            await html_to_image_with_playwright(html_path, image_path, video_path, mobile=True)
 
     except FileNotFoundError as e:
         print(f"❌ 文件未找到: {e}")
     except Exception as e:
         print(f"❌ 发生错误: {e}")
-
 
 def get_random_bg_image(bg_folder_path):
     """
@@ -726,11 +726,11 @@ if __name__ == "__main__":
     print(f"随机选择的背景图路径: {bg_image_url}")
     font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
 
-    convert_md_to_output(
+    asyncio.run(convert_md_to_output_async(
         md_path=input_md_path,
         html_path=output_html,
         image_path=output_image,
         video_path=output_video,
         background_image=bg_image_url,
         custom_font=font_url
-    )
+    ))

@@ -7,7 +7,7 @@ from webui.func.constant import task_root_dir, root_dir
 from webui.func.md2html import (get_random_bg_image,convert_md_to_output)
 
 
-def research_all_hot_word(task_folders, language):
+async def research_all_hot_word(task_folders, language):
     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
     agent_logger = get_logger(__name__, agent_log_file_path)
@@ -25,7 +25,7 @@ def research_all_hot_word(task_folders, language):
             print(f"热词处理成功：{hot_words_folders}")
             print(f"查询md汇总文件,：{hot_words_folders}")
             input_md_path=load_summary_and_paths(hot_words_folders_path)
-            convert_to_img(input_md_path)
+            await convert_to_img(input_md_path)
         except Exception as e:
             print(f"正在处理热词：{hot_words_folders_path}发生异常，下一个热词")
             continue
@@ -33,7 +33,7 @@ def research_all_hot_word(task_folders, language):
     return result
 
 
-def research_hot_word(hot_words_folders_path, language):
+async def research_hot_word(hot_words_folders_path, language):
     print(f"开始处理热词文件夹：{hot_words_folders_path},输出语言{language}")
     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
@@ -43,7 +43,7 @@ def research_hot_word(hot_words_folders_path, language):
     print(f"热词处理成功：{hot_words_folders_path}")
     print(f"查询md汇总文件,：{hot_words_folders_path}")
     input_md_path = load_summary_and_paths(hot_words_folders_path)
-    convert_to_img(input_md_path)
+    await convert_to_img(input_md_path)
     return ret
 
 
@@ -67,7 +67,7 @@ def load_summary_and_paths(hot_word_path):
 
 
 # ===== 定义按钮点击事件 =====
-def convert_to_img(md_path):
+async def convert_to_img(md_path):
     if not md_path or not os.path.exists(md_path):
         return "❌ Markdown 文件不存在，无法转换"
 
@@ -85,8 +85,9 @@ def convert_to_img(md_path):
         video_path = os.path.join(md_dir, f"{base_name}.mp4")
         html_path = output_html
         image_path = output_image
+        print("开始转换..")
 
-        convert_md_to_output(
+        await convert_md_to_output(
             md_path=md_path,
             html_path=html_path,
             image_path=image_path,

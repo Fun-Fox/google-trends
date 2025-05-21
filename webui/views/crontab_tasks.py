@@ -77,7 +77,7 @@ async def scheduled_task(to_download_image, origin, category, nums, language="zh
 
         print(f"📁 开始任务深度搜索: {latest_folder}")
         # 执行热词研究
-        research_all_hot_word(latest_folder, language)
+        await  research_all_hot_word(latest_folder, language)
         print(f"📁 结束任务深度搜索+: {latest_folder}")
 
         # 新增：整合 MP4 文件
