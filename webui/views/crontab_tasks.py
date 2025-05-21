@@ -114,25 +114,20 @@ def run_schedule_in_background():
     thread.start()
 
 _SCHEDULE_STARTED = False
-_CURRENT_TASK = None
+# ========== 设置定时任务 ==========
 # ========== 设置定时任务 ==========
 def set_scheduled_task(run_time, to_download_image, origin, category, nums, language="简体中文"):
-    global _SCHEDULE_STARTED, _CURRENT_TASK
+    global _SCHEDULE_STARTED
     try:
+        # 清除已有任务
         schedule.clear()
 
-        async def wrapped_task():
-            try:
-                await scheduled_task(to_download_image, origin, category, nums, language)
-            except asyncio.CancelledError:
-                print("⚠️ 当前任务已被取消")
-                return "⏹️ 当前任务已被取消"
+        # 构建带参数的异步任务
+        job_func = lambda: asyncio.run(
+            scheduled_task(to_download_image, origin, category, nums, language)
+        )
 
-        def job_func():
-            nonlocal wrapped_task
-            task = asyncio.create_task(wrapped_task())
-            _CURRENT_TASK = task
-
+        # 设置每日定时任务
         schedule.every().day.at(run_time).do(job_func)
         _SCHEDULE_STARTED = True
 
@@ -144,30 +139,13 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
 # ========== 停止定时任务 ==========
 # ========== 修改 stop_scheduled_task 函数 ==========
 def stop_scheduled_task():
-    global _SCHEDULE_STARTED, _CURRENT_TASK
+    global _SCHEDULE_STARTED
     try:
+        # 清除所有定时任务
         schedule.clear()
         setattr(run_schedule_in_background, "is_running", False)
         _SCHEDULE_STARTED = False
-
-        if _CURRENT_TASK and asyncio.iscoroutine(_CURRENT_TASK):
-            # 如果是原始协程，无需取消
-            _CURRENT_TASK = None
-            return "⏹️ 定时任务已停止（检测到协程未包装为 Task）"
-
-        elif _CURRENT_TASK and isinstance(_CURRENT_TASK, asyncio.Task):
-            if not _CURRENT_TASK.done():
-                _CURRENT_TASK.cancel()
-                try:
-                    loop = asyncio.get_event_loop()
-                    loop.run_until_complete(asyncio.wait_for(_CURRENT_TASK, timeout=5))
-                except (asyncio.TimeoutError, asyncio.CancelledError) as e:
-                    print(f"🛑 强制终止任务: {str(e)}")
-            _CURRENT_TASK = None
-            return "⏹️ 定时任务已停止，并安全终止了当前运行的任务"
-        else:
-            _CURRENT_TASK = None
-            return "⏹️ 定时任务已停止"
+        return "⏹️ 定时任务已停止"
     except Exception as e:
         return f"❌ 停止定时任务失败: {e}"
 
