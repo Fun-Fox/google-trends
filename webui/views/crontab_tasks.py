@@ -33,7 +33,7 @@ def find_mp4_files(directory):
     mp4_files = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.lower().endswith(".mp4"):
+            if file.lower().endswith("_p.mp4"):
                 mp4_files.append(os.path.join(root, file))
     return mp4_files
 
@@ -131,7 +131,8 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
                 return "⏹️ 当前任务已被取消"
 
         def job_func():
-            loop = asyncio.get_event_loop()
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             task = loop.create_task(wrapped_task())
             _CURRENT_TASK = task
 
