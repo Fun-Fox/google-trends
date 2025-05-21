@@ -21,7 +21,7 @@ def rewrite_images(html_content, md_path):
         if '../' in src:
             full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.split("../")[1]).replace("\\", "/")
         else:
-            full_path = os.path.join(root_dir, src).replace("\\", "/")
+            full_path = src
         # print(f"图片全路径:{full_path}")
         if not os.path.exists(full_path):
             print(f"图片路径不存在：{full_path}")
