@@ -17,13 +17,16 @@ def rewrite_images(html_content, md_path):
     def replace_img(match, md_path):
         src = match.group(1)
         # 相对路径转为绝对路径
-        print(f"md文件路径：{md_path},图片路径:{src}")
-        full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.split("../")[1])
-        print(f"图片全路径:{full_path}")
+        # print(f"md文件路径：{md_path},图片路径:{src}")
+        if '../' in src:
+            full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.split("../")[1]).replace("\\", "/")
+        else:
+            full_path = os.path.join(root_dir, src).replace("\\", "/")
+        # print(f"图片全路径:{full_path}")
         if not os.path.exists(full_path):
             print(f"图片路径不存在：{full_path}")
         # print(full_path)
-        new_src = get_image_as_base64(full_path.replace("\\", "/"))
+        new_src = get_image_as_base64(full_path)
 
         return f'<img src="{new_src}" alt="Embedded Image" style="max-width:100%; height:auto; border-radius:10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin: 20px 0;">'
 
@@ -32,6 +35,35 @@ def rewrite_images(html_content, md_path):
     rewritten_html = re.sub(img_pattern, lambda m: replace_img(m, md_path), html_content)
 
     return rewritten_html
+
+
+def get_random_bgm(bgm_folder_path):
+    """
+    获取指定目录下的随机音频文件（.mp3/.ogg）的 Base64 数据 URI
+    :param bgm_folder_path: 背景音乐文件夹路径
+    :return: Base64 数据 URI 字符串
+    """
+    if not os.path.exists(bgm_folder_path):
+        print(f"⚠️ 背景音乐目录不存在: {bgm_folder_path}")
+        return None
+
+    audio_files = [
+        f for f in os.listdir(bgm_folder_path)
+        if f.lower().endswith((".mp3", ".ogg"))
+    ]
+
+    if not audio_files:
+        print(f"⚠️ 背景音乐目录中未找到音频文件")
+        return None
+
+    selected_file = random.choice(audio_files)
+    full_path = os.path.join(bgm_folder_path, selected_file)
+
+    with open(full_path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode()
+    ext = os.path.splitext(full_path)[1].lower()
+    mime = "audio/mpeg" if ext == ".mp3" else "audio/ogg"
+    return f"data:{mime};base64,{encoded}"
 
 
 def md_to_html(md_text, md_path, background_image=None, custom_font=None):
@@ -61,6 +93,9 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
 
     # 重写图片 src 为 Base64
     html = rewrite_images(html, md_path)
+    html = html.replace("<h1>", '<h1 class="color-flow">') \
+        .replace("<h2>", '<h2 class="color-flow">') \
+        .replace("<h3>", '<h3 class="color-flow">')
 
     # 构建自定义 CSS
     css = """
@@ -154,8 +189,39 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
         font-family: 'Courier New', monospace;
         color: #333;
     }
+    /*  段落逐字显示动画 */
+    .markdown-content p {
+        opacity: 0;
+        animation: fadeInText 1s ease-in forwards;
+        animation-delay: calc(0.1s * var(--i));
+        background-color: #fffbea;
+    }
     
-    /* 动画效果 */
+    .typing-text {
+        overflow: hidden; /* 隐藏超出内容 */
+        white-space: nowrap; /* 禁止换行 */
+        border-right: 2px solid #333; /* 显示光标方便观察 */
+        animation: typing 5s steps(40, end), blink-caret 0.75s step-end infinite;
+    }
+    
+    
+    @keyframes typing {
+        from { width: 0 }
+        to { width: 100% }
+    }
+    
+    @keyframes blink-caret {
+        from, to { border-color: transparent }
+        50% { border-color: #333 }
+    }
+    .markdown-content code,
+    .markdown-content li {
+        opacity: 0;
+        animation: fadeIn 1s ease-in forwards;
+        animation-delay: calc(0.1s * var(--i));
+    }
+    
+    /* 渐现动画 */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -196,6 +262,10 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     
     .markdown-content li {
         margin: 6px 0;
+    }
+    /*CSS 渐变动效 + 背景裁剪\应用到标题或段落*/
+    .color-flow {
+        color: #4e54c8; /* 默认颜色 */
     }
     
     /* 响应式设计 */
@@ -250,26 +320,59 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
         css += f"@import url('{custom_font}');\n"
         css += "body { font-family: 'YourCustomFont', sans-serif; }\n"
 
+    # 获取随机背景音乐数据
+    bgm_data = get_random_bgm(os.path.join(root_dir, "webui", "bgm"))
+
     # 完整 HTML 模板
     template = f"""<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>Markdown Poster</title>
-    <style>
-        {css}
-    </style>
-</head>
-<body>
-     <div class="background-frame">
-        <div class="markdown-content">
-            {html}
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <title>Markdown Poster</title>
+        <style>
+            {css}
+            .disclaimer {{
+                margin-top: 40px;
+                font-size: 14px;
+                color: #999;
+                text-align: center;
+                padding: 15px;
+                border-top: 1px solid #eee;
+            }}
+        </style>
+    </head>
+    <body class="gradient-bg">
+         <div class="background-frame">
+            <div class="markdown-content">
+                {html}
+                <div class="disclaimer">
+                    ⚠️ 内容来源于互联网，仅供参考，请遵守相关法律法规。
+                </div>
+            </div>
         </div>
-    </div>
-    
-</body>
-</html>
-"""
+
+        <!-- 自动循环播放背景音乐 -->
+        {f'<audio autoplay loop style="display:none;"><source src="{bgm_data}" type="audio/mpeg"></audio>' if bgm_data else ''}
+
+        <script>
+           document.addEventListener("DOMContentLoaded", function () {{
+                const paragraphs = document.querySelectorAll(".markdown-content p");
+            
+                paragraphs.forEach((p, index) => {{
+                    // 添加类名触发逐字动画
+                    p.classList.add("typing-text");
+            
+                    // 设置不同的动画延迟（按顺序）
+                    p.style.animationDelay = `${{index * 3.1}}s`; // 每段间隔3.1秒
+                }});
+            }});
+            document.querySelectorAll(".markdown-content p, .markdown-content li, .markdown-content code").forEach((el, idx) => {{
+                el.style.setProperty('--i', idx);
+            }});
+        </script>
+    </body>
+    </html>
+    """
 
     return template
 
@@ -310,7 +413,7 @@ def save_html(html_content, output_path):
     print(f"✅ 已生成 HTML 文件: {output_path}")
 
 
-def convert_md_to_output(md_path, html_path, image_path=None, background_image=None, custom_font=None):
+def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, background_image=None, custom_font=None):
     """
     统一接口：将 Markdown 转为 HTML 并可选输出图像
     """
@@ -326,7 +429,7 @@ def convert_md_to_output(md_path, html_path, image_path=None, background_image=N
         # 输出图像（如果提供路径）
         if image_path:
             # 使用 playwright 截图
-            html_to_image_with_playwright(html_path, image_path, mobile=True)
+            html_to_image_with_playwright(html_path, image_path, video_path, mobile=True)
 
     except FileNotFoundError as e:
         print(f"❌ 文件未找到: {e}")
@@ -364,24 +467,39 @@ from playwright.sync_api import sync_playwright
 import os
 
 
-def html_to_image_with_playwright(html_path, image_path, mobile=False):
+def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile=False):
     """
-    使用 Playwright 将 HTML 内容转为 PNG 图像
-    :param html_content: HTML 字符串
+    使用 Playwright 将 HTML 内容转为 PNG 图像并录制视频
+    :param html_path: HTML 文件路径
     :param image_path: 输出图像路径（.png）
+    :param video_path: 输出视频路径（.webm），若不指定则不录屏
     :param mobile: 是否启用移动端视口
     """
     abs_html_path = os.path.abspath(html_path)
+
     with sync_playwright() as p:
-        # 启动浏览器（headless=False 用于调试）
+        # 启动浏览器（headless=True 用于无头模式）
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        # 使用 file:// 协议加载本地 HTML 文件
+
+        # 设置上下文（启用录屏）
+        context_args = {}
+        if video_path:
+            os.makedirs(os.path.dirname(video_path), exist_ok=True)
+            context_args.update(
+                record_video_dir=os.path.dirname(video_path),
+                record_video_size={"width": 1080, "height": 1920}
+            )
+
+        # 创建带录屏功能的上下文
+        context = browser.new_context(**context_args)
+        page = context.new_page()
+
+        # 加载 HTML 页面
         page.goto(f"file://{abs_html_path}")
 
         if mobile:
             # 设置为 iPhone 12 视口 + 移动端 UA
-            page.set_viewport_size({"width": 330 * 3, "height": 944 * 2})
+            page.set_viewport_size({"width": 1080, "height": 1920})
             page.add_init_script("""
                 Object.defineProperty(navigator, 'userAgent', {
                     value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.4 (KHTML, like Gecko) Version/14.0 Mobile/15A5370a Safari/604.1',
@@ -390,20 +508,103 @@ def html_to_image_with_playwright(html_path, image_path, mobile=False):
                     enumerable: true
                 })
             """)
-
         else:
-            # 桌面视口
             page.set_viewport_size({"width": 900, "height": 1080})
 
-        # 等待页面渲染完成（尤其是图片、字体等资源）
-        page.wait_for_timeout(2000)
+        # 增加 30s 停顿再开始录制
+        page.wait_for_timeout(30000)
 
-        # 截图并保存
+        # 截图
         page.screenshot(path=image_path, full_page=True)
 
+        # 如果指定了视频路径，则保存视频（注意顺序）
+        if video_path:
+            page.close()  # 🔥 先关闭页面
+            video = page.video
+            if video:
+                video.save_as(video_path)
+                print(f"🎥 已生成{'移动端' if mobile else '桌面'}视频文件: {video_path}")
+                directory = os.path.dirname(video_path)
+                for f in os.listdir(directory):
+                    if f.lower().endswith(".webm"):
+                        try:
+                            os.remove(os.path.join(directory, f))
+                            print(f"🗑️ 清理 .webm 文件: {f}")
+                        except Exception as e:
+                            print(f"❌ 清理失败: {f}, 错误: {e}")
+        # 关闭资源
+        context.close()
         browser.close()
 
-    print(f"✅ 已生成{'移动端' if mobile else '桌面'}图像文件: {image_path}")
+        # 👇 新增：裁剪最后 1 秒
+        process_video_with_first_frame(image_path,video_path)
+
+from moviepy import ImageClip, VideoFileClip, concatenate_videoclips
+import os
+def process_video_with_first_frame(image_path, video_path, output_path=None):
+    """
+    使用 MoviePy 将 image_path 的图片作为视频第一帧，并裁剪最后 1 秒。
+    :param image_path: 图片路径 (用于作+为首帧)
+    :param video_path: 原始视频路径 (.mp4/.webm 等)
+    :param output_path: 最终输出视频路径（默认覆盖原文件）
+    """
+    image_clip = None
+    video_clip = None
+    final_clip = None
+
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"找不到图片文件: {image_path}")
+    if not os.path.exists(video_path):
+        raise FileNotFoundError(f"找不到视频文件: {video_path}")
+
+    if not output_path:
+        output_path = os.path.splitext(video_path)[0] + "_processed.mp4"
+
+    try:
+        # Step 1: 加载图片并生成 2 秒的图片视频片段
+        print("🖼️ 正在生成首帧视频...")
+        image_clip = ImageClip(image_path)
+        image_clip.duration=2
+        image_clip.resized(new_size=(1080, 1920))
+
+        # Step 2: 加载原始视频
+        print("🎥 正在加载原始视频...")
+        video_clip = VideoFileClip(video_path)
+
+        # Step 3: 裁剪最后 1 秒
+        if video_clip.duration > 1:
+            trimmed_clip = video_clip.subclipped(0, video_clip.duration - 1)
+        else:
+            print("⚠️ 视频太短，无法裁剪最后 1 秒")
+            trimmed_clip = video_clip
+
+        # Step 4: 拼接图片片段和视频片段
+        print("🔗 正在拼接首帧与原始视频...")
+        final_clip = concatenate_videoclips([image_clip, trimmed_clip])
+
+        # Step 5: 输出最终视频
+        print("✅ 正在编码最终视频...")
+        final_clip.write_videofile(
+            output_path,
+            codec="libx264",
+            audio_codec="aac",
+            fps=24,
+            preset="fast",
+            bitrate="5000k"
+        )
+
+        print(f"🎉 视频处理完成: {output_path}")
+
+    except Exception as e:
+        print(f"❌ 视频处理失败: {e}")
+    finally:
+        if image_clip is not None:
+            image_clip.close()
+        if video_clip is not None:
+            video_clip.close()
+        if final_clip is not None:
+            final_clip.close()
+
 
 
 if __name__ == "__main__":
@@ -412,6 +613,7 @@ if __name__ == "__main__":
     input_md_path = os.path.join(root_dir, "README.md")
     output_html = os.path.join(root_dir, "output.html")
     output_image = os.path.join(root_dir, "output.png")
+    output_video = os.path.join(root_dir, "output.mp4")
     # 随机选择背景图
     bg_folder = os.path.join(root_dir, "webui", "bg")  # 本地磁盘路径
     bg_image_path = get_random_bg_image(bg_folder)
@@ -428,6 +630,7 @@ if __name__ == "__main__":
         md_path=input_md_path,
         html_path=output_html,
         image_path=output_image,
+        video_path=output_video,
         background_image=bg_image_url,
         custom_font=font_url
     )

@@ -78,6 +78,7 @@ def convert_to_img(md_path):
         md_dir = os.path.dirname(md_path)
         output_html = os.path.join(md_dir, f"{base_name}.html")
         output_image = os.path.join(md_dir, f"{base_name}.png")
+        video_path = os.path.join(md_dir, f"{base_name}.mp4")
         html_path = output_html
         image_path = output_image
 
@@ -85,6 +86,7 @@ def convert_to_img(md_path):
             md_path=md_path,
             html_path=html_path,
             image_path=image_path,
+            video_path=video_path,
             background_image=bg_image_url,
             custom_font=font_url
         )
