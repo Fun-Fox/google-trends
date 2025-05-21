@@ -18,7 +18,7 @@ def rewrite_images(html_content, md_path):
         src = match.group(1)
         # 相对路径转为绝对路径
         print(f"md文件路径：{md_path},图片路径:{src}")
-        full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.stript("../"))
+        full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.split("../")[1])
         print(f"图片全路径:{full_path}")
         if not os.path.exists(full_path):
             print(f"图片路径不存在：{full_path}")

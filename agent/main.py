@@ -73,7 +73,7 @@ def hot_word_research_assistant(hot_word_path: str, language,logger) -> str | No
         hot_word = os.path.basename(hot_word_path)
         shared = {"hot_word": hot_word, "relation_news": relation_news, "hot_word_path": hot_word_path,
                   "logger": logger, "language": language}
-        logger.info(f"正在分析时下网络流行热词: {hot_word}")
+        logger.info(f"===正在分析时下网络流行热词===:\n {hot_word},使用语言:\n {language},关联新闻:\n{relation_news}")
         agent_flow.run(shared)
 
         logger.info(f"[热词深度搜索Agent任务完成]-[DONE] ")
