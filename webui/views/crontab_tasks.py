@@ -10,8 +10,6 @@ from webui.func.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
 from webui.service.search import research_all_hot_word
 
-# ========== 新增全局变量 ==========
-_SCHEDULE_STARTED = False  # 标记是否已启动定时任务
 
 
 def get_latest_task_folder():
@@ -131,9 +129,8 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
                 return "⏹️ 当前任务已被取消"
 
         def job_func():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            task = loop.create_task(wrapped_task())
+            nonlocal wrapped_task
+            task = asyncio.create_task(wrapped_task())
             _CURRENT_TASK = task
 
         schedule.every().day.at(run_time).do(job_func)
@@ -162,11 +159,12 @@ def stop_scheduled_task():
             if not _CURRENT_TASK.done():
                 _CURRENT_TASK.cancel()
                 try:
-                    asyncio.get_event_loop().run_until_complete(_CURRENT_TASK)
-                except asyncio.CancelledError:
-                    pass
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(asyncio.wait_for(_CURRENT_TASK, timeout=5))
+                except (asyncio.TimeoutError, asyncio.CancelledError) as e:
+                    print(f"🛑 强制终止任务: {str(e)}")
             _CURRENT_TASK = None
-            return "⏹️ 定时任务已停止，并终止了当前运行的任务"
+            return "⏹️ 定时任务已停止，并安全终止了当前运行的任务"
         else:
             _CURRENT_TASK = None
             return "⏹️ 定时任务已停止"

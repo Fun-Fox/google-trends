@@ -20,3 +20,4 @@ __pycache__
 /tts
 /heygem/deploy/ssh
 *.webm
+*.html
