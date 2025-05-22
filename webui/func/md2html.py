@@ -1,26 +1,15 @@
+import asyncio
 import base64
 import random
 import re
-import time
-
+from PIL import Image
 import markdown2
 
+from moviepy import *
+import os
+from playwright.async_api import async_playwright
 from webui.func.constant import root_dir
 
-
-class CustomMarkdown(markdown2.Markdown):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def image(self, match, prefix=''):
-        # 获取原始的 image 方法
-        original_image = super().image(match, prefix)
-
-        # 移除包裹的 <p> 标签
-        if original_image.startswith('<p>') and original_image.endswith('</p>'):
-            original_image = original_image[3:-4]
-
-        return original_image
 
 
 def rewrite_images(html_content, md_path):
@@ -148,7 +137,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     }
     /*  > 引用块（blockquotes）*/
     .markdown-content blockquote {
-        font-size: 18px;      /* 比 h1 小一点 */
+        font-size: 20px;      /* 比 h1 小一点 */
         font-weight: 500;     /* 不加粗 */
         color: #555;          /* 淡化文字颜色 */
         background-color: #f9f9f9; /* 浅灰色背景 */
@@ -162,6 +151,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     
     /* 悬浮标题 */
     .markdown-content h1:first-of-type {
+        font-size: 30px;
         position: sticky;
         top: -30px;
         background: white;
@@ -271,45 +261,18 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     
     /* 列表样式增强 */
     .markdown-content ul, .markdown-content ol {
-        padding-left: 20px;
+        padding-left: 22px;
     }
     
-    .markdown-content li {
-        margin: 6px 0;
+    .markdown-content li, .markdown-content p{
+        margin: 8px 0;
+        font-size: 22px; /* 调整为你需要的字体大小 */
     }
     /*CSS 渐变动效 + 背景裁剪\应用到标题或段落*/
     .color-flow {
         color: #4e54c8; /* 默认颜色 */
     }
     
-    /* 响应式设计 */
-    @media (max-width: 820px) {
-        .background-frame {
-            width: calc(100% + 20px);
-            max-width: 100%;
-            padding: 15px;
-        }
-    
-        .markdown-content {
-            width: 100%;
-            max-width: 100%;
-            padding: 20px;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-    
-        .markdown-content h1 {
-            font-size: 24px;
-        }
-    
-        .markdown-content h2 {
-            font-size: 20px;
-        }
-    
-        .markdown-content img {
-            border-radius: 8px;
-        }
-    }
     """
 
     # # 添加背景图片（如果提供）
@@ -318,7 +281,7 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
 
         .background-frame {{
             width: calc(100% + 60px); /* 比内容区宽 40px */
-            max-width: 860px;         /* 卡片宽 800px + 左右各 20px 边距 */
+            max-width: 900px;         /* 卡片宽 800px + 左右各 20px 边距 */
             margin: 0 auto;
             padding: 30px;
             # box-sizing: border-box;
@@ -335,7 +298,6 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
         css += "body { font-family: 'YourCustomFont', sans-serif; }\n"
 
     # 获取随机背景音乐数据
-    bgm_data = get_random_bgm(os.path.join(root_dir, "webui", "bgm"))
 
     # 完整 HTML 模板
     template = f"""<!DOCTYPE html>
@@ -365,8 +327,6 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
             </div>
         </div>
 
-        <!-- 自动循环播放背景音乐 -->
-        {f'<audio autoplay loop style="display:none;"><source src="{bgm_data}" type="audio/mpeg"></audio>' if bgm_data else ''}
 
         <script>
             function typeText(element, index) {{
@@ -400,6 +360,17 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
             }});
             document.querySelectorAll(".markdown-content p, .markdown-content li, .markdown-content code").forEach((el, idx) => {{
                 el.style.setProperty('--i', idx);
+            }});
+            document.querySelectorAll('.markdown-content img').forEach(img => {{
+                img.addEventListener('load', () => {{
+                    img.style.opacity = '1';
+                    if (img.naturalHeight > 400) {{
+                        img.style.cursor = 'zoom-in';
+                        img.addEventListener('click', () => {{
+                            // 实现点击放大功能
+                        }});
+                    }}
+                }});
             }});
         </script>
     </body>
@@ -445,13 +416,14 @@ def save_html(html_content, output_path):
     print(f"✅ 已生成 HTML 文件: {output_path}")
 
 
-def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, background_image=None, custom_font=None):
+async def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, background_image=None, custom_font=None):
     """
     统一接口：将 Markdown 转为 HTML 并可选输出图像
     """
     try:
         with open(md_path, "r", encoding="utf-8") as f:
             md_text = f.read()
+        print(f"正在读取md文件: {md_path}")
 
         html_content = md_to_html(md_text, md_path, background_image, custom_font)
 
@@ -461,13 +433,13 @@ def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, b
         # 输出图像（如果提供路径）
         if image_path:
             # 使用 playwright 截图
-            html_to_image_with_playwright(html_path, image_path, video_path, mobile=True)
+            # 修改为异步调用方式：
+            await html_to_image_with_playwright(html_path, image_path, video_path, mobile=True)
 
     except FileNotFoundError as e:
         print(f"❌ 文件未找到: {e}")
     except Exception as e:
         print(f"❌ 发生错误: {e}")
-
 
 def get_random_bg_image(bg_folder_path):
     """
@@ -495,11 +467,62 @@ def get_random_bg_image(bg_folder_path):
     return full_path  # 或者返回 "/webui/bg/xxx.webp" 格式
 
 
-from playwright.sync_api import sync_playwright
-import os
+async def scroll_to_bottom(page, viewport_height=1920):
+    """
+    滚动到页面底部
+    :param page: Playwright 页面对象
+    :param viewport_height: 视口高度
+    :return: 实际滚动的距离
+    """
+    last_scroll_position = await page.evaluate("window.pageYOffset")
+    doc_height = await page.evaluate("document.body.scrollHeight")
 
+    # 计算剩余高度
+    remaining_height = doc_height - last_scroll_position - viewport_height
+    if remaining_height <= 0:
+        return 0
 
-def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile=False):
+    # 执行滚动
+    scroll_amount = min(remaining_height, 200)  # 每次最多滚动1000px
+    scroll_duration = max(1000, int(scroll_amount * 1.5))
+
+    await page.evaluate(f"""
+        () => {{
+            const start = window.pageYOffset;
+            const end = start + {scroll_amount};
+            const duration = {scroll_duration};
+            let startTime = null;
+
+            const animateScroll = (currentTime) => {{
+                if (!startTime) startTime = currentTime;
+                const elapsed = currentTime - startTime;
+
+                // 使用缓动函数控制速度
+                const progress = Math.min(elapsed / duration, 1);
+                const easing = 1 - Math.pow(1 - progress, 3);  // cubic ease-out
+
+                window.scrollTo({{
+                    top: start + ({scroll_amount} * easing),
+                    left: 0,
+                    behavior: 'auto'
+                }});
+
+                if (progress < 1) {{
+                    requestAnimationFrame(animateScroll);
+                }}
+            }};
+
+            requestAnimationFrame(animateScroll);
+        }}
+    """)
+
+    # 等待滚动完成
+    await page.wait_for_timeout(scroll_duration + 500)
+
+    # 返回实际滚动距离
+    return scroll_amount
+
+async def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile=False):
     """
     使用 Playwright 将 HTML 内容转为 PNG 图像并录制视频
     :param html_path: HTML 文件路径
@@ -509,9 +532,9 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
     """
     abs_html_path = os.path.abspath(html_path)
 
-    with sync_playwright() as p:
+    async with async_playwright() as p:
         # 启动浏览器（headless=True 用于无头模式）
-        browser = p.chromium.launch(headless=True)
+        browser =await p.chromium.launch(headless=True)
 
         # 设置上下文（启用录屏）
         context_args = {}
@@ -523,16 +546,16 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
             )
 
         # 创建带录屏功能的上下文
-        context = browser.new_context(**context_args)
-        page = context.new_page()
+        context =await browser.new_context(**context_args)
+        page =await context.new_page()
 
         # 加载 HTML 页面
-        page.goto(f"file://{abs_html_path}")
+        await page.goto(f"file://{abs_html_path}")
 
         if mobile:
             # 设置为 iPhone 12 视口 + 移动端 UA
-            page.set_viewport_size({"width": 1080, "height": 1920})
-            page.add_init_script("""
+            await page.set_viewport_size({"width": 1080, "height": 1920})
+            await page.add_init_script("""
                 Object.defineProperty(navigator, 'userAgent', {
                     value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.4 (KHTML, like Gecko) Version/14.0 Mobile/15A5370a Safari/604.1',
                     configurable: false,
@@ -541,20 +564,40 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
                 })
             """)
         else:
-            page.set_viewport_size({"width": 900, "height": 1080})
+            await page.set_viewport_size({"width": 900, "height": 1080})
 
-        # 增加 30s 停顿再开始录制
-        page.wait_for_timeout(30000)
+
+        # 增加 10s 停顿再开始录制
+        await page.wait_for_timeout(8000)
+        # 多次滚动直到所有内容可见
+        max_attempts = 5
+        attempt = 0
+        while attempt < max_attempts:
+
+            # 尝试滚动更多
+            scrolled = await scroll_to_bottom(page,viewport_height=1920)
+
+            await page.wait_for_timeout(2000)
+
+            # 如果没有滚动或内容已完全显示则退出
+            if scrolled == 0:
+                break
+
+            attempt += 1
+            print(f"🔄 第 {attempt} 次滚动完成，继续检查是否有更多内容")
+
+        # 新增：等待图片加载完成
 
         # 截图
-        page.screenshot(path=image_path, full_page=True)
+        await page.screenshot(path=image_path, full_page=True)
+
 
         # 如果指定了视频路径，则保存视频（注意顺序）
         if video_path:
-            page.close()  # 🔥 先关闭页面
+            await page.close()  # 🔥 先关闭页面
             video = page.video
             if video:
-                video.save_as(video_path)
+                await video.save_as(video_path)
                 print(f"🎥 已生成{'移动端' if mobile else '桌面'}视频文件: {video_path}")
                 directory = os.path.dirname(video_path)
                 for f in os.listdir(directory):
@@ -565,16 +608,89 @@ def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile
                         except Exception as e:
                             print(f"❌ 清理失败: {f}, 错误: {e}")
         # 关闭资源
-        context.close()
-        browser.close()
+        await context.close()
+        await browser.close()
         # time.sleep(3)
 
-        # 👇 新增：裁剪最后 1 秒
-        process_video_with_first_frame(image_path, video_path)
+    # 👇 新增：裁剪最后 1 秒
+    process_video_with_first_frame(image_path, video_path)
+    # 图片裁剪
+    crop_image_with_gray_area(image_path, image_path)
 
 
-from moviepy import *
-import os
+
+
+
+def hex_to_rgb(hex_color):
+    """
+    将十六进制颜色值转换为 RGB 格式。
+    :param hex_color: 十六进制颜色值（例如：'#f2f2f2'）
+    :return: RGB 格式（例如：(242, 242, 242)）
+    """
+    # 去掉开头的 '#' 号
+    hex_color = hex_color.lstrip('#')
+
+    # 将十六进制字符串每两个字符一组，转换为十进制
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+
+    return (r, g, b)
+
+
+def find_gray_area_height(image_path):
+    """
+    找到图像最底部中间区域的灰色部分高度。
+    """
+    # 打开图像
+    img = Image.open(image_path)
+    width, height = img.size
+
+    # 定义灰色的阈值范围
+    hex_color = "#f2f2f2"
+    rgb_color = hex_to_rgb(hex_color)
+    gray_threshold = rgb_color
+    tolerance = 50  # 灰色值的容差范围
+
+    # 遍历图像的每一行，从底部向上找到灰色区域的起始位置
+    for y in range(height - 1, -1, -1):
+        gray_row = True
+        for x in range(width // 4, width * 3 // 4):  # 只检查中间区域
+            pixel = img.getpixel((x, y))
+            if not (gray_threshold[0] - tolerance <= pixel[0] <= gray_threshold[0] + tolerance and
+                    gray_threshold[1] - tolerance <= pixel[1] <= gray_threshold[1] + tolerance and
+                    gray_threshold[2] - tolerance <= pixel[2] <= gray_threshold[2] + tolerance):
+                gray_row = False
+                break
+        if not gray_row:
+            return height - y - 1  # 返回灰色区域的高度
+
+    return 0  # 如果没有找到灰色区域，返回 0
+
+
+def crop_image_with_gray_area(image_path, output_path):
+    """
+    根据灰色区域的高度裁剪图像，并预留 20px 的距离。
+    """
+    # 打开图像
+    img = Image.open(image_path)
+    width, height = img.size
+
+    # 找到灰色区域的高度
+    gray_height = find_gray_area_height(image_path)
+
+    # 确定裁剪的底部位置（预留 20px）
+    crop_bottom = height - gray_height + 20
+
+    # 裁剪图像
+    cropped_img = img.crop((0, 0, width, crop_bottom))
+
+    # 保存裁剪后的图像
+    cropped_img.save(output_path)
+
+
+
+
 
 
 def process_video_with_first_frame(image_path, video_path):
@@ -613,31 +729,6 @@ def process_video_with_first_frame(image_path, video_path):
             print("⚠️ 视频太短，无法裁剪最后 1 秒")
             trimmed_clip = video_clip
 
-        # Step 4: 拼接图片片段和视频片段
-        # print("🔗 正在拼接首帧与原始视频...")
-        # final_clip = concatenate_videoclips([image_clip, trimmed_clip])
-        # # Step 5: 静音视频（移除原始音频）
-        # final_clip = final_clip.without_audio()
-
-        # Step 6: 获取随机背景音乐文件
-        bgm_folder = os.path.join(root_dir, "webui", "bgm")  # ⚠️ 替换为你的 bgm 文件夹路径
-        bgm_files = [
-            f for f in os.listdir(bgm_folder)
-            if f.lower().endswith((".mp3", ".ogg"))
-        ]
-        if not bgm_files:
-            print("⚠️ 未找到可用背景音乐文件")
-        else:
-            selected_bgm = random.choice(bgm_files)
-            bgm_path = os.path.join(bgm_folder, selected_bgm)
-            print(f"🎵 正在加载背景音乐: {bgm_path}")
-
-            # 加载音频并设置为循环播放
-            music = AudioFileClip(bgm_path)
-            # AudioLoop())  # 循环播放音频
-            audio = music.with_effects([afx.AudioLoop(duration=trimmed_clip.duration)])
-            # 合并音频到视频
-            trimmed_clip.with_audio(audio)
 
         # Step 5: 输出最终视频
         print("✅ 正在编码最终视频...")
@@ -647,8 +738,6 @@ def process_video_with_first_frame(image_path, video_path):
             audio_codec="aac",  # 推荐使用更通用的 aac 编码
             fps=24,
             preset="fast",
-            bitrate="5000k",
-            audio_bitrate="192k"
         )
 
         print(f"🎉 视频处理完成: {output_path}")
@@ -683,11 +772,11 @@ if __name__ == "__main__":
     print(f"随机选择的背景图路径: {bg_image_url}")
     font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
 
-    convert_md_to_output(
+    asyncio.run(convert_md_to_output(
         md_path=input_md_path,
         html_path=output_html,
         image_path=output_image,
         video_path=output_video,
         background_image=bg_image_url,
         custom_font=font_url
-    )
+    ))

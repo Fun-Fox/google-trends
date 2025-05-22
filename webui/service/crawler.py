@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from core import get_logger, init_browser, crawl_google_trends_page, close_browser
 from webui.func.conf import load_regions_choices
-from webui.func.constant import task_root_dir, task_log_file_path, task_date
+from webui.func.constant import task_root_dir, root_dir
 
 load_dotenv()
 
@@ -29,6 +29,9 @@ async def start_crawler(url, to_download_image, origin="", category="", nums=25)
     :param category:
     :param url: 目标URL
     """
+    task_date = datetime.datetime.now().strftime("%Y年%m月%d日%H时%M分")
+    task_log_file_path = os.path.join(f"task_{task_date}.log")
+    os.makedirs(os.path.join(root_dir, "logs"), exist_ok=True)
     # 获取当前时间并创建任务文件夹
     task_dir_file_name = os.path.join(task_root_dir, task_date + f'_{origin}_{category}')
     os.makedirs(task_root_dir, exist_ok=True)

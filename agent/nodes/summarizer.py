@@ -1,5 +1,6 @@
 import csv
 import os
+from datetime import datetime
 from time import sleep
 
 from dotenv import load_dotenv
@@ -17,11 +18,24 @@ __all__ = ["SupervisorNode", "ImageMatchScorer", "ContentSummarizer"]
 class ContentSummarizer(Node):
     def prep(self, shared):
         """获取用于回答的问题和上下文。"""
-        return shared["hot_word"], shared.get("context"), shared.get("language"), shared["logger"]
+        search_volume = shared["search_volume"]
+        search_growth_rate = shared["search_growth_rate"]
+        search_active_time = shared["search_active_time"]
+        return (shared['current_date'],
+                shared["hot_word"],
+                search_volume,
+                search_growth_rate,
+                search_active_time,
+                shared.get("search_history"),
+                shared.get("context"),
+                shared.get("language"),
+                shared["logger"])
 
     def exec(self, inputs):
         """调用 LLM 编制草稿。"""
-        hot_word, context, language, logger = inputs
+        current_date, hot_word, search_volume, search_growth_rate, search_active_time, search_history, context, language, logger = inputs
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        hot_word_info = f"此热词从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
 
         logger.info(f"编制草稿...")
 
@@ -40,10 +54,18 @@ class ContentSummarizer(Node):
 
 ### 输入格式:
 
-时下网络流行热词: {hot_word}
-相关研究: 
+当前时间: {current_date}
+时下流行热词: {hot_word}
+
+{hot_word_info}
+
+内容描述: 
 
 {context}
+
+相关搜索历史:
+
+{search_history}
 
 ### 你的回答:
 1. 请根据研究内容撰写如下两部分叙事文案：
@@ -78,7 +100,7 @@ output: |
 - 不允许在 `title:`、`summary:`、`link:` 后直接嵌套新结构
 - 避免使用中文冒号 `：` 或省略空格
 - 不要对 `chinese` 和 `output` 字段进行嵌套或添加额外结构
-        """
+"""
         # 调用 LLM 生成草稿
         search_data, success = call_llm(prompt, logger)
         if "```yaml" not in search_data:
@@ -107,7 +129,7 @@ output: |
         highlights = response.get('highlights', [])
         if highlights:
             highlights_str = "\n".join([
-                f"🌐报道{index}:\n{highlight['title']}\n摘要：\n{highlight['summary']}\n来源：\n{highlight['link']}\n\n"
+                f"{index}.🌐:\n[{highlight['title']}]({highlight['link']})\n摘要：\n{highlight['summary']}\n\n"
                 for index, highlight in enumerate(highlights, start=1)
             ])
         else:
@@ -118,7 +140,15 @@ output: |
 
         logger.info(f"✅ 优质新闻提取成功{highlights_str}")
 
-        generate_news_summary_report(highlights_str, output, shared['hot_word_path'], logger, shared['language'])
+        hot_word_info = {
+            'search_volume': shared["search_volume"],
+            'search_growth_rate': shared["search_growth_rate"],
+            'search_active_time': shared["search_active_time"],
+            'current_date': shared['current_date']
+        }
+
+        generate_news_summary_report(highlights_str, output, shared['hot_word_path'], hot_word_info, logger,
+                                     shared['language'])
 
         logger.info(f"✅ 生成markdown汇总文档{highlights_str}")
 
@@ -182,6 +212,9 @@ class SupervisorNode(Node):
                                 # 如果 hot_word 存在，追加 final_article
                                 row_tmp = {
                                     "hot_word": row['hot_word'],
+                                    'search_volume': row['search_volume'],
+                                    'search_growth_rate': row['search_growth_rate'],
+                                    "search_active_time": row['search_active_time'],
                                     'relation_news': row['relation_news'],
                                     'search_history': shared['search_history'],
                                     'chinese': shared['chinese'],
@@ -191,6 +224,9 @@ class SupervisorNode(Node):
                             else:
                                 row_tmp = {
                                     "hot_word": row['hot_word'],
+                                    'search_volume': row['search_volume'],
+                                    'search_growth_rate': row['search_growth_rate'],
+                                    "search_active_time": row['search_active_time'],
                                     'relation_news': row['relation_news'],
                                     'search_history': row['search_history'],
                                     'chinese': row['chinese'],
@@ -207,7 +243,15 @@ class SupervisorNode(Node):
 
                 # 写入数据
                 with open(hot_words_csv, 'w', newline='', encoding='utf-8-sig') as csvfile:
-                    fieldnames = ['hot_word', 'relation_news', 'search_history', 'highlights', 'chinese', "output"]
+                    fieldnames = ['hot_word',
+                                  'search_volume',
+                                  'search_growth_rate',
+                                  "search_active_time",
+                                  "relation_news",
+                                  "search_history",
+                                  "highlights",
+                                  "chinese",
+                                  "output", ]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)

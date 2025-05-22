@@ -8,7 +8,7 @@ from .flow import deepsearch_flow, content_flow
 __all__ = ["hot_word_research_assistant", "write_in_style_assistant"]
 
 
-def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
+def get_info_by_hot_word(hot_word_path: str):
     """
     根据 hot_word_path 获取对应的 relation_news 内容
     :param hot_word_path: 热词文件夹路径
@@ -48,15 +48,23 @@ def get_relation_news_by_hot_word(hot_word_path: str) -> str | None:
 
         # 返回 relation_news 字段内容
         relation_news = row.iloc[0]['relation_news']
+        search_volume = row.iloc[0]['search_volume']
+        search_growth_rate = row.iloc[0]['search_growth_rate']
+        search_active_time = row.iloc[0]['search_active_time']
         print(f"relation_news: {relation_news}")
-        return str(relation_news) if pd.notna(relation_news) else None
+        print(f"search_volume: {search_volume}")
+        print(f"search_growth_rate: {search_growth_rate}")
+        print(f"search_active_time: {search_active_time}")
+        return str(relation_news) if pd.notna(relation_news) else None, str(search_volume) if pd.notna(
+            search_volume) else None, str(search_growth_rate) if pd.notna(search_growth_rate) else None, str(
+            search_active_time) if pd.notna(search_active_time) else None
 
     except Exception as e:
         print(f"relation_news_by_hot_word:读取 CSV 文件时发生错误: {e}")
         return None
 
 
-def hot_word_research_assistant(hot_word_path: str, language,logger) -> str | None:
+def hot_word_research_assistant(hot_word_path: str, language, logger) -> str | None:
     """处理"""
     try:
         if hot_word_path == [] or hot_word_path == "" or hot_word_path is None:
@@ -67,13 +75,17 @@ def hot_word_research_assistant(hot_word_path: str, language,logger) -> str | No
         if not os.path.exists(hot_word_path):
             return "热词路径不存在"
 
-        relation_news = '\n'.join(get_relation_news_by_hot_word(hot_word_path).split('---'))
+        relation_news, search_volume, search_growth_rate, search_active_time = get_info_by_hot_word(hot_word_path)
+        relation_news = '\n'.join(relation_news.split('---'))
 
         # 处理问题
         hot_word = os.path.basename(hot_word_path)
-        shared = {"hot_word": hot_word, "relation_news": relation_news, "hot_word_path": hot_word_path,
+        shared = {"hot_word": hot_word, 'search_volume': search_volume, 'search_growth_rate': search_growth_rate,
+                  "search_active_time": search_active_time, "relation_news": relation_news,
+                  "hot_word_path": hot_word_path,
                   "logger": logger, "language": language}
-        logger.info(f"===正在分析时下网络流行热词===:\n {hot_word},使用语言:\n {language},关联新闻:\n{relation_news}")
+        logger.info(
+            f"===正在分析时下网络流行热词===:\n {hot_word},搜索量：{search_volume}，搜索增长率：{search_growth_rate}，搜索活跃时间：{search_active_time},使用语言:\n {language},关联新闻:\n{relation_news}")
         agent_flow.run(shared)
 
         logger.info(f"[热词深度搜索Agent任务完成]-[DONE] ")

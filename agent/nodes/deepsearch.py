@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import sleep
 
 from dotenv import load_dotenv
@@ -5,12 +6,12 @@ from pocketflow import Node
 
 from agent.tools.parser import analyze_site
 from agent.tools.search import search_web
-from agent.tools.crawler import WebCrawler
+from agent.tools.crawler import NewsCrawler
 from agent.utils import call_llm
 import yaml
 
 load_dotenv()
-__all__ = ["DecideAction", "SearchWeb", "ContentSummarizer"]
+__all__ = ["DecideAction", "SearchWeb", ]
 
 total_links_count = 0
 
@@ -31,83 +32,85 @@ class DecideAction(Node):
         hot_word = shared["hot_word"]
         links_count = shared.get("links_count", 0)
         relation_news = shared["relation_news"]
+        search_volume = shared["search_volume"]
+        search_growth_rate = shared["search_growth_rate"]
+        search_active_time = shared["search_active_time"]
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        shared["current_date"] = current_date
         logger = shared["logger"]
         language = shared["language"]
         # 返回问题和上下文，供 exec 步骤使用
-        return hot_word, context, relation_news, links_count, language, logger
+        return current_date, hot_word, search_volume, search_growth_rate, search_active_time, context, relation_news, links_count, language, logger
 
     def exec(self, inputs):
         """调用 LLM 决定是搜索还是回答。"""
-        hot_word, context, relation_news, links_count, language, logger = inputs
-
+        current_date, hot_word, search_volume, search_growth_rate, search_active_time, context, relation_news, links_count, language, logger = inputs
         logger.info(f"代理正在决定下一步操作...")
+        desc = f"此热词从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
         prompt = f"""
-            你是一个可以搜索网络的热点新闻深度搜索助手
-            现在给你一个时下网络流行热词，你需要参考查询维度、先前的研究进行深度搜索，深度思考并理解该热词对应的叙事内容。
-            使用{language}回答
-            
-            ### 查询维度
-            
-            - 发生时间：最近48小时内
-            - 事件基本信息 : 确认热词对应的具体事件、时间、地点、主要人物
-            - 事件发展脉络 : 事件起因、关键节点、最新进展
-            - 社会影响范围 : 受众群体、地域影响、行业影响
-            - 争议焦点 : 各方观点分歧、争论核心问题
-            - 官方回应 : 相关权威机构/人物的正式表态
-            - 关联事件 : 与此热点相关的历史/并行事件
-            
-            并非所有查询条件都需满足，可使用优先级进行排序
-            查询优先级：事件基本信息>事件发展脉络>社会影响范围>争议焦点>官方回应>关联事件
-            
-            ## 上下文
-            - 时下流行热词: 
-            
-            {hot_word}
-            
-            - 相关新闻报导标题：
-            
-            {relation_news}
-            
-            - 先前的研究,总计为{links_count}条,具体如下：
-            
-            {context}
+你是一个可以搜索网络的热点新闻深度搜索助手
+现在给你一个时下网络流行热词，你需要参考查询维度、先前的研究进行深度搜索，深度思考并理解该热词对应的叙事内容。
+使用{language}回答
+### 查询维度
 
-            ## 操作空间
-            [1] search
-              描述: 在网络上查找更多信息
-              参数:
-                - query (str): 搜索内容
+- 事件基本信息 : 确认热词对应的具体事件、时间、地点、主要人物
+- 事件发展脉络 : 事件起因、关键节点、最新进展
+- 社会影响范围 : 受众群体、地域影响、行业影响
+- 争议焦点 : 各方观点分歧、争论核心问题
+- 官方回应 : 相关权威机构/人物的正式表态
+- 关联事件 : 与此热点相关的历史/并行事件
 
-            [2] answer
-              描述: 用当前知识回答问题
-              参数:
-                - answer (str): 问题的最终回答
+并非所有查询条件都需满足，可使用优先级进行排序
+查询优先级：事件基本信息>事件发展脉络>社会影响范围>争议焦点>官方回应>关联事件
 
-            ### 下一步操作
-            根据上下文、查询维度和可用操作决定下一步操作。
-            重要：请确保：
-            如先前的研究，总计大于8条，则结合已有的研究进行回答操作，不再进行深度搜索，
-            
-            请以以下格式返回你的响应：
-            
-            ```yaml
-            thinking: |
-                <你的逐步推理过程>
-            action: search OR answer
-            reason: <为什么选择这个操作>
-            answer: <如果操作是回答>
-            search_query: <具体的搜索查询如果操作是搜索>
-            ```
-            重要：请确保：
-            
-            如先前的研究，总计大于8条，则结合已有的研究进行回答操作，不再进行深度搜索，
-            1. 使用|字符表示多行文本字段
-            2. 多行字段使用缩进（4个空格）
-            3. 单行字段不使用|字符
-            4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
-            5. 非键值对不允许随意使用冒号: 
-            """
+## 上下文
+- 当前时间: {current_date}
+- 时下流行热词: {hot_word}
+{desc}
+- 相关新闻报导标题：
+
+{relation_news}
+
+- 先前的研究,总计为{links_count}条,具体如下：
+
+{context}
+
+## 操作空间
+[1] search
+  描述: 在网络上查找更多信息
+  参数:
+    - query (str): 搜索内容
+
+[2] answer
+  描述: 用当前知识回答问题
+  参数:
+    - answer (str): 问题的最终回答
+
+### 下一步操作
+根据上下文、查询维度和可用操作决定下一步操作。
+重要：请确保：
+如先前的研究，总计大于6条，则结合已有的研究进行回答操作，不再进行深度搜索，
+
+请以以下格式返回你的响应：
+
+```yaml
+thinking: |
+    <你的逐步推理过程>
+action: search OR answer
+reason: <为什么选择这个操作>
+answer: <如果操作是回答>
+search_query: <具体的搜索查询如果操作是搜索>
+```
+重要：请确保：
+
+如先前的研究，总计大于6条，则结合已有的研究进行回答操作，不再进行深度搜索，
+1. 使用|字符表示多行文本字段
+2. 多行字段使用缩进（4个空格）
+3. 单行字段不使用|字符
+4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
+5. 非键值对不允许随意使用冒号: 
+"""
         # 调用 LLM 进行决策
         response, success = call_llm(prompt, logger)
         if not success:
@@ -171,30 +174,52 @@ class SearchWeb(Node):
             logger.info(f"🌐 摘要:{snippet}")
 
             logger.info(f"🌐 源链接:{link}")
-            content_list = WebCrawler(link).crawl()
 
-            analyzed_results.append(analyze_site(content_list, logger, language))
+            try:
+                crawler = NewsCrawler(link)
+                crawl_content = crawler.extract_information()
+                crawl_content_analyze = analyze_site(crawl_content, logger, language)
+            except Exception as e:
+                analyzed_results.append({
+                    "results": {},
+                    "title": title,
+                    "url": link,
+                    'snippet': snippet
+                })
+                logger.error(f"深度搜索失败: {e}")
+                continue
+            analyzed_results.append({
+                "results": crawl_content_analyze,
+                "title": title,
+                "url": link,
+                'snippet': snippet
+            })
 
         results = []
-        for analyzed_result in analyzed_results:
-            for content in analyzed_result:
-                total_links_count += 1
-
-                result = (
-                    # f"标题：{content.get('title', '无')}\n" +
-                        f"🌐 报道{total_links_count}: {content['analysis']['title']}\n" +
-                        f"链接：{content.get('url', '无')}\n" +
-                        # f"类型：{content['analysis']['content_type']}\n" +
-                        # f"话题：{','.join(content['analysis']['topics'])}\n" +
-                        f"{content['analysis']['summary']}\n\n"
-
-                )
-                results.append(result)
-                # 统计链接数量
-
+        for ret in analyzed_results:
+            if ret["results"] == {}:
+                summary = '无'
+                title = ret.get('title', '无')
+            else:
+                content = ret["results"]
+                summary = content['analysis']['summary'].replace('\n', '')
+                title = content['analysis']['title'].replace('\n', '')
+            total_links_count += 1
+            result = (
+                # f"标题：{content.get('title', '无')}\n" +
+                    f"🌐 报道{total_links_count}: {title}\n" +
+                    f"链接：{ret.get('url', '无')}\n" +
+                    # f"类型：{content['analysis']['content_type']}\n" +
+                    # f"话题：{','.join(content['analysis']['topics'])}\n" +
+                    f" 摘要-1：{summary}\n"
+                    f" 摘要-2：{ret.get('snippet', '无')}\n"
+            )
+            results.append(result)
+            # 统计链接数量
+        # print(results)
         logger.info(f"✅ 当前已采集链接总数: {total_links_count}")
 
-        return '\n\n'.join(results), total_links_count
+        return '\n'.join(results), total_links_count
 
     def post(self, shared, prep_res, exec_res):
         """保存搜索结果并返回决策节点。"""
@@ -205,6 +230,7 @@ class SearchWeb(Node):
         # 搜索记忆功能
         shared["context"] = previous + "\n\n搜索条件: " + shared[
             "search_query"] + "\n搜索结果(多条):\n " + results.strip()
+        print("📚 搜索结果: " + results)
         shared["search_history"] = search_history_previous.strip() + results.strip()
         logger = shared["logger"]
         shared["links_count"] = links_count
@@ -212,8 +238,6 @@ class SearchWeb(Node):
 
         # 搜索后始终返回决策节点
         return "decide"
-
-
 
 
 if __name__ == "__main__":
