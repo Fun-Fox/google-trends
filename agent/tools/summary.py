@@ -95,8 +95,7 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
 
 # 内容结构
 1. 惊爆标题（使用悬念/数字/对比手法）
-    - 示例："突发！这个关键词{hot_word_info["search_active_time"]}搜索暴涨{hot_word_info["search_growth_rate"]}"
-    - 要求：必须包含1个💥emoji
+    - 要求：必须包含emoji
 2. 事件解码（结合内容叙述、相关优质报道）
     - 一句话真相：{" ".join(highlights.split()[:20])}...
     - 专家解读：用「」符号标注权威观点

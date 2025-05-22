@@ -163,7 +163,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
             writer.writerow(
                 {'hot_word': text_content,
                  'search_volume': search_volume,
-                 'search_growth_rate': search_growth_rate,
+                 'search_growth_rate': search_growth_rate.replace(',', ''),
                  "search_active_time": search_active_time,
                  "relation_news": '---'.join(title_new),
                  "search_history": '',

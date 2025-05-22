@@ -76,7 +76,7 @@ content_type: <填写内容类型>
         }
 
 
-def analyze_site(crawl_results: List[Dict], logger, language) -> List[Dict]:
+def analyze_site(crawl_content, logger, language) -> List[Dict]:
     """分析所有爬取的网页内容
 
     参数:
@@ -86,8 +86,8 @@ def analyze_site(crawl_results: List[Dict], logger, language) -> List[Dict]:
         List[Dict]: 包含分析结果的原始内容
     """
     analyzed_results = []
+    for content in crawl_content:
 
-    for content in crawl_results:
         if content and content.get("text"):
             analysis = analyze_content(content, logger, language=language)
             content["analysis"] = analysis
