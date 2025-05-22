@@ -78,25 +78,33 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         elements_temp = []  # ✅ 添加默认空列表防止后续引用错误
 
     for i, div in enumerate(elements_temp):
-        hot_words = query_selector_with_retry(div, logging, 'td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc',
+        hot_words_elements = await query_selector_with_retry(div, logging, 'td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc',
                                               max_retries=3, delay=2)
 
-        search_volume = await query_selector_with_retry(div, logging,
+        search_volume_element = await query_selector_with_retry(div, logging,
                                                         'td.enOdEe-wZVHld-aOtOmf.dQOTjf > div > div.lqv0Cb',
                                                         max_retries=3, delay=2)
 
-        search_growth_rate = await query_selector_with_retry(div, logging,
+        search_growth_rate_element = await query_selector_with_retry(div, logging,
                                                              'td.enOdEe-wZVHld-aOtOmf.dQOTjf > div > div.wqrjjc > div',
                                                              max_retries=3, delay=2)
 
-        search_active_time = await query_selector_with_retry(div, logging,
+        search_active_time_element = await query_selector_with_retry(div, logging,
                                                              'td.enOdEe-wZVHld-aOtOmf.WirRge > div.vdw3Ld',
                                                              max_retries=3, delay=2)
-        text_content = await div.text_content()
+        if hot_words_elements:
+            hot_word_element = hot_words_elements[0]  # 取第一个元素
+            search_volume = search_volume_element[0]
+            search_growth_rate= search_growth_rate_element[0]
+            search_active_time= search_active_time_element[0]
+            text_content = await hot_word_element.text_content()
+        else:
+            logging.warning("未找到关键词元素，使用默认名称代替")
+            continue
         logging.info(f'div {i + 1} 的文本内容: {text_content}')
 
         try:
-            await div.click()
+            await hot_word_element.click()
             await asyncio.sleep(5)
             logging.debug(f'点击了 div {i + 1}')
         except Exception as e:
