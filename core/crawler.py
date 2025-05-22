@@ -148,19 +148,32 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8-sig') as csvfile:
-            fieldnames = ['hot_word', 'search_volume', 'search_growth_rate', "search_active_time", "relation_news",
-                          "search_history", "highlights", "chinese", "output", ]
+            fieldnames = ['hot_word',
+                          'search_volume',
+                          'search_growth_rate',
+                          "search_active_time",
+                          "relation_news",
+                          "search_history",
+                          "highlights",
+                          "chinese",
+                          "output", ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
             writer.writerow(
-                {'hot_word': text_content, 'search_volume': search_volume, 'search_growth_rate': search_growth_rate,
-                 "search_active_time": search_active_time, "relation_news": '---'.join(title_new), "search_history": '',
-                 "highlights": "", "chinese": '',
-                 "output": '', })
+                {'hot_word': text_content,
+                 'search_volume': search_volume,
+                 'search_growth_rate': search_growth_rate,
+                 "search_active_time": search_active_time,
+                 "relation_news": '---'.join(title_new),
+                 "search_history": '',
+                 "chinese": '',
+                 "output": '',
+                 "highlights": "",
+                 })
             logging.info(
                 f"关键词 {text_content} ,搜索量：{search_volume}，搜索增长率：{search_growth_rate}，搜索活跃时间：{search_active_time}")
             logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
             await asyncio.sleep(5)
-    logging.info(f"地区编码：{origin}，分类编码：{category}，采集任务已完成，共采集了{len(hot_words)}个关键词")
+    logging.info(f"地区编码：{origin}，分类编码：{category}，采集任务已完成，共采集了{len(hot_words_elements)}个关键词")

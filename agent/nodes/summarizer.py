@@ -202,6 +202,9 @@ class SupervisorNode(Node):
                                 # 如果 hot_word 存在，追加 final_article
                                 row_tmp = {
                                     "hot_word": row['hot_word'],
+                                    'search_volume': row['search_volume'],
+                                    'search_growth_rate': row['search_growth_rate'],
+                                    "search_active_time": row['search_active_time'],
                                     'relation_news': row['relation_news'],
                                     'search_history': shared['search_history'],
                                     'chinese': shared['chinese'],
@@ -211,6 +214,9 @@ class SupervisorNode(Node):
                             else:
                                 row_tmp = {
                                     "hot_word": row['hot_word'],
+                                    'search_volume': row['search_volume'],
+                                    'search_growth_rate': row['search_growth_rate'],
+                                    "search_active_time": row['search_active_time'],
                                     'relation_news': row['relation_news'],
                                     'search_history': row['search_history'],
                                     'chinese': row['chinese'],
@@ -227,7 +233,15 @@ class SupervisorNode(Node):
 
                 # 写入数据
                 with open(hot_words_csv, 'w', newline='', encoding='utf-8-sig') as csvfile:
-                    fieldnames = ['hot_word', 'relation_news', 'search_history', 'highlights', 'chinese', "output"]
+                    fieldnames = ['hot_word',
+                          'search_volume',
+                          'search_growth_rate',
+                          "search_active_time",
+                          "relation_news",
+                          "search_history",
+                          "highlights",
+                          "chinese",
+                          "output", ]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)
