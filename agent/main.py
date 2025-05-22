@@ -75,14 +75,17 @@ def hot_word_research_assistant(hot_word_path: str, language, logger) -> str | N
         if not os.path.exists(hot_word_path):
             return "热词路径不存在"
 
-        relation_news, search_volume, search_growth_rate, search_active_time = '\n'.join(get_info_by_hot_word(hot_word_path).split('---'))
+        relation_news, search_volume, search_growth_rate, search_active_time = get_info_by_hot_word(hot_word_path)
+        relation_news = '\n'.join(relation_news.split('---'))
 
         # 处理问题
         hot_word = os.path.basename(hot_word_path)
         shared = {"hot_word": hot_word, 'search_volume': search_volume, 'search_growth_rate': search_growth_rate,
-                 "search_active_time": search_active_time,"relation_news": relation_news, "hot_word_path": hot_word_path,
+                  "search_active_time": search_active_time, "relation_news": relation_news,
+                  "hot_word_path": hot_word_path,
                   "logger": logger, "language": language}
-        logger.info(f"===正在分析时下网络流行热词===:\n {hot_word},搜索量：{search_volume}，搜索增长率：{search_growth_rate}，搜索活跃时间：{search_active_time},使用语言:\n {language},关联新闻:\n{relation_news}")
+        logger.info(
+            f"===正在分析时下网络流行热词===:\n {hot_word},搜索量：{search_volume}，搜索增长率：{search_growth_rate}，搜索活跃时间：{search_active_time},使用语言:\n {language},关联新闻:\n{relation_news}")
         agent_flow.run(shared)
 
         logger.info(f"[热词深度搜索Agent任务完成]-[DONE] ")
