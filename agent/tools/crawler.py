@@ -60,15 +60,13 @@ class NewsCrawler:
     def extract_information(self):
         article = newspaper.Article(url=self.source_urls_,config=self.config)
         article.download()
-        content =[]
         article.parse()
-        content.append({
+        return {
             "title": article.title,
             "authors": article.authors,
             "text": article.text[:2000],
             "url": article.url
-        })
-        return content
+        }
 
 
 if __name__ == "__main__":

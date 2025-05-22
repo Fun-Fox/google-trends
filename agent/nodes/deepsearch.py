@@ -177,11 +177,11 @@ class SearchWeb(Node):
 
             try:
                 crawler = NewsCrawler(link)
-                content_list = crawler.extract_information()
-                result_list = analyze_site(content_list, logger, language)
+                crawl_content = crawler.extract_information()
+                crawl_content_analyze = analyze_site(crawl_content, logger, language)
             except Exception as e:
                 analyzed_results.append({
-                    "results": [],
+                    "results": {},
                     "title": title,
                     "url": link,
                     'snippet': snippet
@@ -189,32 +189,33 @@ class SearchWeb(Node):
                 logger.error(f"深度搜索失败: {e}")
                 continue
             analyzed_results.append({
-                "results": result_list,
+                "results": crawl_content_analyze,
                 "title": title,
                 "url": link,
                 'snippet': snippet
             })
 
         results = []
-        for analyzed in analyzed_results:
-            for content in analyzed["results"]:
-                print(f"打印每个搜索内容:{content}")
-                if not content:
-                    summary = ''
-                else:
-                    summary = content['analysis']['summary'].replace('\n', '')
-                total_links_count += 1
-                result = (
-                    # f"标题：{content.get('title', '无')}\n" +
-                        f"🌐 报道{total_links_count}: {analyzed.get('title', '无')}\n" +
-                        f"链接：{analyzed.get('url', '无')}\n" +
-                        # f"类型：{content['analysis']['content_type']}\n" +
-                        # f"话题：{','.join(content['analysis']['topics'])}\n" +
-                        f" 摘要-1：{summary}\n"
-                        f" 摘要-2：{analyzed.get('snippet'), '无'}\n"
-                )
-                results.append(result)
-                # 统计链接数量
+        for ret in analyzed_results:
+            if ret["results"] == {}:
+                summary = '无'
+                title = ret.get('title', '无')
+            else:
+                content = ret["results"]
+                summary = content['analysis']['summary'].replace('\n', '')
+                title = content['analysis']['title'].replace('\n', '')
+            total_links_count += 1
+            result = (
+                # f"标题：{content.get('title', '无')}\n" +
+                    f"🌐 报道{total_links_count}: {title}\n" +
+                    f"链接：{ret.get('url', '无')}\n" +
+                    # f"类型：{content['analysis']['content_type']}\n" +
+                    # f"话题：{','.join(content['analysis']['topics'])}\n" +
+                    f" 摘要-1：{summary}\n"
+                    f" 摘要-2：{ret.get('snippet', '无')}\n"
+            )
+            results.append(result)
+            # 统计链接数量
         # print(results)
         logger.info(f"✅ 当前已采集链接总数: {total_links_count}")
 

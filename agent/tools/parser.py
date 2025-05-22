@@ -85,12 +85,10 @@ def analyze_site(crawl_content, logger, language) -> List[Dict]:
     返回:
         List[Dict]: 包含分析结果的原始内容
     """
-    analyzed_results = []
-    for content in crawl_content:
 
-        if content and content.get("text"):
-            analysis = analyze_content(content, logger, language=language)
-            content["analysis"] = analysis
-            analyzed_results.append(content)
+    if crawl_content and crawl_content.get("text"):
+        analysis = analyze_content(crawl_content, logger, language=language)
+        crawl_content["analysis"] = analysis
 
-    return analyzed_results
+
+    return crawl_content
