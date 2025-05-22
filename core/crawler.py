@@ -117,7 +117,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         for index, title in enumerate(new_titles):
             title_text = await title.text_content()
             logging.info(f"关键词{text_content}：第{index + 1}个标题：{title_text}")
-            title_new.append(title_text)
+            title_new.append(f"标题{index + 1}:title_text")
 
         if to_download_image:
             # 获取指定路径下的图片的 src 地址
