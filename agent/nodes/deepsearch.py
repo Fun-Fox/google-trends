@@ -178,8 +178,10 @@ class SearchWeb(Node):
             try:
                 crawler = NewsCrawler(link)
                 crawl_content = crawler.extract_information()
-                print(crawl_content)
-                crawl_content_analyze = analyze_site(crawl_content, logger, language)
+                if crawl_content['text'] != '':
+                    crawl_content_analyze = analyze_site(crawl_content, logger, language)
+                else:
+                    crawl_content_analyze = {}
             except Exception as e:
                 analyzed_results.append({
                     "results": {},
