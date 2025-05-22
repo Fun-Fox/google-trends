@@ -181,6 +181,7 @@ class SearchWeb(Node):
                 if crawl_content['text'] != '':
                     crawl_content_analyze = analyze_site(crawl_content, logger, language)
                 else:
+                    logger.info(f"🌐 深度搜索信息为空或者是二进制视频")
                     crawl_content_analyze = {}
             except Exception as e:
                 analyzed_results.append({

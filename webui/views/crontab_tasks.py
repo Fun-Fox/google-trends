@@ -192,13 +192,15 @@ def calculate_next_run(run_time: str) -> datetime:
         target_time += timedelta(days=1)
 
     return target_time
+
+
 def set_scheduled_task(run_time, to_download_image, origin, category, nums, language="简体中文"):
     global _JOB_ID_SEQ
-
+    run_time = run_time.strip()
     try:
         # 验证时间格式
         if not re.match(r'^([01]\d|2[0-3]):([0-5]\d)$', run_time):
-            return f"❌ 时间格式错误，请使用 HH:mm 格式",get_current_tasks()
+            return f"❌ 时间格式错误，请使用 HH:mm 格式", get_current_tasks()
 
         # 创建任务ID
         job_id = f"task_{_JOB_ID_SEQ}"
@@ -239,12 +241,12 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
                 if len(_TASK_HISTORY) > 50:  # 限制最大记录数
                     _TASK_HISTORY.pop(0)
 
-                return result,get_current_tasks()
+                return result, get_current_tasks()
 
             except Exception as e:
                 task_info["status"] = f"error: {str(e)}"
                 print(f"❌ 任务 {job_id} 执行失败: {str(e)}")
-                return f"❌ 任务执行失败: {str(e)}",get_current_tasks()
+                return f"❌ 任务执行失败: {str(e)}", get_current_tasks()
 
         # 创建并添加新任务到调度器
         job_func = lambda: asyncio.run(create_task())
@@ -261,12 +263,13 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
         _SCHEDULED_TASKS[job_id] = task_info
 
         # 返回成功信息和更新后的状态
-        return f"✅ 定时任务 {job_id} 已设定于每天 {run_time} 执行",get_current_tasks()
+        return f"✅ 定时任务 {job_id} 已设定于每天 {run_time} 执行", get_current_tasks()
 
     except Exception as e:
         error_msg = f"❌ 设置定时任务失败: {e}"
         print(error_msg)
-        return error_msg,get_current_tasks()
+        return error_msg, get_current_tasks()
+
 
 # ========== 停止定时任务 ==========
 # ========== 修改 stop_scheduled_task 函数 ==========
@@ -278,18 +281,19 @@ def stop_scheduled_task(job_id=None):
             schedule.clear(job_id)
             if job_id in _SCHEDULED_TASKS:
                 _SCHEDULED_TASKS[job_id]["status"] = "stopped"
-            return f"⏹️ 已停止任务 {job_id}",get_current_tasks()
+            return f"⏹️ 已停止任务 {job_id}", get_current_tasks()
         else:
             # 停止所有任务
             schedule.clear()
             for tid in _SCHEDULED_TASKS:
                 _SCHEDULED_TASKS[tid]["status"] = "stopped"
-            return "⏹️ 已停止所有定时任务",get_current_tasks()
+            return "⏹️ 已停止所有定时任务", get_current_tasks()
 
     except Exception as e:
         error = f"❌ 停止定时任务失败: {e}"
         print(error)
-        return error,get_current_tasks()
+        return error, get_current_tasks()
+
 
 # ===== 新增 Gradio UI 组件 =====
 def build_tab():
@@ -321,11 +325,11 @@ def build_tab():
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, lang_dropdown],
-                     outputs=[output_text,task_list])
+                     outputs=[output_text, task_list])
 
     stop_button.click(fn=stop_scheduled_task,
                       inputs=[],
-                      outputs=[output_text,task_list])
+                      outputs=[output_text, task_list])
 
 
 # 启动后台定时器
