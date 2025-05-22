@@ -11,9 +11,11 @@ load_dotenv()
 __all__ = ["NewsCrawler"]
 
 
+
 class NewsCrawler:
 
     def __init__(self, source_urls_=None):
+
         # 使用 None 避免可变默认参数问题
         self.source_urls_ = source_urls_
         config = Configuration()

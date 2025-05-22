@@ -6,15 +6,15 @@ from dotenv import load_dotenv
 
 from webui.func.constant import root_dir
 from webui.views import (
-                        cookie_settings,
-                         trend_crawler,
-                         crontab_tasks,
-                         voice_script_generation,
-                         voice_synthesis,
-                        digital_human,
-                        deep_search,
-                         downloads
-                         )
+    cookie_settings,
+    trend_crawler,
+    crontab_tasks,
+    voice_script_generation,
+    voice_synthesis,
+    digital_human,
+    deep_search,
+    downloads
+)
 
 load_dotenv()
 
@@ -50,16 +50,23 @@ with gr.Blocks(title="GT") as app:
 
 
 def start():
+    import nltk
+    nltk_path = os.path.join(root_dir, "nltk_data")
+    os.makedirs(nltk_path, exist_ok=True)
+    # 它是nltk的一个预训练分词模型，用于：英文句子分割识别缩写、标点等特殊结构这个资源被很多NLP模块依赖，比如新闻摘要提取、文章清洗、文本摘要生成等模块
+    # 下载所需的 punkt_tab 资源
+    nltk.data.path.append(os.path.join(root_dir, "nltk_data"))  # 添加自定义路径
+    nltk.download('punkt_tab', download_dir=nltk_path)
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=7866, help='Gradio 应用监听的端口号')
     args = parser.parse_args()
     app.queue(20)
     if os.getenv('PLATFORM', '') == 'local':
-        app.launch(debug=True,share=False,
+        app.launch(debug=True, share=False,
                    allowed_paths=[os.path.join(root_dir, os.getenv('ROOT', '')),
                                   os.path.join(root_dir, os.getenv('ZIP_DIR', '')),
                                   os.path.join(root_dir, os.getenv('TASK_DIR', '')),
-                                  os.path.join(root_dir, 'Log')],
+                                  os.path.join(root_dir, 'Log'), nltk_path],
                    server_port=args.port, favicon_path="favicon.ico")
     elif os.getenv('PLATFORM', '') == 'server':
         app.launch(share=False, server_name="0.0.0.0",
@@ -67,5 +74,5 @@ def start():
                                   os.path.join(root_dir, os.getenv('ZIP_DIR', '')),
                                   os.path.join(root_dir, os.getenv('TASK_DIR', '')),
                                   os.path.join(root_dir, "doc"),
-                                  os.path.join(root_dir, 'Log')],
+                                  os.path.join(root_dir, 'Log'), nltk_path],
                    server_port=args.port, favicon_path="favicon.ico")

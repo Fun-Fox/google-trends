@@ -204,12 +204,15 @@ class SearchWeb(Node):
                 title = ret.get('title', '无')
             else:
                 content = ret["results"]
-                summary = content['summary'].replace('\n', '')
-                title = content['title'].replace('\n', '')
+                summary = content['analysis']['summary'].replace('\n', '')
+                title = content['analysis']['title'].replace('\n', '')
             total_links_count += 1
             result = (
+                # f"标题：{content.get('title', '无')}\n" +
                     f"🌐 报道{total_links_count}: {title}\n" +
                     f"链接：{ret.get('url', '无')}\n" +
+                    # f"类型：{content['analysis']['content_type']}\n" +
+                    # f"话题：{','.join(content['analysis']['topics'])}\n" +
                     f" 摘要-1：{summary}\n"
                     f" 摘要-2：{ret.get('snippet', '无')}\n"
             )

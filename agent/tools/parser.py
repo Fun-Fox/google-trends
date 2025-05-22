@@ -5,7 +5,7 @@ from agent.utils.call_llm import call_llm
 __all__ = ["analyze_content", "analyze_site"]
 
 
-def analyze_content(content: Dict, logger, language="中文") -> Dict:
+def analyze_content(content, logger, language="中文"):
     """使用大语言模型分析网页内容
 
     参数:
@@ -86,9 +86,8 @@ def analyze_site(crawl_content, logger, language) -> List[Dict]:
         List[Dict]: 包含分析结果的原始内容
     """
 
-    if crawl_content and crawl_content.get("text"):
+    if crawl_content:
         analysis = analyze_content(crawl_content, logger, language=language)
         crawl_content["analysis"] = analysis
-
 
     return crawl_content
