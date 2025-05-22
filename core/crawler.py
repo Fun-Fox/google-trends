@@ -94,7 +94,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
                                                                      'td.enOdEe-wZVHld-aOtOmf.WirRge > div.vdw3Ld',
                                                                      max_retries=3, delay=2)
         if hot_words_elements:
-            hot_word_element = await hot_words_elements[0].text_content()  # 取第一个元素
+            hot_word_element = await hot_words_elements[0]  # 取第一个元素
             search_volume = await search_volume_element[0].text_content()
             search_growth_rate = await search_growth_rate_element[0].text_content()
             search_active_time = await  search_active_time_element[0].text_content()
