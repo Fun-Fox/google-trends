@@ -5,7 +5,7 @@ from typing import Dict
 from agent.utils import call_llm
 
 
-def generate_news_summary_report(highlights: str, output: str, hot_word_path: str, logger,
+def generate_news_summary_report(highlights: str, output: str, hot_word_path: str, hot_word_info, logger,
                                  language: str = "中文") -> Dict:
     """
     这是一个由AI驱动的虚拟新闻报道师，能够基于事件说明和优质报道内容，
@@ -28,7 +28,7 @@ def generate_news_summary_report(highlights: str, output: str, hot_word_path: st
         return {"action": "error", "reason": "缺少必要参数"}
 
     # Step 2: 构建 Prompt 并调用 LLM
-    prompt = _build_prompt(output, highlights, language)
+    prompt = _build_prompt(output, highlights, language, hot_word_info)
     response, success = call_llm(prompt, logger=logger)
 
     if not success:
@@ -62,27 +62,63 @@ def generate_news_summary_report(highlights: str, output: str, hot_word_path: st
 # 私有方法区（Private Helpers）
 # ----------------------------
 
-def _build_prompt(output: str, highlights: str, language: str) -> str:
+def _build_prompt(output: str, highlights: str, language: str, hot_word_info) -> str:
+    search_volume = hot_word_info["search_volume"]
+    search_growth_rate = hot_word_info["search_growth_rate"]
+    search_active_time = hot_word_info["search_active_time"]
+    current_date = hot_word_info["current_date"]
+    desc = f"此内容从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
     """构建 LLM 所需的 Prompt"""
     return f"""
-你是一个专业的新闻分析师，请根据以下信息进行总结。
+你是一位专业热点新闻海报设计师，请根据以下信息生成具有传播力的新闻海报内容。
 
-事件说明:
+# 内容定位
+- 目标平台：{language}社交媒体平台
+- 核心诉求：在{hot_word_info["search_active_time"]}时段抓住{hot_word_info["search_growth_rate"]}的爆发性增长
+- 传播目标：引发行业讨论+公众关注
+
+# 视觉风格
+- 使用社交媒体风格的短句表达
+- 重要数据用🎉🔥💥🌟等emoji标注
+- 关键时间节点用📅⏳⏰等时间符号强调
+- 使用💡小贴士标注
+- 采用阶梯式信息递进结构
+
+# 核心要素
+当前时间：{current_date}
+内容叙述：
 {output}
-
-优质报道:
+相关优质报道:
 {highlights}
+搜索热度：🔥{hot_word_info["search_volume"]} (↑{hot_word_info["search_growth_rate"]})
+活跃时段：🕒{hot_word_info["search_active_time"]}
 
-请使用{language}输出一个结构清晰的 Markdown 总结报告，包括：
-- 事件概要（简明扼要地概括事件）
-- 关键点分析（列出3~5个核心要点）
-- 影响与趋势（分析该事件可能带来的影响或趋势）
-- 引用一些优质报道证明观点
+# 内容结构
+1. 惊爆标题（使用悬念/数字/对比手法）
+    - 示例："突发！这个关键词{hot_word_info["search_active_time"]}搜索暴涨{hot_word_info["search_growth_rate"]}"
+    - 要求：必须包含1个💥emoji
+2. 事件解码（结合内容叙述、相关优质报道）
+    - 一句话真相：{" ".join(highlights.split()[:20])}...
+    - 专家解读：用「」符号标注权威观点
+    - 政策动向：用⚖️标注监管信号
+    - 行业影响：用💰标注经济关联
+    - 自我观点：用💬标注你对此事的评论
 
-格式要求：
-- 使用 Markdown 语法
-- 不包含任何解释性语句，只输出内容本身
+3. 影响预测（使用符号化表达）
+   - 经济层面：💰
+   - 社会层面：👥
+   - 政策层面：⚖️
+4. 传播预测（新增模块）
+   - 潜在爆点：预测可能引发二次传播的要素
+   - 关联热搜：列出3个可能联动的热点话题
+   - 传播建议：提供2条互动引导语
+
+# 注意！确保
+- 使用{language}输出内容
+- Markdown语法
 - 只允许一个一级标题
+- 关键数据用**加粗**
+- 在末尾添加#热点追踪 #数据分析 标签
 """
 
 

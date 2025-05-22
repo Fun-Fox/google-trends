@@ -2,26 +2,14 @@ import asyncio
 import base64
 import random
 import re
-import time
-
+from PIL import Image
 import markdown2
 
+from moviepy import *
+import os
+from playwright.async_api import async_playwright
 from webui.func.constant import root_dir
 
-
-class CustomMarkdown(markdown2.Markdown):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def image(self, match, prefix=''):
-        # 获取原始的 image 方法
-        original_image = super().image(match, prefix)
-
-        # 移除包裹的 <p> 标签
-        if original_image.startswith('<p>') and original_image.endswith('</p>'):
-            original_image = original_image[3:-4]
-
-        return original_image
 
 
 def rewrite_images(html_content, md_path):
@@ -310,7 +298,6 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
         css += "body { font-family: 'YourCustomFont', sans-serif; }\n"
 
     # 获取随机背景音乐数据
-    bgm_data = get_random_bgm(os.path.join(root_dir, "webui", "bgm"))
 
     # 完整 HTML 模板
     template = f"""<!DOCTYPE html>
@@ -340,8 +327,6 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
             </div>
         </div>
 
-        <!-- 自动循环播放背景音乐 -->
-        {f'<audio autoplay loop style="display:none;"><source src="{bgm_data}" type="audio/mpeg"></audio>' if bgm_data else ''}
 
         <script>
             function typeText(element, index) {{
@@ -375,6 +360,17 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
             }});
             document.querySelectorAll(".markdown-content p, .markdown-content li, .markdown-content code").forEach((el, idx) => {{
                 el.style.setProperty('--i', idx);
+            }});
+            document.querySelectorAll('.markdown-content img').forEach(img => {{
+                img.addEventListener('load', () => {{
+                    img.style.opacity = '1';
+                    if (img.naturalHeight > 400) {{
+                        img.style.cursor = 'zoom-in';
+                        img.addEventListener('click', () => {{
+                            // 实现点击放大功能
+                        }});
+                    }}
+                }});
             }});
         </script>
     </body>
@@ -471,8 +467,60 @@ def get_random_bg_image(bg_folder_path):
     return full_path  # 或者返回 "/webui/bg/xxx.webp" 格式
 
 
-from playwright.async_api import async_playwright
+async def scroll_to_bottom(page, viewport_height=1920):
+    """
+    滚动到页面底部
+    :param page: Playwright 页面对象
+    :param viewport_height: 视口高度
+    :return: 实际滚动的距离
+    """
+    last_scroll_position = await page.evaluate("window.pageYOffset")
+    doc_height = await page.evaluate("document.body.scrollHeight")
 
+    # 计算剩余高度
+    remaining_height = doc_height - last_scroll_position - viewport_height
+    if remaining_height <= 0:
+        return 0
+
+    # 执行滚动
+    scroll_amount = min(remaining_height, 200)  # 每次最多滚动1000px
+    scroll_duration = max(1000, int(scroll_amount * 1.5))
+
+    await page.evaluate(f"""
+        () => {{
+            const start = window.pageYOffset;
+            const end = start + {scroll_amount};
+            const duration = {scroll_duration};
+            let startTime = null;
+
+            const animateScroll = (currentTime) => {{
+                if (!startTime) startTime = currentTime;
+                const elapsed = currentTime - startTime;
+
+                // 使用缓动函数控制速度
+                const progress = Math.min(elapsed / duration, 1);
+                const easing = 1 - Math.pow(1 - progress, 3);  // cubic ease-out
+
+                window.scrollTo({{
+                    top: start + ({scroll_amount} * easing),
+                    left: 0,
+                    behavior: 'auto'
+                }});
+
+                if (progress < 1) {{
+                    requestAnimationFrame(animateScroll);
+                }}
+            }};
+
+            requestAnimationFrame(animateScroll);
+        }}
+    """)
+
+    # 等待滚动完成
+    await page.wait_for_timeout(scroll_duration + 500)
+
+    # 返回实际滚动距离
+    return scroll_amount
 
 async def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile=False):
     """
@@ -518,8 +566,27 @@ async def html_to_image_with_playwright(html_path, image_path, video_path=None, 
         else:
             await page.set_viewport_size({"width": 900, "height": 1080})
 
+
         # 增加 10s 停顿再开始录制
-        await page.wait_for_timeout(10000)
+        await page.wait_for_timeout(8000)
+        # 多次滚动直到所有内容可见
+        max_attempts = 5
+        attempt = 0
+        while attempt < max_attempts:
+
+            # 尝试滚动更多
+            scrolled = await scroll_to_bottom(page,viewport_height=1920)
+
+            await page.wait_for_timeout(2000)
+
+            # 如果没有滚动或内容已完全显示则退出
+            if scrolled == 0:
+                break
+
+            attempt += 1
+            print(f"🔄 第 {attempt} 次滚动完成，继续检查是否有更多内容")
+
+        # 新增：等待图片加载完成
 
         # 截图
         await page.screenshot(path=image_path, full_page=True)
@@ -551,7 +618,7 @@ async def html_to_image_with_playwright(html_path, image_path, video_path=None, 
     crop_image_with_gray_area(image_path, image_path)
 
 
-from PIL import Image
+
 
 
 def hex_to_rgb(hex_color):
@@ -624,8 +691,6 @@ def crop_image_with_gray_area(image_path, output_path):
 
 
 
-from moviepy import *
-import os
 
 
 def process_video_with_first_frame(image_path, video_path):
@@ -664,25 +729,6 @@ def process_video_with_first_frame(image_path, video_path):
             print("⚠️ 视频太短，无法裁剪最后 1 秒")
             trimmed_clip = video_clip
 
-        # Step 6: 获取随机背景音乐文件
-        bgm_folder = os.path.join(root_dir, "webui", "bgm")  # ⚠️ 替换为你的 bgm 文件夹路径
-        bgm_files = [
-            f for f in os.listdir(bgm_folder)
-            if f.lower().endswith((".mp3", ".ogg"))
-        ]
-        if not bgm_files:
-            print("⚠️ 未找到可用背景音乐文件")
-        else:
-            selected_bgm = random.choice(bgm_files)
-            bgm_path = os.path.join(bgm_folder, selected_bgm)
-            print(f"🎵 正在加载背景音乐: {bgm_path}")
-
-            # 加载音频并设置为循环播放
-            music = AudioFileClip(bgm_path)
-            # AudioLoop())  # 循环播放音频
-            audio = music.with_effects([afx.AudioLoop(duration=trimmed_clip.duration)])
-            # 合并音频到视频
-            trimmed_clip.audio =audio
 
         # Step 5: 输出最终视频
         print("✅ 正在编码最终视频...")
@@ -726,7 +772,7 @@ if __name__ == "__main__":
     print(f"随机选择的背景图路径: {bg_image_url}")
     font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
 
-    asyncio.run(convert_md_to_output_async(
+    asyncio.run(convert_md_to_output(
         md_path=input_md_path,
         html_path=output_html,
         image_path=output_image,

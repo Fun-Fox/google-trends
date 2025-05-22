@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import sleep
 
 from dotenv import load_dotenv
@@ -10,7 +11,7 @@ from agent.utils import call_llm
 import yaml
 
 load_dotenv()
-__all__ = ["DecideAction", "SearchWeb", "ContentSummarizer"]
+__all__ = ["DecideAction", "SearchWeb", ]
 
 total_links_count = 0
 
@@ -31,25 +32,28 @@ class DecideAction(Node):
         hot_word = shared["hot_word"]
         links_count = shared.get("links_count", 0)
         relation_news = shared["relation_news"]
+        search_volume = shared["search_volume"]
+        search_growth_rate = shared["search_growth_rate"]
+        search_active_time = shared["search_active_time"]
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        shared["current_date"] = current_date
         logger = shared["logger"]
         language = shared["language"]
         # 返回问题和上下文，供 exec 步骤使用
-        return hot_word, context, relation_news, links_count, language, logger
+        return current_date,hot_word, search_volume, search_growth_rate, search_active_time, context, relation_news, links_count, language, logger
 
     def exec(self, inputs):
         """调用 LLM 决定是搜索还是回答。"""
-        hot_word, context, relation_news, links_count, language, logger = inputs
-
+        current_date,hot_word, search_volume, search_growth_rate, search_active_time, context, relation_news, links_count, language, logger = inputs
         logger.info(f"代理正在决定下一步操作...")
+        desc = f"此热词从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
         prompt = f"""
             你是一个可以搜索网络的热点新闻深度搜索助手
             现在给你一个时下网络流行热词，你需要参考查询维度、先前的研究进行深度搜索，深度思考并理解该热词对应的叙事内容。
             使用{language}回答
-            
             ### 查询维度
             
-            - 发生时间：最近48小时内
             - 事件基本信息 : 确认热词对应的具体事件、时间、地点、主要人物
             - 事件发展脉络 : 事件起因、关键节点、最新进展
             - 社会影响范围 : 受众群体、地域影响、行业影响
@@ -61,10 +65,10 @@ class DecideAction(Node):
             查询优先级：事件基本信息>事件发展脉络>社会影响范围>争议焦点>官方回应>关联事件
             
             ## 上下文
+            - 当前时间: {current_date}
             - 时下流行热词: 
-            
             {hot_word}
-            
+            {desc}
             - 相关新闻报导标题：
             
             {relation_news}
@@ -212,8 +216,6 @@ class SearchWeb(Node):
 
         # 搜索后始终返回决策节点
         return "decide"
-
-
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import os
 from agent import hot_word_research_assistant
 from core import get_logger
 from webui.func.constant import task_root_dir, root_dir
-from webui.func.md2html import (get_random_bg_image,convert_md_to_output)
+from webui.func.md2html import (get_random_bg_image, convert_md_to_output)
 
 
 async def research_all_hot_word(task_folders, language):
@@ -24,13 +24,21 @@ async def research_all_hot_word(task_folders, language):
             ret = hot_word_research_assistant(hot_words_folders_path, language, agent_logger)
             print(f"热词处理成功：{hot_words_folders}")
             print(f"查询md汇总文件,：{hot_words_folders}")
-            input_md_path=load_summary_and_paths(hot_words_folders_path)
-            await convert_to_img(input_md_path)
+            input_md_path = load_summary_and_paths(hot_words_folders_path)
+            await convert_md_file_to_img(input_md_path)
         except Exception as e:
             print(f"正在处理热词：{hot_words_folders_path}发生异常，下一个热词")
             continue
         result.append(ret)
     return result
+
+
+async def md_to_img(hot_words_folders_path):
+    print(f"查询md汇总文件,：{hot_words_folders_path}")
+    input_md_path = load_summary_and_paths(hot_words_folders_path)
+    print(f"正在将md转为图片、视频、html：{hot_words_folders_path}")
+    await convert_md_file_to_img(input_md_path)
+    return "转换html、图片、视频成功"
 
 
 async def research_hot_word(hot_words_folders_path, language):
@@ -43,9 +51,8 @@ async def research_hot_word(hot_words_folders_path, language):
     print(f"热词处理成功：{hot_words_folders_path}")
     print(f"查询md汇总文件,：{hot_words_folders_path}")
     input_md_path = load_summary_and_paths(hot_words_folders_path)
-    await convert_to_img(input_md_path)
+    await convert_md_file_to_img(input_md_path)
     return ret
-
 
 
 def load_summary_and_paths(hot_word_path):
@@ -67,7 +74,7 @@ def load_summary_and_paths(hot_word_path):
 
 
 # ===== 定义按钮点击事件 =====
-async def convert_to_img(md_path):
+async def convert_md_file_to_img(md_path):
     if not md_path or not os.path.exists(md_path):
         return "❌ Markdown 文件不存在，无法转换"
 

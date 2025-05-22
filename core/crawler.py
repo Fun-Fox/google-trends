@@ -9,7 +9,8 @@ load_dotenv()
 current_path = os.path.dirname(os.path.abspath(__file__))
 __all__ = ['crawl_google_trends_page']
 
-async def query_selector_with_retry(page, logging,selector, max_retries=3, delay=2):
+
+async def query_selector_with_retry(page, logging, selector, max_retries=3, delay=2):
     """
     带重试机制的 query_selector_all 封装
     :param page: Playwright 页面对象
@@ -35,6 +36,8 @@ async def query_selector_with_retry(page, logging,selector, max_retries=3, delay
 
     logging.error(f"经过 {max_retries} 次尝试仍未找到元素：{selector}")
     return []
+
+
 async def crawl_google_trends_page(page, logging, origin="", category=0, url="", task_dir=None,
                                    to_download_image=False, nums=25):
     """
@@ -62,17 +65,33 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
     else:
         logging.error("页面已关闭，无法导航")
         return
-    await query_selector_with_retry(page,logging,'div.VfPpkd-dgl2Hf-ppHlrf-sM5MNb > div', max_retries=3, delay=2)
+    await query_selector_with_retry(page, logging, 'div.VfPpkd-dgl2Hf-ppHlrf-sM5MNb > div', max_retries=3, delay=2)
 
     # 第一次加载图片
     try:
-        elements = await query_selector_with_retry(page,logging,
-            'tbody:nth-child(3) > tr:nth-child(n) > td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc')
-        hot_words = elements[:nums]  # ✅ 在 await 后进行切片
+        elements = await query_selector_with_retry(page, logging,
+                                                   'tbody:nth-child(3) > tr:nth-child(n)')
+        elements_temp = elements[:nums]  # ✅ 在 await 后进行切片
+
     except Exception as e:
         logging.error(f'未找到 div 元素: {e}')
+        elements_temp = []  # ✅ 添加默认空列表防止后续引用错误
 
-    for i, div in enumerate(hot_words):
+    for i, div in enumerate(elements_temp):
+        hot_words = query_selector_with_retry(div, logging, 'td.enOdEe-wZVHld-aOtOmf.jvkLtd > div.mZ3RIc',
+                                              max_retries=3, delay=2)
+
+        search_volume = await query_selector_with_retry(div, logging,
+                                                        'td.enOdEe-wZVHld-aOtOmf.dQOTjf > div > div.lqv0Cb',
+                                                        max_retries=3, delay=2)
+
+        search_growth_rate = await query_selector_with_retry(div, logging,
+                                                             'td.enOdEe-wZVHld-aOtOmf.dQOTjf > div > div.wqrjjc > div',
+                                                             max_retries=3, delay=2)
+
+        search_active_time = await query_selector_with_retry(div, logging,
+                                                             'td.enOdEe-wZVHld-aOtOmf.WirRge > div.vdw3Ld',
+                                                             max_retries=3, delay=2)
         text_content = await div.text_content()
         logging.info(f'div {i + 1} 的文本内容: {text_content}')
 
@@ -82,9 +101,9 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
             logging.debug(f'点击了 div {i + 1}')
         except Exception as e:
             logging.error(f'点击 div {i + 1} 时出错: {e}')
-
+        # 查看关联新闻
         new_titles_selector = 'div.jDtQ5 > div:nth-child(n) > a > div.MEJ15 > div.QbLC8c'
-        new_titles = await query_selector_with_retry(page,logging,new_titles_selector)
+        new_titles = await query_selector_with_retry(page, logging, new_titles_selector)
         title_new = []
         for index, title in enumerate(new_titles):
             title_text = await title.text_content()
@@ -94,7 +113,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         if to_download_image:
             # 获取指定路径下的图片的 src 地址
             img_selector = 'div.jDtQ5 > div:nth-child(n) > a > div.yYagic > img'
-            img_src_list = await query_selector_with_retry(page,logging,img_selector)
+            img_src_list = await query_selector_with_retry(page, logging, img_selector)
             logging.info(f"关键词{text_content}：图片数量：{len(img_src_list)}")
             if len(img_src_list) < 3:
                 logging.warning(f"关键词{text_content}：图片数量不足3张，请注意")
@@ -120,14 +139,18 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
         csv_file_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
         file_exists = os.path.isfile(csv_file_path)
         with open(csv_file_path, 'a', newline='', encoding='utf-8-sig') as csvfile:
-            fieldnames = ['hot_word', "relation_news", "search_history", "highlights", "chinese", "output", ]
+            fieldnames = ['hot_word', 'search_volume', 'search_growth_rate', "search_active_time", "relation_news",
+                          "search_history", "highlights", "chinese", "output", ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
             writer.writerow(
-                {'hot_word': text_content, "relation_news": '---'.join(title_new), "search_history": '',
+                {'hot_word': text_content, 'search_volume': search_volume, 'search_growth_rate': search_growth_rate,
+                 "search_active_time": search_active_time, "relation_news": '---'.join(title_new), "search_history": '',
                  "highlights": "", "chinese": '',
                  "output": '', })
+            logging.info(
+                f"关键词 {text_content} ,搜索量：{search_volume}，搜索增长率：{search_growth_rate}，搜索活跃时间：{search_active_time}")
             logging.info(f"关键词 {text_content} 已存储至 CSV 文件")
 
             await asyncio.sleep(5)

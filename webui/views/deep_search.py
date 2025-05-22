@@ -2,7 +2,7 @@ import gradio as gr
 
 from webui.func.image import get_hot_word_images_and_narratives
 from webui.func.log import update_agent_log_textbox
-from webui.service.search import research_all_hot_word, research_hot_word
+from webui.service.search import research_all_hot_word, research_hot_word, md_to_img
 from webui.func.folder import get_task_folders, update_hot_word_folders
 
 
@@ -38,6 +38,11 @@ def build_tab():
             research_button = gr.Button("🤐特定-热词-网络搜索")
 
             research_button.click(fn=research_hot_word, inputs=[hot_word_folders, language_dropdown],
+                                  outputs=gr.Textbox(label=""))
+        with gr.Column():
+            research_button = gr.Button("🤐热词-搜索内容转海报")
+
+            research_button.click(fn=md_to_img, inputs=[hot_word_folders],
                                   outputs=gr.Textbox(label=""))
         with gr.Column():
             research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")

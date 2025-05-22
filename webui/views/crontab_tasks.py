@@ -1,4 +1,5 @@
 import os
+import random
 import re
 import time
 import asyncio
@@ -9,6 +10,7 @@ import schedule
 import gradio as gr
 
 from webui.func.conf import load_regions_choices
+from webui.func.constant import root_dir
 from webui.func.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
 from webui.service.search import research_all_hot_word
@@ -45,7 +47,7 @@ def find_mp4_files(directory):
     return mp4_files
 
 
-from moviepy import VideoFileClip, concatenate_videoclips
+from moviepy import *
 
 
 def merge_videos(video_paths, output_path):
@@ -60,6 +62,26 @@ def merge_videos(video_paths, output_path):
 
     clips = [VideoFileClip(v) for v in video_paths]
     final_clip = concatenate_videoclips(clips, method="compose")
+
+    # Step 6: 获取随机背景音乐文件
+    bgm_folder = os.path.join(root_dir, "webui", "bgm")  # ⚠️ 替换为你的 bgm 文件夹路径
+    bgm_files = [
+        f for f in os.listdir(bgm_folder)
+        if f.lower().endswith((".mp3", ".ogg"))
+    ]
+    if not bgm_files:
+        print("⚠️ 未找到可用背景音乐文件")
+    else:
+        selected_bgm = random.choice(bgm_files)
+        bgm_path = os.path.join(bgm_folder, selected_bgm)
+        print(f"🎵 正在加载背景音乐: {bgm_path}")
+
+        # 加载音频并设置为循环播放
+        music = AudioFileClip(bgm_path)
+        # AudioLoop())  # 循环播放音频
+        audio = music.with_effects([afx.AudioLoop(duration=final_clip.duration)])
+        # 合并音频到视频
+        final_clip.audio = audio
 
     # 写入最终视频
     final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
@@ -99,6 +121,7 @@ async def scheduled_task(to_download_image, origin, category, nums, language="zh
         if mp4_files:
             output_video = os.path.join(task_dir, f"{latest_folder}_merged.mp4")
             merged_result = merge_videos(mp4_files, output_video)
+
             if merged_result:
                 print(f"✅ 视频已成功合并到 {merged_result}")
             else:
@@ -129,7 +152,7 @@ def get_current_tasks():
     """获取当前所有定时任务"""
     tasks = []
     for job in schedule.get_jobs():
-        job_id = job.tags[0] if job.tags else "unknown"
+        job_id = next(iter(job.tags)) if job.tags else "unknown"
         task_info = _SCHEDULED_TASKS.get(job_id, {})
 
         task_data = {
