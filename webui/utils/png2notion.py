@@ -70,7 +70,7 @@ def create_notion_page(database_id: str, title: str) -> Optional[Dict]:
                 "type": {"select": {"name": "Post"}},
                 "category": {"select": {"name": "热点追踪"}},
                 "status": {"select": {"name": "Draft"}},
-                "create_time": {"date": {"start": datetime.now().strftime("%Y/%m/%d")}}
+                "create_time": {"date": {"start": datetime.now().strftime("%Y-%m-%d")}}
             },
             children=[]
         )

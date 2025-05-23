@@ -288,7 +288,7 @@ def create_notion_page(database_id: str, title: str, body_blocks: List[dict]) ->
                 "type": {"select": {"name": "Post"}},
                 "category": {"select": {"name": "热点快照"}},
                 "status": {"select": {"name": "Draft"}},
-                "create_time": {"date": {"start": datetime.now().strftime("%Y/%m/%d")}}
+                "create_time": {"date": {"start": datetime.now().strftime("%Y-%m-%d")}}
             },
             children=body_blocks
         )
