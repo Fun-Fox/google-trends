@@ -2,6 +2,7 @@ import datetime
 import os
 
 from agent import hot_word_research_assistant
+from agent.tools.summary import generate_news_summary_report
 from core import get_logger
 from webui.func.constant import task_root_dir, root_dir
 from webui.func.md2html import (get_random_bg_image, convert_md_to_output)
@@ -33,11 +34,54 @@ async def research_all_hot_word(task_folders, language):
     return result
 
 
-async def md_to_img(hot_words_folders_path):
-    print(f"查询md汇总文件,：{hot_words_folders_path}")
-    input_md_path = load_summary_and_paths(hot_words_folders_path)
-    print(f"正在将md转为图片、视频、html：{hot_words_folders_path}")
-    await convert_md_file_to_img(input_md_path)
+import os
+from dotenv import load_dotenv
+import pandas as pd
+
+load_dotenv()
+
+
+async def md_to_img(hot_words_folders_path, language):
+    agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
+
+    agent_logger = get_logger(__name__, agent_log_file_path)
+    hot_words = os.path.basename(hot_words_folders_path)
+    task_dir = os.path.dirname(os.path.dirname(hot_words_folders_path))
+    hot_words_file_name = os.getenv("HOT_WORDS_FILE_NAME")
+    csv_path = os.path.join(task_dir, hot_words_file_name)
+    task_name = os.path.basename(task_dir)
+    task_time = task_name.split('_')[0]
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"md_to_img:CSV 文件不存在: {csv_path}")
+    df = pd.read_csv(csv_path)
+    matched_rows = df[df['hot_word'] == hot_words]
+
+    if matched_rows.empty:
+        print(f"未找到热词 '{hot_words}' 对应的行")
+        return None
+    required_columns = ['output', 'highlights', 'search_volume',
+                        'search_growth_rate', 'search_active_time', 'current_date']
+    missing_cols = [col for col in required_columns if col not in df.columns]
+    if missing_cols:
+        raise KeyError(f"md_to_img:缺失以下字段: {missing_cols}")
+        # 6. 返回所需字段的数据（示例返回第一行）
+    first_row = matched_rows.iloc[0]
+
+    highlights_str = first_row["highlights"]
+    output = first_row['output']
+    hot_word_info = {
+        'search_volume': first_row["search_volume"],
+        'search_growth_rate': first_row["search_growth_rate"],
+        'search_active_time': first_row["search_active_time"],
+        'current_date': task_time
+    }
+
+    generate_news_summary_report(highlights_str, output, hot_words_folders_path, hot_word_info, agent_logger,
+                                 language)
+    # print(f"查询md汇总文件,：{hot_words_folders_path}")
+    # input_md_path = load_summary_and_paths(hot_words_folders_path)
+    # print(f"正在将md转为图片、视频、html：{hot_words_folders_path}")
+    # await convert_md_file_to_img(input_md_path)
     return "转换html、图片、视频成功"
 
 
