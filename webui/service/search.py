@@ -108,8 +108,9 @@ async def md_to_img(hot_words_folders_path, language):
     if matched_rows.empty:
         print(f"未找到热词 '{hot_words}' 对应的行")
         return None
+
     required_columns = ['output', 'highlights', 'search_volume',
-                        'search_growth_rate', 'search_active_time', 'current_date']
+                        'search_growth_rate', 'search_active_time',]
     missing_cols = [col for col in required_columns if col not in df.columns]
     if missing_cols:
         raise KeyError(f"md_to_img:缺失以下字段: {missing_cols}")
