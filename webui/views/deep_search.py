@@ -33,22 +33,22 @@ def build_tab():
             )
 
         with gr.Column():
-            research_button = gr.Button("🤐特定-热词-网络搜索")
+            research_button = gr.Button("🤐单个热点-网络搜索")
 
             research_button.click(fn=research_hot_word, inputs=[hot_word_folders, language_dropdown],
                                   outputs=gr.Textbox(label=""))
         with gr.Column():
-            research_button = gr.Button("🤐热词-搜索内容转海报")
+            research_button = gr.Button("🤐单个热点-搜索内容转海报")
 
             research_button.click(fn=md_to_img, inputs=[hot_word_folders, language_dropdown],
                                   outputs=gr.Textbox(label=""))
         with gr.Column():
-            research_button = gr.Button("🤐海报同步至Notion笔记")
+            research_button = gr.Button("🤐单个热点-海报同步至Notion笔记")
 
             research_button.click(fn=to_notion, inputs=[hot_word_folders],
                                   outputs=gr.Textbox(label=""))
         with gr.Column():
-            research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")
+            research_all_keyword_button = gr.Button("🤐全部热点-网络搜索")
 
             research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders, language_dropdown],
                                               outputs=gr.Textbox(label=""))
