@@ -5,7 +5,7 @@ import time
 
 from dotenv import load_dotenv
 
-from webui.func.constant import root_dir
+from webui.utils.constant import root_dir
 
 load_dotenv()
 __all__ = ["get_logger"]

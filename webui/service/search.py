@@ -4,8 +4,8 @@ import os
 from agent import hot_word_research_assistant
 from agent.tools.summary import generate_news_summary_report
 from core import get_logger
-from webui.func.constant import task_root_dir, root_dir
-from webui.func.md2html import (get_random_bg_image, convert_md_to_output)
+from webui.utils.constant import task_root_dir, root_dir
+from webui.utils.md2html import (get_random_bg_image, convert_md_to_output)
 
 
 async def research_all_hot_word(task_folders, language):

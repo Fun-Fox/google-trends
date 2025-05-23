@@ -1,6 +1,6 @@
 import os
 import zipfile
-from webui.func.constant import root_dir
+from webui.utils.constant import root_dir
 
 def zip_folder(folder_path, zip_path):
     """

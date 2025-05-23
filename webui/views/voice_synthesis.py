@@ -4,9 +4,9 @@ import time
 
 import gradio as gr
 
-from webui.func.constant import task_root_dir, root_dir
-from webui.func.csv import get_csv_files, clear_result_button_click
-from webui.func.folder import get_task_folders, update_drop_down, read_result_csv_file
+from webui.utils.constant import task_root_dir, root_dir
+from webui.utils.csv import get_csv_files, clear_result_button_click
+from webui.utils.folder import get_task_folders, update_drop_down, read_result_csv_file
 from webui.service.tts import init_tts, parse_speakers_and_texts
 
 

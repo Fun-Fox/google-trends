@@ -3,7 +3,7 @@ import gradio as gr
 import pandas as pd
 from dotenv import load_dotenv
 
-from webui.func.constant import task_root_dir, root_dir
+from webui.utils.constant import task_root_dir, root_dir
 
 load_dotenv()
 

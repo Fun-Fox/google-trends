@@ -1,9 +1,9 @@
 import gradio as gr
 
-from webui.func.image import get_hot_word_images_and_narratives
-from webui.func.log import update_agent_log_textbox
+from webui.utils.image import get_hot_word_images_and_narratives
+from webui.utils.log import update_agent_log_textbox
 from webui.service.search import research_all_hot_word, research_hot_word, md_to_img
-from webui.func.folder import get_task_folders, update_hot_word_folders
+from webui.utils.folder import get_task_folders, update_hot_word_folders
 
 
 def build_tab():

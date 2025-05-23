@@ -8,7 +8,7 @@ import markdown2
 from moviepy import *
 import os
 from playwright.async_api import async_playwright
-from webui.func.constant import root_dir
+from webui.utils.constant import root_dir
 
 
 

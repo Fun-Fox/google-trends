@@ -2,7 +2,7 @@ import os
 import warnings
 import sys
 
-from webui.func.constant import root_dir, task_root_dir
+from webui.utils.constant import root_dir, task_root_dir
 
 
 def singleton(func):

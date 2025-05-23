@@ -2,8 +2,8 @@ import os
 
 import gradio as gr
 
-from webui.func.build_zip import download_folder, refresh_zip_files
-from webui.func.constant import task_root_dir, root_dir
+from webui.utils.build_zip import download_folder, refresh_zip_files
+from webui.utils.constant import task_root_dir, root_dir
 
 
 def build_tab():

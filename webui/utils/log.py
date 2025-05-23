@@ -1,5 +1,5 @@
 import os
-from webui.func.constant import root_dir
+from webui.utils.constant import root_dir
 
 # 新增函数：获取 logs 目录下时间戳最新的日志文件
 def get_latest_log_file(log_dir, start_str="task_"):
