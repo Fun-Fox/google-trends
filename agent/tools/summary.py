@@ -77,7 +77,7 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
 - 核心诉求：在{hot_word_info["search_active_time"]}时段抓住{hot_word_info["search_growth_rate"]}的爆发性增长
 - 传播目标：引发行业讨论+公众关注
 
-# 视觉风格
+# 视觉风格，可以参考但不限于以下内容
 - 使用社交媒体风格的短句表达
 - 重要数据用🎉🔥💥🌟等emoji标注
 - 关键时间节点用📅⏳⏰等时间符号强调
@@ -96,18 +96,18 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
 # 内容结构
 1. 惊爆标题（使用悬念/数字/对比手法）
     - 要求：必须包含emoji
-2. 事件解码（结合内容叙述、相关优质报道）
+2. 事件解码（结合内容叙述、相关优质报道），可以参考但不限于以下内容
     - 一句话真相：{" ".join(highlights.split()[:20])}...
     - 专家解读：用「」符号标注权威观点
     - 政策动向：用⚖️标注监管信号
     - 行业影响：用💰标注经济关联
     - 自我观点：用💬标注你对此事的评论
 
-3. 影响预测（使用符号化表达）
+3. 影响预测（使用符号化表达），可以参考但不限于以下内容
    - 经济层面：💰
    - 社会层面：👥
    - 政策层面：⚖️
-4. 传播预测（新增模块）
+4. 传播预测（新增模块），可以参考但不限于以下内容
    - 潜在爆点：预测可能引发二次传播的要素
    - 关联热搜：列出3个可能联动的热点话题
    - 传播建议：提供2条互动引导语
@@ -116,6 +116,7 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
 - 使用{language}输出内容
 - Markdown语法
 - 只允许一个一级标题
+- 清晰的文档结构，有二级标题
 - 关键数据用**加粗**
 - 在末尾添加#热点追踪 #数据分析 标签
 """
