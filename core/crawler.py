@@ -99,6 +99,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
             search_growth_rate = await search_growth_rate_element[0].text_content()
             search_active_time = await  search_active_time_element[0].text_content()
             text_content = await hot_word_element.text_content()
+            text_content = f"{i + 1}-{text_content}"
         else:
             logging.warning("未找到关键词元素，使用默认名称代替")
             continue
