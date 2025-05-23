@@ -2,7 +2,7 @@ import gradio as gr
 
 from webui.utils.image import get_hot_word_images_and_narratives
 from webui.utils.log import update_agent_log_textbox
-from webui.service.search import research_all_hot_word, research_hot_word, md_to_img
+from webui.service.search import research_all_hot_word, research_hot_word, md_to_img, to_notion
 from webui.utils.folder import get_task_folders, update_hot_word_folders
 
 
@@ -25,7 +25,6 @@ def build_tab():
 
     with gr.Row():
         with gr.Column():
-
             # 仅提供语言名称选项，不要编码
             language_dropdown = gr.Dropdown(
                 label="选择采样信息输出语言",
@@ -34,7 +33,6 @@ def build_tab():
             )
 
         with gr.Column():
-
             research_button = gr.Button("🤐特定-热词-网络搜索")
 
             research_button.click(fn=research_hot_word, inputs=[hot_word_folders, language_dropdown],
@@ -42,18 +40,22 @@ def build_tab():
         with gr.Column():
             research_button = gr.Button("🤐热词-搜索内容转海报")
 
-            research_button.click(fn=md_to_img, inputs=[hot_word_folders],
+            research_button.click(fn=md_to_img, inputs=[hot_word_folders, language_dropdown],
+                                  outputs=gr.Textbox(label=""))
+        with gr.Column():
+            research_button = gr.Button("🤐海报同步至Notion笔记")
+
+            research_button.click(fn=to_notion, inputs=[hot_word_folders],
                                   outputs=gr.Textbox(label=""))
         with gr.Column():
             research_all_keyword_button = gr.Button("🤐全部-热词-网络搜索")
-
 
             research_all_keyword_button.click(fn=research_all_hot_word, inputs=[task_folders, language_dropdown],
                                               outputs=gr.Textbox(label=""))
     with gr.Row():
         gr.Textbox(label="AI搜索助手-执行记录", value=update_agent_log_textbox, lines=9,
-                                       max_lines=15,
-                                       every=5)
+                   max_lines=15,
+                   every=5)
         image_gallery = gr.Gallery(label="热词-对应图片信息", value=[], interactive=False, columns=5)
 
     # 修改回调函数，正确更新 hotword_folders 的选项

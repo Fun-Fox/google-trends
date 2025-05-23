@@ -1,11 +1,15 @@
 import datetime
 import os
+from typing import List
+
+from lxml.isoschematron import extract_xsd
 
 from agent import hot_word_research_assistant
 from agent.tools.summary import generate_news_summary_report
 from core import get_logger
 from webui.utils.constant import task_root_dir, root_dir
 from webui.utils.md2html import (get_random_bg_image, convert_md_to_output)
+from webui.utils.png2notion import extract_title, upload_image_and_create_notion_page
 
 
 async def research_all_hot_word(task_folders, language):
@@ -39,6 +43,51 @@ from dotenv import load_dotenv
 import pandas as pd
 
 load_dotenv()
+
+
+def get_md_and_image_paths(hot_word_folder: str) -> (str, List[str]):
+    """
+    自动查找 hot_word_folder 下的 md 文件夹中的 .md 文件，以及同目录下的图片文件
+    返回：
+        md_file: Markdown 文件路径
+        image_paths: 图片文件路径列表（支持多图）
+    """
+    # 构建 md 文件夹路径
+    md_dir = os.path.join(hot_word_folder, "md")
+
+    # 查找 .md 文件（取最新修改的一个）
+    if not os.path.exists(md_dir):
+        raise FileNotFoundError(f"未找到 md 文件夹: {md_dir}")
+
+    md_files = [f for f in os.listdir(md_dir) if f.endswith(".md")]
+    if not md_files:
+        raise FileNotFoundError(f"未在 {md_dir} 中找到 .md 文件")
+    latest_md_file = max([os.path.join(md_dir, f) for f in md_files], key=os.path.getmtime)
+
+    # 查找图片文件（支持常见格式）
+    SUPPORTED_IMAGE_EXTS = {".png"}
+    image_paths = [
+        os.path.join(hot_word_folder, f)
+        for f in os.listdir(hot_word_folder)
+        if os.path.splitext(f)[1].lower() in SUPPORTED_IMAGE_EXTS
+    ]
+
+    if not image_paths:
+        raise FileNotFoundError(f"未在 {hot_word_folder} 中找到任何图片文件")
+
+    return latest_md_file, image_paths[0]
+
+
+def to_notion(hot_word_folders):
+    try:
+        database_id = os.getenv("DATABASE_ID")
+        latest_md_file, image_path = get_md_and_image_paths(hot_word_folders)
+        title = extract_title(latest_md_file)
+        page = upload_image_and_create_notion_page(database_id, title, image_path)
+    except Exception as e:
+        print(f"上传失败: {e}")
+        return f"上传失败: {e}"
+    return f"上传成功: 请访问{page['url']}"
 
 
 async def md_to_img(hot_words_folders_path, language):
