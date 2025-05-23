@@ -67,13 +67,13 @@ def get_md_and_image_paths(hot_word_folder: str) -> (str, List[str]):
     # 查找图片文件（支持常见格式）
     SUPPORTED_IMAGE_EXTS = {".png"}
     image_paths = [
-        os.path.join(hot_word_folder, f)
-        for f in os.listdir(hot_word_folder)
+        os.path.join(md_dir, f)
+        for f in os.listdir(md_dir)
         if os.path.splitext(f)[1].lower() in SUPPORTED_IMAGE_EXTS
     ]
 
     if not image_paths:
-        raise FileNotFoundError(f"未在 {hot_word_folder} 中找到任何图片文件")
+        raise FileNotFoundError(f"未在 {md_dir} 中找到任何图片文件")
 
     return latest_md_file, image_paths[0]
 
