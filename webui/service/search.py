@@ -95,7 +95,7 @@ async def md_to_img(hot_words_folders_path, language):
 
     agent_logger = get_logger(__name__, agent_log_file_path)
     hot_words = os.path.basename(hot_words_folders_path)
-    task_dir = os.path.dirname(os.path.dirname(hot_words_folders_path))
+    task_dir = os.path.dirname(hot_words_folders_path)
     hot_words_file_name = os.getenv("HOT_WORDS_FILE_NAME")
     csv_path = os.path.join(task_dir, hot_words_file_name)
     task_name = os.path.basename(task_dir)

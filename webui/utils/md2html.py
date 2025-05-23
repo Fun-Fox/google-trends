@@ -26,6 +26,7 @@ def rewrite_images(html_content, md_path):
         # print(f"md文件路径：{md_path},图片路径:{src}")
         if '../' in src:
             full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.split("../")[1]).replace("\\", "/")
+            print(f'开始替换md中的相对图片地址为绝对图片地址:{full_path}')
         else:
             full_path = os.path.join(root_dir, src).replace("\\", "/")
         # print(f"图片全路径:{full_path}")
