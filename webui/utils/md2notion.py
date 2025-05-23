@@ -123,7 +123,7 @@ class MarkdownProcessor:
         self.file_path = file_path
         self.title = "Untitled"
         self.body_blocks: List[dict] = []
-        self.notion_token = os.getenv("NOTION_API_KEY") or "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"
+        self.notion_token = os.getenv("NOTION_API_KEY")
 
     def parse(self) -> Tuple[str, List[dict]]:
         """仅解析 Markdown 标题和内容块，不上传图片"""
@@ -286,7 +286,7 @@ def create_notion_page(database_id: str, title: str, body_blocks: List[dict]) ->
             properties={
                 "title": {"title": [{"text": {"content": title}}]},
                 "type": {"select": {"name": "Post"}},
-                "category": {"select": {"name": "热点追踪"}},
+                "category": {"select": {"name": "热点快照"}},
                 "status": {"select": {"name": "Draft"}},
                 "create_time": {"date": {"start": datetime.now().isoformat()}}
             },
