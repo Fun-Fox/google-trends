@@ -2,7 +2,7 @@ import os
 import warnings
 import sys
 
-from torchvision.version import cuda
+import torch
 
 from webui.utils.constant import root_dir, task_root_dir
 
@@ -29,7 +29,8 @@ def init_tts():
     from tools.i18n.i18n import I18nAuto
     i18n = I18nAuto(language="zh_CN")
     # 自动判断是否支持 CUDA
-    if cuda.is_available():
+    use_cuda = torch.cuda.is_available()
+    if use_cuda:
         print("🎮 CUDA 可用，使用 GPU 加载模型")
         device = "cuda:0"
     else:
@@ -40,7 +41,7 @@ def init_tts():
             model_dir=os.path.join(root_dir, "index-tts/checkpoints"),
             cfg_path=os.path.join(root_dir, "index-tts/checkpoints/config.yaml"),
             device=device,
-            use_cuda_kernel=cuda.is_available()  # 如果有 CUDA 才使用加速内核
+            use_cuda_kernel=use_cuda  # 如果有 CUDA 才使用加速内核
         )
     except Exception as e:
         print(f"⚠️ 使用指定设备加载失败: {e}，尝试使用默认设备重新加载...")
