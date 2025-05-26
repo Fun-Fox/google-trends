@@ -96,10 +96,10 @@ def hot_word_research_assistant(hot_word_path: str, language, logger) -> str | N
         raise e
 
 
-def write_in_style_assistant(draft: str, prompt: str, logger) -> str | None:
+def write_in_style_assistant(draft: str, prompt: str,language, logger) -> str | None:
     try:
         shared = {
-            "draft": draft, "prompt": prompt, "logger": logger
+            "draft": draft, "prompt": prompt,"language":language, "logger": logger
         }
         agent_flow = content_flow()
         logger.info(f"\n 正在结合时下热点叙事进行撰写:\n {draft}")

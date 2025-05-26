@@ -123,7 +123,7 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
 
         # 进行批量生成口播文案
         hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
-        batch_gen_save_result(prompt, hot_word_csv_files_path)
+        batch_gen_save_result(prompt, hot_word_csv_files_path, language=language)
 
         # 进行批量生成口播音频
 
@@ -196,6 +196,8 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             print(f"开始运行tts，生成音频文件")
             hot_word = row['hot_word']
             content = row['result']
+            if content is None or content == "":
+                continue
             speak_content_list = content.split("\n")
             print(f"多角色对话{speak_content_list}")
             result_content = []

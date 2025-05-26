@@ -11,24 +11,25 @@ class ContentParaphraser(Node):
         """
         从共享数据中获取草稿
         """
-        return shared["draft"], shared["prompt"], shared["logger"]
+        return shared["draft"], shared["prompt"], shared["language"],shared["logger"]
 
     def exec(self, inputs):
         """
         对文章应用特定风格
         """
-        draft, prompt, logger = inputs
+        draft, prompt,language, logger = inputs
 
         # 将 draft 插入到 style_note 中
         prompt = (prompt +
 '\n ## 时下热点详细叙事如下：\n'
 + draft +
-"""
+f"""
 ## 输出格式:
 
 角色名称 : 角色说的话
 
 ## 注意：确保：
+- 对话使用{language}回答
 - 只要角色名称和角说的话
 - 不需要提供角色介绍或其他无关信息
 - 角色之间对话使用换行符间隔
