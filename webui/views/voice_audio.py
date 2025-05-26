@@ -4,6 +4,7 @@ import time
 
 import gradio as gr
 
+from webui.service.human import get_reference_audios
 from webui.utils.constant import task_root_dir, root_dir
 from webui.utils.csv_utils import get_csv_files, clear_result_button_click
 from webui.utils.folder import get_task_folders, update_drop_down, read_result_csv_file
@@ -42,12 +43,7 @@ def build_tab():
 
         clear_result_button.click(clear_result_button_click, inputs=[hot_word_csv_files_path], outputs=gr.Textbox())
 
-    def get_reference_audios():
-        audio_dir = os.path.join(root_dir, "doc", "数字人", "参考音频")
-        if not os.path.exists(audio_dir):
-            return []
-        audios = [f for f in os.listdir(audio_dir) if f.lower().endswith(('.wav', '.mp3'))]
-        return [os.path.join(audio_dir, audio) for audio in audios]
+
 
     @gr.render(inputs=selected_row_tmp)
     def render_audio_inputs(selected_row_tmp_value):
@@ -164,7 +160,7 @@ def build_tab():
             progress(0.7, f"开始按角色进行独立音轨拼接（含等待静音）")
             hot_word = selected_row_tmp_value.split("/")[0]
             results_id = selected_row_tmp_value.split("/")[1]
-            task_path = os.path.join(task_root_dir, os.path.basename(task_folders.value), hot_word)
+            hot_word_dir = os.path.join(task_root_dir, os.path.basename(task_folders.value), hot_word)
 
             for speaker_name in set(seg["speaker"] for seg in output_files_with_duration):
                 # 筛选当前 speaker 的语音段
@@ -194,19 +190,19 @@ def build_tab():
 
                 # 保存最终拼接文件
 
-                os.makedirs(task_path, "tts", exist_ok=True)
+                os.makedirs(hot_word_dir, "tts", exist_ok=True)
 
                 final_output_path = os.path.join(
-                    task_path, "tts",
+                    hot_word_dir, "tts",
                     f"{hot_word}_{results_id}_角色_{speaker_name}_{formatted_time}.wav"
                 )
                 combined_audio.export(final_output_path, format="wav")
                 output_files_by_speaker[speaker_name] = final_output_path
             progress(0.8, f"角色独立音轨拼接完成")
 
-            os.makedirs(task_path, "srt", exist_ok=True)
+            os.makedirs(hot_word_dir, "srt", exist_ok=True)
             # 第三步 导出 SRT 字幕文件
-            srt_path = os.path.join(task_path, "srt",
+            srt_path = os.path.join(hot_word_dir, "srt",
                                     f"{hot_word}_{results_id}_{formatted_time}_字幕.srt")
             with open(srt_path, "w", encoding="utf-8-sig") as f:
                 for i, seg in enumerate(output_files_with_duration, start=1):

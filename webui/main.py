@@ -9,8 +9,8 @@ from webui.views import (
     cookie_settings,
     trend_crawler,
     crontab_tasks,
-    voice_script_generation,
-    voice_synthesis,
+    voice_text_generation,
+    voice_audio,
     digital_human,
     deep_search,
     downloads
@@ -35,12 +35,12 @@ with gr.Blocks(title="GT") as app:
 
     with gr.Tab("口播文案生成"):
         try:
-            voice_script_generation.build_tab()
+            voice_text_generation.build_tab()
         except Exception as e:
             gr.Markdown(f"⚠️ 加载失败: {str(e)}")
 
     with gr.Tab("口播音频生成"):
-        voice_synthesis.build_tab()
+        voice_audio.build_tab()
     #
     with gr.Tab("多角色数字人合成"):
         digital_human.build_tab()

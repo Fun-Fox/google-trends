@@ -110,7 +110,7 @@ async def md_to_img(hot_words_folders_path, language):
         return None
 
     required_columns = ['output', 'highlights', 'search_volume',
-                        'search_growth_rate', 'search_active_time',]
+                        'search_growth_rate', 'search_active_time', ]
     missing_cols = [col for col in required_columns if col not in df.columns]
     if missing_cols:
         raise KeyError(f"md_to_img:缺失以下字段: {missing_cols}")
@@ -127,7 +127,7 @@ async def md_to_img(hot_words_folders_path, language):
     }
 
     ret = generate_news_summary_report(highlights_str, output, hot_words_folders_path, hot_word_info, agent_logger,
-                                 language)
+                                       language)
     input_md_path = ret['file_path']
     # print(f"查询md汇总文件,：{hot_words_folders_path}")
     # input_md_path = load_summary_and_paths(hot_words_folders_path)
@@ -170,7 +170,7 @@ def load_summary_and_paths(hot_word_path):
 
 
 # ===== 定义按钮点击事件 =====
-async def convert_md_file_to_img(md_path):
+async def convert_md_file_to_img(md_path, duration=7000):
     if not md_path or not os.path.exists(md_path):
         return "❌ Markdown 文件不存在，无法转换"
 
@@ -196,7 +196,8 @@ async def convert_md_file_to_img(md_path):
             image_path=image_path,
             video_path=video_path,
             background_image=bg_image_url,
-            custom_font=font_url
+            custom_font=font_url,
+            duration=duration
         )
         # 返回成功消息和生成的图片
         return f"✅ 转换成功！HTML 已保存至 {html_path}"

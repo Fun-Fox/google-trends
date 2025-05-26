@@ -6,14 +6,20 @@ import asyncio
 import threading
 from datetime import datetime, timedelta
 
+import pandas as pd
 import schedule
 import gradio as gr
+from pydub import AudioSegment
 
+from webui.service.human import get_reference_audios
+from webui.service.tts import init_tts
+from webui.service.write import batch_gen_save_result
 from webui.utils.conf import load_regions_choices
 from webui.utils.constant import root_dir
 from webui.utils.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
-from webui.service.search import research_all_hot_word
+from webui.service.search import research_all_hot_word, load_summary_and_paths
+from webui.utils.md2html import convert_md_to_output
 
 # ========== 多任务支持 ==========
 _SCHEDULED_TASKS = {}  # 存储所有计划任务 {job_id: task_info}
@@ -42,7 +48,7 @@ def find_mp4_files(directory):
     mp4_files = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.lower().endswith("_p.mp4"):
+            if not file.lower().endswith("_tmp.mp4"):
                 mp4_files.append(os.path.join(root, file))
     return mp4_files
 
@@ -91,7 +97,7 @@ def merge_videos(video_paths, output_path):
     return output_path
 
 
-async def scheduled_task(to_download_image, origin, category, nums, language="zh"):
+async def scheduled_task(to_download_image, origin, category, nums, prompt, speaker_audio_path, language="zh"):
     """
     定时执行的任务，接收用户输入参数
     """
@@ -114,24 +120,138 @@ async def scheduled_task(to_download_image, origin, category, nums, language="zh
         await  research_all_hot_word(latest_folder, language)
         print(f"📁 结束任务深度搜索+: {latest_folder}")
 
+        # 进行批量生成口播文案
+        hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
+        batch_gen_save_result(prompt, hot_word_csv_files_path)
+
+        # 进行批量生成口播音频
+
+        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir)
         # 新增：整合 MP4 文件
-        print(f"📼 正在扫描 {task_dir} 中的 MP4 文件...")
-        mp4_files = find_mp4_files(task_dir)
-
-        if mp4_files:
-            output_video = os.path.join(task_dir, f"{latest_folder}_merged.mp4")
-            merged_result = merge_videos(mp4_files, output_video)
-
-            if merged_result:
-                print(f"✅ 视频已成功合并到 {merged_result}")
-            else:
-                print("❌ 视频合并失败")
-        else:
-            print("ℹ️ 未发现任何 MP4 文件，跳过合并步骤")
+        # print(f"📼 正在扫描 {task_dir} 中的 MP4 文件...")
+        # mp4_files = find_mp4_files(task_dir)
+        #
+        # if mp4_files:
+        #     output_video = os.path.join(task_dir, f"{latest_folder}_merged.mp4")
+        #     merged_result = merge_videos(mp4_files, output_video)
+        #
+        #     if merged_result:
+        #         print(f"✅ 视频已成功合并到 {merged_result}")
+        #     else:
+        #         print("❌ 视频合并失败")
+        # else:
+        #     print("ℹ️ 未发现任何 MP4 文件，跳过合并步骤")
 
     else:
         print("⚠️ 未找到任务文件夹")
 
+async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
+    try:
+        # 读取CSV文件
+        df = pd.read_csv(hot_word_csv_files_path)
+
+        # 确保包含所需的列
+        if 'hot_word' not in df.columns or 'result' not in df.columns:
+            print("❌ CSV文件缺少必要的列：'hot_word' 或 'result'")
+            return
+
+        # 初始化TTS模型
+        tts, i18n = init_tts()
+
+        # 循环处理每一行
+        for _, row in df[['hot_word', 'result']].iterrows():
+            hot_word = row['hot_word']
+            content = row['result']
+
+            # 生成时间戳
+            formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            # 构建输出路径
+            hot_word_tts_dir = os.path.join(task_dir, hot_word, 'tts')
+            tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{formatted_time}.wav")
+
+            # 创建目录（如果不存在）
+            os.makedirs(hot_word_tts_dir, exist_ok=True)
+
+            # 调用TTS生成音频
+            tts.infer_fast(speaker_audio_path, content, tts_audio_output_path)
+            # 获取语音时长（毫秒）
+            segment = AudioSegment.from_wav(tts_audio_output_path)
+            duration_ms = len(segment)  # 毫秒
+            print(f"🔊 已生成音频文件: {tts_audio_output_path}")
+
+            # 根据tts时长，重新生成语言音频
+            hot_words_folders_path = os.path.dirname(hot_word_csv_files_path)
+
+            md_path = load_summary_and_paths(hot_words_folders_path)
+
+            base_name = os.path.splitext(os.path.basename(md_path))[0]
+            md_dir = os.path.dirname(md_path)
+            output_html = os.path.join(md_dir, f"{base_name}.html")
+            video_path = os.path.join(md_dir, f"{base_name}_tts.mp4")
+            html_path = output_html
+
+            await convert_md_to_output(
+                md_path=md_path,
+                html_path=html_path,
+                image_path=None,
+                video_path=video_path,
+                background_image=None,
+                custom_font=None,
+                duration=duration_ms
+            )
+
+
+            # 将video_path 与tts_audio_output_path 合并
+            output_path = os.path.join(md_dir, f"{base_name}_tts_merged.mp4")
+            await merge_audio_with_video(video_path, tts_audio_output_path, output_path)
+
+    except Exception as e:
+        print(f"❌ 批量TTS失败及合成失败: {e}")
+
+from moviepy import VideoFileClip, AudioFileClip
+
+
+async def merge_audio_with_video(video_path, audio_path, output_path):
+    """
+    将指定的音频文件与视频文件合并，用音频替换视频的原有声音。
+
+    :param video_path: 视频文件路径
+    :param audio_path: 音频文件路径 (TTS生成的)
+    :param output_path: 合成后输出的视频路径
+    """
+    try:
+        print(f"🎥 正在加载视频: {video_path}")
+        video = VideoFileClip(video_path)
+
+        print(f"🔊 正在加载音频: {audio_path}")
+        audio = AudioFileClip(audio_path)
+
+        # 设置音频到视频
+        video.audio = audio
+
+
+        # 写入输出文件
+        print(f"💾 正在写入合成视频: {output_path}")
+        video.write_videofile(
+            output_path,
+            codec="libx264",
+            audio_codec="aac",
+            verbose=False,
+            logger=None
+        )
+
+        # 关闭资源
+        video.close()
+        audio.close()
+        video_with_audio.close()
+
+        print(f"✅ 合成完成: {output_path}")
+        return output_path
+
+    except Exception as e:
+        print(f"❌ 合成失败: {e}")
+        return None
 
 # ========== 后台调度器线程 ==========
 def run_schedule_in_background():
@@ -194,7 +314,8 @@ def calculate_next_run(run_time: str) -> datetime:
     return target_time
 
 
-def set_scheduled_task(run_time, to_download_image, origin, category, nums, language="简体中文"):
+def set_scheduled_task(run_time, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
+                       language="简体中文", ):
     global _JOB_ID_SEQ
     run_time = run_time.strip()
     try:
@@ -215,7 +336,9 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
                 "origin": origin,
                 "category": category,
                 "nums": nums,
-                "language": language
+                "language": language,
+                "prompt": prompt_textbox,
+                "audio": audio_dropdown
             },
             "status": "scheduled",
             "next_run": None,
@@ -230,7 +353,8 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, lang
                 task_info["status"] = "running"
                 task_info["last_exec"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 使用 datetime 替代 time
                 # 执行主任务
-                result = await scheduled_task(to_download_image, origin, category, nums, language)
+                result = await scheduled_task(to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
+                                              language)
 
                 # 更新任务结果
                 task_info["status"] = "completed"
@@ -312,6 +436,18 @@ def build_tab():
             lang_dropdown = gr.Dropdown(label="选择语言",
                                         choices=["简体中文", "繁体中文", "英文", "日文", "韩文", "俄文"],
                                         value="简体中文")
+            prompt_textbox = gr.Textbox(label="请输入口播人设提示词(可编辑)",
+                                        value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿""",
+                                        lines=3)
+            reference_audios = get_reference_audios()
+            # 下拉选择参考音频
+            audio_dropdown = gr.Dropdown(
+                label=f"或者请选择角色现有的参考音频",
+                choices=reference_audios,
+                value='',
+                allow_custom_value=True
+            )
+
             set_button = gr.Button("设置定时任务")
             stop_button = gr.Button("停止定时任务", variant="secondary")
         with gr.Column():
@@ -324,7 +460,8 @@ def build_tab():
                        every=5)
 
     set_button.click(fn=set_scheduled_task,
-                     inputs=[time_input, to_download_image, origin, category, nums, lang_dropdown],
+                     inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
+                             lang_dropdown],
                      outputs=[output_text, task_list])
 
     stop_button.click(fn=stop_scheduled_task,

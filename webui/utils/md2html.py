@@ -11,7 +11,6 @@ from playwright.async_api import async_playwright
 from webui.utils.constant import root_dir
 
 
-
 def rewrite_images(html_content, md_path):
     """
     将 HTML 内容中的 <img> 标签替换为 Base64 数据
@@ -417,7 +416,8 @@ def save_html(html_content, output_path):
     print(f"✅ 已生成 HTML 文件: {output_path}")
 
 
-async def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, background_image=None, custom_font=None):
+async def convert_md_to_output(md_path, html_path, image_path=None, video_path=None, background_image=None,
+                               custom_font=None, duration=7000):
     """
     统一接口：将 Markdown 转为 HTML 并可选输出图像
     """
@@ -426,21 +426,25 @@ async def convert_md_to_output(md_path, html_path, image_path=None, video_path=N
             md_text = f.read()
         print(f"正在读取md文件: {md_path}")
 
-        html_content = md_to_html(md_text, md_path, background_image, custom_font)
-
-        # 输出 HTML
-        save_html(html_content, html_path)
+        if os.path.exists(html_path):
+            print(f"✅ 文件已存在: {html_path}, 无需重复生成")
+        else:
+            print(f"❌ html文件不存在: {html_path}, 进行生成")
+            html_content = md_to_html(md_text, md_path, background_image, custom_font)
+            # 输出 HTML
+            save_html(html_content, html_path)
 
         # 输出图像（如果提供路径）
-        if image_path:
-            # 使用 playwright 截图
-            # 修改为异步调用方式：
-            await html_to_image_with_playwright(html_path, image_path, video_path, mobile=True)
+        # if os.path.exists(image_path):
+        # 使用 playwright 截图
+        # 修改为异步调用方式：
+        await html_to_image_with_playwright(html_path, image_path, video_path, mobile=True, duration=duration)
 
     except FileNotFoundError as e:
         print(f"❌ 文件未找到: {e}")
     except Exception as e:
         print(f"❌ 发生错误: {e}")
+
 
 def get_random_bg_image(bg_folder_path):
     """
@@ -523,7 +527,8 @@ async def scroll_to_bottom(page, viewport_height=1920):
     # 返回实际滚动距离
     return scroll_amount
 
-async def html_to_image_with_playwright(html_path, image_path, video_path=None, mobile=False):
+
+async def html_to_image_with_playwright(html_path, image_path=None, video_path=None, mobile=False, duration=7000):
     """
     使用 Playwright 将 HTML 内容转为 PNG 图像并录制视频
     :param html_path: HTML 文件路径
@@ -535,7 +540,7 @@ async def html_to_image_with_playwright(html_path, image_path, video_path=None, 
 
     async with async_playwright() as p:
         # 启动浏览器（headless=True 用于无头模式）
-        browser =await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=True)
 
         # 设置上下文（启用录屏）
         context_args = {}
@@ -547,8 +552,8 @@ async def html_to_image_with_playwright(html_path, image_path, video_path=None, 
             )
 
         # 创建带录屏功能的上下文
-        context =await browser.new_context(**context_args)
-        page =await context.new_page()
+        context = await browser.new_context(**context_args)
+        page = await context.new_page()
 
         # 加载 HTML 页面
         await page.goto(f"file://{abs_html_path}")
@@ -567,16 +572,15 @@ async def html_to_image_with_playwright(html_path, image_path, video_path=None, 
         else:
             await page.set_viewport_size({"width": 900, "height": 1080})
 
-
         # 增加 10s 停顿再开始录制
-        await page.wait_for_timeout(8000)
+        await page.wait_for_timeout(timeout=duration)
         # 多次滚动直到所有内容可见
         max_attempts = 5
         attempt = 0
         while attempt < max_attempts:
 
             # 尝试滚动更多
-            scrolled = await scroll_to_bottom(page,viewport_height=1920)
+            scrolled = await scroll_to_bottom(page, viewport_height=1920)
 
             await page.wait_for_timeout(2000)
 
@@ -590,17 +594,18 @@ async def html_to_image_with_playwright(html_path, image_path, video_path=None, 
         # 新增：等待图片加载完成
 
         # 截图
-        await page.screenshot(path=image_path, full_page=True)
-
+        if image_path:
+            await page.screenshot(path=image_path, full_page=True)
 
         # 如果指定了视频路径，则保存视频（注意顺序）
         if video_path:
+            tmp_video_path = os.path.join(video_path.replace(".mp4", ''), '_tmp.mp4')
             await page.close()  # 🔥 先关闭页面
             video = page.video
             if video:
-                await video.save_as(video_path)
-                print(f"🎥 已生成{'移动端' if mobile else '桌面'}视频文件: {video_path}")
-                directory = os.path.dirname(video_path)
+                await video.save_as(tmp_video_path)
+                print(f"🎥 已生成{'移动端' if mobile else '桌面'}视频文件: {tmp_video_path}")
+                directory = os.path.dirname(tmp_video_path)
                 for f in os.listdir(directory):
                     if f.lower().endswith(".webm"):
                         try:
@@ -614,12 +619,10 @@ async def html_to_image_with_playwright(html_path, image_path, video_path=None, 
         # time.sleep(3)
 
     # 👇 新增：裁剪最后 1 秒
-    process_video_with_first_frame(image_path, video_path)
+    process_video_with_first_frame(video_path)
     # 图片裁剪
-    crop_image_with_gray_area(image_path, image_path)
-
-
-
+    if image_path:
+        crop_image_with_gray_area(image_path, image_path)
 
 
 def hex_to_rgb(hex_color):
@@ -690,11 +693,7 @@ def crop_image_with_gray_area(image_path, output_path):
     cropped_img.save(output_path)
 
 
-
-
-
-
-def process_video_with_first_frame(image_path, video_path):
+def process_video_with_first_frame(video_path):
     """
     使用 MoviePy 将 image_path 的图片作为视频第一帧，并裁剪最后 1 秒。
     :param image_path: 图片路径 (用于作+为首帧)
@@ -705,12 +704,10 @@ def process_video_with_first_frame(image_path, video_path):
     video_clip = None
     trimmed_clip = None
 
-    if not os.path.exists(image_path):
-        raise FileNotFoundError(f"找不到图片文件: {image_path}")
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"找不到视频文件: {video_path}")
 
-    output_path = os.path.splitext(video_path)[0]+"_p.mp4"  # 直接覆盖原视频文件
+    output_path = video_path
 
     try:
         # Step 1: 加载图片并生成 2 秒的图片视频片段
@@ -729,7 +726,6 @@ def process_video_with_first_frame(image_path, video_path):
         else:
             print("⚠️ 视频太短，无法裁剪最后 1 秒")
             trimmed_clip = video_clip
-
 
         # Step 5: 输出最终视频
         print("✅ 正在编码最终视频...")
