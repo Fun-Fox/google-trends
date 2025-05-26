@@ -10,9 +10,10 @@ from serpapi import GoogleSearch
 from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-__all__=["search_web"]
+__all__ = ["search_web"]
 # 设置代理
 proxies = {
     "http": f"{os.getenv('PROXY_URL')}",
@@ -20,6 +21,8 @@ proxies = {
 }
 
 search_web_call_count = 0
+
+
 #
 # class SearchTool:
 #     """Tool for performing web searches using SerpAPI"""
@@ -75,7 +78,7 @@ search_web_call_count = 0
 #             print(f"Search error: {str(e)}")
 #             return []
 
-def search_web(query, hot_word_path, logger,num_results=3):
+def search_web(query, hot_word_path, logger, num_results=3):
     try:
         # 使用serper.dev进行网络搜索
         # logger.info(f"## 查询: {query}")
@@ -102,14 +105,14 @@ def search_web(query, hot_word_path, logger,num_results=3):
                 results = response.json().get("organic", [])
                 results_str = "\n\n".join(
                     [f"标题: {r['title']}\n源链接: {r['link']}\n摘要: {r['snippet']}" for r in results])
-                results_dict = [{'title':r['title'],'snippet':r['snippet'],'link':r['link']}  for r in results]
+                results_dict = [{'title': r['title'], 'snippet': r['snippet'], 'link': r['link']} for r in results]
                 try:
-                    search_image(query, hot_word_path, logger)
+                    search_image(query, hot_word_path, search_web_call_count, logger)
                 except  Exception as e:
                     logger.error(f"搜索图片时发生异常: {e}")
             else:
                 logger.error(f"错误: 无法获取搜索结果。状态码: {response.status_code}")
-                return "错误: 无法获取搜索结果。",None
+                return "错误: 无法获取搜索结果。", None
         else:
             logger.info(f"使用DuckDuckgo免费搜索进行查询")
 
@@ -119,15 +122,15 @@ def search_web(query, hot_word_path, logger,num_results=3):
                 # Convert results to a string
                 results_str = "\n\n".join(
                     [f"标题: {r['title']}\n源链接: {r['href']}\n摘要: {r['body']}" for r in news_results])
-                results_dict = [{'title':r['title'],'snippet':r['body'],'link':r['href']}  for r in news_results]
+                results_dict = [{'title': r['title'], 'snippet': r['body'], 'link': r['href']} for r in news_results]
         # logger.info(f"## 结果: {results_str}")
-        return results_str,results_dict
+        return results_str, results_dict
     except Exception as e:
         logger.error(f"搜索网络时发生异常: {e}")
-        return "错误: 搜索网络时发生异常。",None
+        return "错误: 搜索网络时发生异常。", None
 
 
-def search_image(query, hot_word_path, logger,num_results=8):
+def search_image(query, hot_word_path, search_web_call_count, logger, num_results=8):
     # logger.info(f"## 查询: {query}")
 
     # 检查 hot_word_path 目录下的图片数量
@@ -150,6 +153,7 @@ def search_image(query, hot_word_path, logger,num_results=8):
     with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
         img_results = ddgs.images(query, max_results=5, size="Large")
         # 下载并保存图片
+        hot_word = os.path.splitext(os.path.basename(hot_word_path))[0]
         for i, result in enumerate(img_results):
             image_url = result["image"]
             try:
@@ -165,7 +169,8 @@ def search_image(query, hot_word_path, logger,num_results=8):
                         continue
 
                     # 保存图片
-                    save_path = os.path.join(hot_word_path, f"{query}_{i + 1}.jpg")
+
+                    save_path = os.path.join(hot_word_path, f"{hot_word}_{search_web_call_count}_{i + 1}.jpg")
                     with open(save_path, "wb") as file:
                         file.write(response.content)
                     logger.info(f"图片已保存到: {save_path}")
@@ -182,4 +187,3 @@ def search_image(query, hot_word_path, logger,num_results=8):
                     logger.info(f"无法下载图片 {image_url}，状态码: {response.status_code}")
             except Exception as e:
                 logger.info(f"下载图片 {image_url} 时发生异常: {e}")
-

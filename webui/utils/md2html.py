@@ -37,7 +37,8 @@ def rewrite_images(html_content, md_path):
         return f'<img src="{new_src}" alt="Embedded Image" style="max-width:100%; height:auto; border-radius:10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin: 20px 0;">'
 
     # 正则匹配 <img> 标签中的 src 属性
-    img_pattern = r'<img.*?src="(.*?)".*?>'
+    # img_pattern = r'<img.*?src="(.*?)".*?>'
+    img_pattern = r'<img\b[^>]*?src="([^"]+)"[^>]*>'
     print(f"开始替换md中的图片地址为Base64")
     rewritten_html = re.sub(img_pattern, lambda m: replace_img(m, md_path), html_content)
 
@@ -97,9 +98,12 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
             "task_list",  # 支持任务列表 [-] [x]
         ]
     )
+    print(f"开始转换md为html")
 
     # 重写图片 src 为 Base64
     html = rewrite_images(html, md_path)
+
+    print(f"替换图片完成")
     html = html.replace("<h1>", '<h1 class="color-flow">') \
         .replace("<h2>", '<h2 class="color-flow">') \
         .replace("<h3>", '<h3 class="color-flow">')
@@ -428,7 +432,7 @@ async def convert_md_to_output(md_path, html_path, image_path=None, video_path=N
         print(f"正在读取md文件: {md_path}")
 
         if os.path.exists(html_path):
-            print(f"✅ 文件已存在: {html_path}, 无需重复生成")
+            print(f"✅ html文件已存在: {html_path}, 无需重复生成")
         else:
             print(f"❌ html文件不存在: {html_path}, 进行生成")
             html_content = md_to_html(md_text, md_path, background_image, custom_font)

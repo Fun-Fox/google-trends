@@ -147,18 +147,18 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
         print("⚠️ 未找到任务文件夹")
 
 
-async def gen_media(speaker_audio_path,prompt,language):
+async def gen_media(speaker_audio_path,prompt,language,gen_result=False):
     # 获取最新任务文件夹
 
     latest_folder = get_latest_task_folder()
     task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
 
     hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
-
-    batch_gen_save_result(prompt, hot_word_csv_files_path, language=language)
+    if gen_result:
+        batch_gen_save_result(prompt, hot_word_csv_files_path, language=language)
     if latest_folder:
-        task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
-        hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
+        # task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
+        # hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
         await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,language)
     return "运行结束"
 
@@ -525,7 +525,8 @@ def build_tab():
                        max_lines=15,
                        every=5)
             gen_media_button = gr.Button("调试-运行tts、生成srt、生成mp4、语音与视频合成")
-            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown,prompt_textbox,lang_dropdown], outputs=[gr.Textbox(label="运行结果")])
+
+            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown,prompt_textbox,lang_dropdown,gen_result], outputs=[gr.Textbox(label="运行结果")])
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
