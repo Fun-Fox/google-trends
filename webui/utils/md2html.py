@@ -751,28 +751,28 @@ def process_video_with_first_frame(video_path, output_path):
 
 if __name__ == "__main__":
     # 示例配置
-
-    input_md_path = os.path.join(root_dir, "README.md")
-    output_html = os.path.join(root_dir, "output.html")
-    output_image = os.path.join(root_dir, "output.png")
-    output_video = os.path.join(root_dir, "output.mp4")
-    # 随机选择背景图
-    bg_folder = os.path.join(root_dir, "webui", "bg")  # 本地磁盘路径
-    bg_image_path = get_random_bg_image(bg_folder)
-
-    if bg_image_path:
-        # bg_image_url = bg_image_path.replace(root_dir, "")  # 转为相对路径
-        bg_image_url = bg_image_path.replace("\\", "/")
-    else:
-        bg_image_url = None
-    print(f"随机选择的背景图路径: {bg_image_url}")
-    font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
-
-    asyncio.run(convert_md_to_output(
-        md_path=input_md_path,
-        html_path=output_html,
-        image_path=output_image,
-        video_path=output_video,
-        background_image=bg_image_url,
-        custom_font=font_url
-    ))
+    print(os.path.exists("D:/PycharmProjects/google-trends/tasks/2025年05月26日14时59分_美国_所有分类/10-knicks vs pacers/10-kicks vs pacers playoff series analysis_4.jpg"))
+    # input_md_path = os.path.join(root_dir, "README.md")
+    # output_html = os.path.join(root_dir, "output.html")
+    # output_image = os.path.join(root_dir, "output.png")
+    # output_video = os.path.join(root_dir, "output.mp4")
+    # # 随机选择背景图
+    # bg_folder = os.path.join(root_dir, "webui", "bg")  # 本地磁盘路径
+    # bg_image_path = get_random_bg_image(bg_folder)
+    #
+    # if bg_image_path:
+    #     # bg_image_url = bg_image_path.replace(root_dir, "")  # 转为相对路径
+    #     bg_image_url = bg_image_path.replace("\\", "/")
+    # else:
+    #     bg_image_url = None
+    # print(f"随机选择的背景图路径: {bg_image_url}")
+    # font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+    #
+    # asyncio.run(convert_md_to_output(
+    #     md_path=input_md_path,
+    #     html_path=output_html,
+    #     image_path=output_image,
+    #     video_path=output_video,
+    #     background_image=bg_image_url,
+    #     custom_font=font_url
+    # ))

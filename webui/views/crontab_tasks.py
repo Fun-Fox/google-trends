@@ -147,9 +147,14 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
         print("⚠️ 未找到任务文件夹")
 
 
-async def gen_media(speaker_audio_path):
+async def gen_media(speaker_audio_path,prompt,language):
     # 获取最新任务文件夹
+
     latest_folder = get_latest_task_folder()
+    task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
+
+    hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
+    batch_gen_save_result(prompt, hot_word_csv_files_path, language=language)
     if latest_folder:
         task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
         hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
@@ -196,6 +201,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             print(f"开始运行tts，生成音频文件")
             hot_word = row['hot_word']
             content = row['result']
+            print(content)
             if content is None or content == "" or content == "nan":
                 continue
             if "\n" not in content:
@@ -260,7 +266,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             )
 
             # 将video_path 与tts_audio_output_path 合并
-            output_path = os.path.join(md_dir, f"{base_name}_tts_merged.mp4")
+            output_path = os.path.join(task_dir, f"{base_name}_tts_merged.mp4")
             await merge_audio_with_video(video_path, tts_audio_output_path, output_path)
 
     except Exception as e:
@@ -492,7 +498,7 @@ def build_tab():
                                         choices=["简体中文", "繁体中文", "英文", "日文", "韩文", "俄文"],
                                         value="简体中文")
             prompt_textbox = gr.Textbox(label="请输入口播人设提示词(可编辑)",
-                                        value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 使用中文输出\n- 通过标点符号(-)在任意位置控制停顿""",
+                                        value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 直接开场，无需客套\n- 通过标点符号(-)在任意位置控制停顿""",
                                         lines=3)
             reference_audios = get_reference_audios()
             # 下拉选择参考音频
@@ -515,7 +521,7 @@ def build_tab():
                        max_lines=15,
                        every=5)
             gen_media_button = gr.Button("调试-运行tts、生成srt、生成mp4、语音与视频合成")
-            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown], outputs=[gr.Textbox(label="运行结果")])
+            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown,prompt_textbox,lang_dropdown], outputs=[gr.Textbox(label="运行结果")])
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,

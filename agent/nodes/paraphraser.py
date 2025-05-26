@@ -11,19 +11,21 @@ class ContentParaphraser(Node):
         """
         从共享数据中获取草稿
         """
-        return shared["draft"], shared["prompt"], shared["language"],shared["logger"]
+        return shared["draft"], shared["prompt"], shared["language"], shared["logger"]
 
     def exec(self, inputs):
         """
         对文章应用特定风格
         """
-        draft, prompt,language, logger = inputs
+        draft, prompt, language, logger = inputs
 
         # 将 draft 插入到 style_note 中
-        prompt = (prompt +
-'\n ## 时下热点详细叙事如下：\n'
-+ draft +
-f"""
+        prompt = ("## 要求:\n" + prompt +
+                  '\n\n '
+                  '## 时下热点详细叙事如下：\n'
+                  + draft +
+                  f"""
+                  
 ## 输出格式:
 
 角色名称 : 角色说的话
