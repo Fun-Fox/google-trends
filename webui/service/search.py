@@ -156,17 +156,21 @@ def load_summary_and_paths(hot_word_path):
         return "",
 
     md_dir = os.path.join(hot_word_path, "md")
-    # 查找 .md 文件
-    md_files = [f for f in os.listdir(md_dir) if f.endswith(".md")]
-    if not md_files:
-        return "未找到 .md 文件", "", "", ""
-    # 获取完整路径，并按修改时间排序
-    files_with_path = [os.path.join(md_dir, f) for f in md_files]
-    latest_file = max(files_with_path, key=os.path.getmtime)  # 最新修改的文件
+    if os.path.exists(md_dir):
+        # 查找 .md 文件
+        md_files = [f for f in os.listdir(md_dir) if f.endswith(".md")]
+        if not md_files:
+            return None
+        # 获取完整路径，并按修改时间排序
+        files_with_path = [os.path.join(md_dir, f) for f in md_files]
+        latest_file = max(files_with_path, key=os.path.getmtime)  # 最新修改的文件
 
-    # input_md_path = os.path.join(md_dir, md_files[0])  # 取第一个
+        # input_md_path = os.path.join(md_dir, md_files[0])  # 取第一个
+        return latest_file
+    else:
+        return None
 
-    return latest_file
+
 
 
 # ===== 定义按钮点击事件 =====

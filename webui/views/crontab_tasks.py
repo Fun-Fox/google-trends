@@ -18,7 +18,7 @@ from webui.utils.conf import load_regions_choices
 from webui.utils.constant import root_dir
 from webui.utils.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
-from webui.service.search import research_all_hot_word, load_summary_and_paths
+from webui.service.search import research_all_hot_word, load_summary_and_paths, md_to_img
 from webui.utils.md2html import convert_md_to_output
 from webui.utils.transcribe import get_whisper_model
 
@@ -154,11 +154,12 @@ async def gen_media(speaker_audio_path,prompt,language):
     task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
 
     hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
+
     batch_gen_save_result(prompt, hot_word_csv_files_path, language=language)
     if latest_folder:
         task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
         hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
-        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir)
+        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,language)
     return "运行结束"
 
 
@@ -183,7 +184,7 @@ def format_timestamp(seconds):
     return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}"
 
 
-async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
+async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,language):
     try:
         # 读取CSV文件
         df = pd.read_csv(hot_word_csv_files_path)
@@ -247,6 +248,9 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             # 根据tts时长，重新生成语言音频
             hot_words_folders_path = hot_word_dir
 
+            md_path = load_summary_and_paths(hot_words_folders_path)
+            if md_path is None:
+                await md_to_img(hot_words_folders_path, language)
             md_path = load_summary_and_paths(hot_words_folders_path)
 
             base_name = os.path.splitext(os.path.basename(md_path))[0]
