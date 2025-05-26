@@ -619,7 +619,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
         # time.sleep(3)
 
     # 👇 新增：裁剪最后 1 秒
-    process_video_with_first_frame(video_path)
+    process_video_with_first_frame(tmp_video_path, output_video=video_path)
     # 图片裁剪
     if image_path:
         crop_image_with_gray_area(image_path, image_path)
@@ -693,7 +693,7 @@ def crop_image_with_gray_area(image_path, output_path):
     cropped_img.save(output_path)
 
 
-def process_video_with_first_frame(video_path):
+def process_video_with_first_frame(video_path, output_path):
     """
     使用 MoviePy 将 image_path 的图片作为视频第一帧，并裁剪最后 1 秒。
     :param image_path: 图片路径 (用于作+为首帧)
@@ -706,8 +706,6 @@ def process_video_with_first_frame(video_path):
 
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"找不到视频文件: {video_path}")
-
-    output_path = video_path
 
     try:
         # Step 1: 加载图片并生成 2 秒的图片视频片段
