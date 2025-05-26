@@ -97,7 +97,7 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
 1. 惊爆标题（使用悬念/数字/对比手法）
     - 要求：必须包含emoji
 2. 事件解码（结合内容叙述、相关优质报道），可以参考但不限于以下内容
-    - 一句话真相：{" ".join(highlights.split()[:20])}...
+    - 一句话真相：使用优质报道的真相
     - 专家解读：用「」符号标注权威观点
     - 政策动向：用⚖️标注监管信号
     - 行业影响：用💰标注经济关联
