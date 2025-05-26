@@ -5,15 +5,15 @@ from faster_whisper import WhisperModel
 
 from webui.utils.constant import root_dir
 import warnings
+
 # 定义模型存放位置
 
-LOCAL_MODEL_PATH=os.path.join(root_dir,'models', "faster-distil-whisper-large-v3.5")
+LOCAL_MODEL_PATH = os.path.join(root_dir, 'models', "faster-distil-whisper-large-v3.5")
 
 
 class WhisperModelSingleton:
     _instance = None
     _model = None
-
 
     def __new__(cls, model_size="deepdml/faster-whisper-large-v3.5", device="auto", compute_type="float16"):
         if cls._instance is None:
@@ -45,9 +45,11 @@ class WhisperModelSingleton:
         :param kwargs: 其他 transcribe 参数
         :return: segments, info
         """
+        print(f"语音文件地址：{audio_path}")
         segments, info = self._model.transcribe(audio_path, **kwargs)
         segments = list(segments)
         return segments, info
+
 
 # 提供一个全局接口调用
 def get_whisper_model():
