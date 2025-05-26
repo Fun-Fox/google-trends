@@ -196,7 +196,9 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             print(f"开始运行tts，生成音频文件")
             hot_word = row['hot_word']
             content = row['result']
-            if content is None or content == "":
+            if content is None or content == "" or content == "nan":
+                continue
+            if "\n" not in content:
                 continue
             speak_content_list = content.split("\n")
             print(f"多角色对话{speak_content_list}")

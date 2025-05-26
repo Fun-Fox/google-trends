@@ -38,6 +38,7 @@ def rewrite_images(html_content, md_path):
 
     # 正则匹配 <img> 标签中的 src 属性
     img_pattern = r'<img.*?src="(.*?)".*?>'
+    print(f"开始替换md中的图片地址为Base64")
     rewritten_html = re.sub(img_pattern, lambda m: replace_img(m, md_path), html_content)
 
     return rewritten_html
