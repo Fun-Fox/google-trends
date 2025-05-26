@@ -53,7 +53,7 @@ def save_result(result, csv_file_path, selected_row):
                     if row['hot_word'] == hot_word:
                         # 如果有旧的 result，拼接新内容；否则直接写入
                         old_result = row.get('result', '')
-                        if old_result:
+                        if old_result is not None or old_result != "":
                             row['result'] = f"{old_result}\n---\n{result}"
                         else:
                             row['result'] = result
@@ -98,7 +98,7 @@ def batch_gen_save_result(prompt, hot_word_csv_files_path):
                 # 如果已有result字段，则拼接新内容
                 tmp = df.at[index, 'result']
                 old_result = str(tmp).strip() if pd.notna(tmp) and tmp != "" else ""
-                if old_result is not None and old_result != "":
+                if old_result is not None or old_result != "":
                     df.at[index, 'result'] = f"{old_result}\n---\n{result}"
                 else:
                     df.at[index, 'result'] = result
