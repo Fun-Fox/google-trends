@@ -493,8 +493,6 @@ def build_tab():
             set_button = gr.Button("设置定时任务")
             stop_button = gr.Button("停止定时任务", variant="secondary")
 
-            gen_media_button = gr.Button("运行tts、生成srt、生成mp4、语音与视频合成")
-            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown], outputs=[gr.Textbox(label="运行结果")])
 
         with gr.Column():
             output_text = gr.Textbox(label="状态输出")
@@ -504,6 +502,8 @@ def build_tab():
             gr.Textbox(label="深度搜索-执行记录", value=update_agent_log_textbox, lines=9,
                        max_lines=15,
                        every=5)
+            gen_media_button = gr.Button("调试-运行tts、生成srt、生成mp4、语音与视频合成")
+            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown], outputs=[gr.Textbox(label="运行结果")])
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
