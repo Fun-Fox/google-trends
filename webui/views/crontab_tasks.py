@@ -9,9 +9,9 @@ from datetime import datetime, timedelta
 import schedule
 import gradio as gr
 
-from webui.func.conf import load_regions_choices
-from webui.func.constant import root_dir
-from webui.func.log import update_agent_log_textbox, update_task_log_textbox
+from webui.utils.conf import load_regions_choices
+from webui.utils.constant import root_dir
+from webui.utils.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
 from webui.service.search import research_all_hot_word
 

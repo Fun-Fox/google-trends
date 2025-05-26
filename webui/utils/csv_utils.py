@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from webui.func.constant import task_root_dir
+from webui.utils.constant import task_root_dir
 import gradio as gr
 
 def get_csv_files(task_folder):

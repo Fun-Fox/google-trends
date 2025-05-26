@@ -1,9 +1,9 @@
 # tabs/trend_crawler.py
 import gradio as gr
 
-from webui.func.conf import load_regions_choices
+from webui.utils.conf import load_regions_choices
 from webui.service.crawler import run_crawler
-from webui.func.log import update_task_log_textbox
+from webui.utils.log import update_task_log_textbox
 
 
 def build_tab():

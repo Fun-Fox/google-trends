@@ -4,7 +4,7 @@ import os
 
 from dotenv import load_dotenv
 
-from webui.func.constant import root_dir
+from webui.utils.constant import root_dir
 
 load_dotenv()
 

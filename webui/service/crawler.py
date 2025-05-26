@@ -5,8 +5,8 @@ import os
 from dotenv import load_dotenv
 
 from core import get_logger, init_browser, crawl_google_trends_page, close_browser
-from webui.func.conf import load_regions_choices
-from webui.func.constant import task_root_dir, root_dir
+from webui.utils.conf import load_regions_choices
+from webui.utils.constant import task_root_dir, root_dir
 
 load_dotenv()
 

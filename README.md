@@ -253,7 +253,7 @@ playwright install chromium
 cd index-tts
 pip install -r requirements.txt
 set HF_ENDPOINT=https://hf-mirror.com
-huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir /checkpoints
+huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
 ```
 
 ## 模型文件

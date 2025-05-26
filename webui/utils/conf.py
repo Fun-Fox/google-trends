@@ -1,6 +1,6 @@
 import configparser
 import os.path
-from webui.func.constant import root_dir
+from webui.utils.constant import root_dir
 
 def load_regions_choices():
     config = configparser.ConfigParser()

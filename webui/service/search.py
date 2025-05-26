@@ -1,11 +1,15 @@
 import datetime
 import os
+from typing import List
+
+from lxml.isoschematron import extract_xsd
 
 from agent import hot_word_research_assistant
 from agent.tools.summary import generate_news_summary_report
 from core import get_logger
-from webui.func.constant import task_root_dir, root_dir
-from webui.func.md2html import (get_random_bg_image, convert_md_to_output)
+from webui.utils.constant import task_root_dir, root_dir
+from webui.utils.md2html import (get_random_bg_image, convert_md_to_output)
+from webui.utils.png2notion import extract_title, upload_image_and_create_notion_page
 
 
 async def research_all_hot_word(task_folders, language):
@@ -41,12 +45,57 @@ import pandas as pd
 load_dotenv()
 
 
+def get_md_and_image_paths(hot_word_folder: str) -> (str, List[str]):
+    """
+    自动查找 hot_word_folder 下的 md 文件夹中的 .md 文件，以及同目录下的图片文件
+    返回：
+        md_file: Markdown 文件路径
+        image_paths: 图片文件路径列表（支持多图）
+    """
+    # 构建 md 文件夹路径
+    md_dir = os.path.join(hot_word_folder, "md")
+
+    # 查找 .md 文件（取最新修改的一个）
+    if not os.path.exists(md_dir):
+        raise FileNotFoundError(f"未找到 md 文件夹: {md_dir}")
+
+    md_files = [f for f in os.listdir(md_dir) if f.endswith(".md")]
+    if not md_files:
+        raise FileNotFoundError(f"未在 {md_dir} 中找到 .md 文件")
+    latest_md_file = max([os.path.join(md_dir, f) for f in md_files], key=os.path.getmtime)
+
+    # 查找图片文件（支持常见格式）
+    SUPPORTED_IMAGE_EXTS = {".png"}
+    image_paths = [
+        os.path.join(md_dir, f)
+        for f in os.listdir(md_dir)
+        if os.path.splitext(f)[1].lower() in SUPPORTED_IMAGE_EXTS
+    ]
+
+    if not image_paths:
+        raise FileNotFoundError(f"未在 {md_dir} 中找到任何图片文件")
+
+    return latest_md_file, image_paths[0]
+
+
+def to_notion(hot_word_folders):
+    try:
+        database_id = os.getenv("DATABASE_ID")
+        latest_md_file, image_path = get_md_and_image_paths(hot_word_folders)
+        title = extract_title(latest_md_file)
+        page = upload_image_and_create_notion_page(database_id, title, image_path)
+    except Exception as e:
+        print(f"上传失败: {e}")
+        return f"上传失败: {e}"
+    return f"上传成功: 请访问{page['url']}"
+
+
 async def md_to_img(hot_words_folders_path, language):
     agent_log_file_path = f"agent_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.log"
 
     agent_logger = get_logger(__name__, agent_log_file_path)
     hot_words = os.path.basename(hot_words_folders_path)
-    task_dir = os.path.dirname(os.path.dirname(hot_words_folders_path))
+    task_dir = os.path.dirname(hot_words_folders_path)
     hot_words_file_name = os.getenv("HOT_WORDS_FILE_NAME")
     csv_path = os.path.join(task_dir, hot_words_file_name)
     task_name = os.path.basename(task_dir)
@@ -59,8 +108,9 @@ async def md_to_img(hot_words_folders_path, language):
     if matched_rows.empty:
         print(f"未找到热词 '{hot_words}' 对应的行")
         return None
+
     required_columns = ['output', 'highlights', 'search_volume',
-                        'search_growth_rate', 'search_active_time', 'current_date']
+                        'search_growth_rate', 'search_active_time',]
     missing_cols = [col for col in required_columns if col not in df.columns]
     if missing_cols:
         raise KeyError(f"md_to_img:缺失以下字段: {missing_cols}")
@@ -76,12 +126,14 @@ async def md_to_img(hot_words_folders_path, language):
         'current_date': task_time
     }
 
-    generate_news_summary_report(highlights_str, output, hot_words_folders_path, hot_word_info, agent_logger,
+    ret = generate_news_summary_report(highlights_str, output, hot_words_folders_path, hot_word_info, agent_logger,
                                  language)
+    input_md_path = ret['file_path']
     # print(f"查询md汇总文件,：{hot_words_folders_path}")
     # input_md_path = load_summary_and_paths(hot_words_folders_path)
     # print(f"正在将md转为图片、视频、html：{hot_words_folders_path}")
-    # await convert_md_file_to_img(input_md_path)
+
+    await convert_md_file_to_img(input_md_path)
     return "转换html、图片、视频成功"
 
 

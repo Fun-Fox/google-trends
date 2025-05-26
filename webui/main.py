@@ -4,7 +4,7 @@ import os
 import gradio as gr
 from dotenv import load_dotenv
 
-from webui.func.constant import root_dir
+from webui.utils.constant import root_dir
 from webui.views import (
     cookie_settings,
     trend_crawler,

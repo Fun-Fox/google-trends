@@ -2,7 +2,7 @@ import os
 import gradio as gr
 from ffmpeg import output
 
-from webui.func.folder import get_task_folders, update_hot_word_folders
+from webui.utils.folder import get_task_folders, update_hot_word_folders
 from heygem.digital_human_pipeline import digital_human_pipeline
 
 

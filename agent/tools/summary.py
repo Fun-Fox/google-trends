@@ -118,7 +118,7 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
 - 只允许一个一级标题
 - 清晰的文档结构，有二级标题
 - 关键数据用**加粗**
-- 在末尾添加#热点追踪 #数据分析 标签
+- 在末尾添加 #热点追踪 #数据分析 标签
 """
 
 
