@@ -599,7 +599,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
 
         # 如果指定了视频路径，则保存视频（注意顺序）
         if video_path:
-            tmp_video_path = os.path.join(video_path.replace(".mp4", ''), '_tmp.mp4')
+            tmp_video_path = video_path.replace(".mp4", '')+'_tmp.mp4'
             await page.close()  # 🔥 先关闭页面
             video = page.video
             if video:

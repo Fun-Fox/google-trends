@@ -196,6 +196,12 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             print(f"开始运行tts，生成音频文件")
             hot_word = row['hot_word']
             content = row['result']
+            speak_content_list=content.split("\n")
+            result_content = []
+            for co in  speak_content_list:
+                if ":" in co:
+                    speaker_name, content = co.split(":", 1)
+                    result_content.append(content)
 
             # 生成时间戳
             formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -209,7 +215,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             os.makedirs(hot_word_tts_dir, exist_ok=True)
 
             # 调用TTS生成音频
-            tts.infer_fast(speaker_audio_path, content, tts_audio_output_path)
+            tts.infer_fast(speaker_audio_path, '\n'.join(result_content), tts_audio_output_path)
             # 获取语音时长（毫秒）
             segment = AudioSegment.from_wav(tts_audio_output_path)
             duration_ms = len(segment)  # 毫秒
@@ -219,7 +225,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             whisper_fast = get_whisper_model()
             print(f"开始生成srt文件")
             segments, _ = whisper_fast.transcribe(tts_audio_output_path)
-            output_srt_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{formatted_time}.srt")
+            output_srt_path = os.path.join(hot_word_tts_dir, f"{hot_word}.srt")
             generate_srt(segments, output_srt_path)
             print(f"生成srt文件成功: {tts_audio_output_path}")
 
