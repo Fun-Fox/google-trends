@@ -44,12 +44,15 @@ def build_tab():
                 """, lines=3)
 
     with gr.Row():
+        lang_dropdown = gr.Dropdown(label="选择语言",
+                                    choices=["简体中文", "繁体中文", "英文", "日文", "韩文", "俄文"],
+                                    value="简体中文")
         with gr.Column():
             prompt_button1 = gr.Button("生成结果")
             result1 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
             prompt_button1.click(
                 fn=process_prompt,
-                inputs=[selected_row, prompt_textbox1],
+                inputs=[selected_row, prompt_textbox1,lang_dropdown],
                 outputs=result1
             )
             save_button1 = gr.Button("保存结果")
@@ -62,7 +65,7 @@ def build_tab():
             batch_button1 = gr.Button("批量生成并保存结果")
             batch_button1.click(
                 fn=batch_gen_save_result,
-                inputs=[prompt_textbox1, hot_word_csv_files_path],
+                inputs=[prompt_textbox1, hot_word_csv_files_path,lang_dropdown],
                 outputs=gr.Textbox(label="", value="", interactive=False)
             )
 
@@ -71,7 +74,7 @@ def build_tab():
             result2 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
             prompt_button2.click(
                 fn=process_prompt,
-                inputs=[selected_row, prompt_textbox2],
+                inputs=[selected_row, prompt_textbox2,lang_dropdown],
                 outputs=result2
             )
             save_button2 = gr.Button("保存结果")
@@ -85,7 +88,7 @@ def build_tab():
             batch_button2 = gr.Button("批量生成并保存结果")
             batch_button2.click(
                 fn=batch_gen_save_result,
-                inputs=[prompt_textbox2, hot_word_csv_files_path],
+                inputs=[prompt_textbox2, hot_word_csv_files_path,lang_dropdown],
                 outputs=gr.Textbox(label="", value="", interactive=False)
             )
 
@@ -94,7 +97,7 @@ def build_tab():
             result3 = gr.Textbox(label="结果", value="", max_lines=6, lines=5, interactive=False)
             prompt_button3.click(
                 fn=process_prompt,
-                inputs=[selected_row, prompt_textbox3],
+                inputs=[selected_row, prompt_textbox3,lang_dropdown],
                 outputs=result3
             )
             save_button3 = gr.Button("保存结果")
@@ -108,6 +111,6 @@ def build_tab():
             batch_button3 = gr.Button("批量生成并保存结果")
             batch_button3.click(
                 fn=batch_gen_save_result,
-                inputs=[prompt_textbox3, hot_word_csv_files_path],
+                inputs=[prompt_textbox3, hot_word_csv_files_path,lang_dropdown],
                 outputs=gr.Textbox(label="", value="", interactive=False)
             )
