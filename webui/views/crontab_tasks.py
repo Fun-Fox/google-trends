@@ -20,7 +20,7 @@ from webui.utils.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
 from webui.service.search import research_all_hot_word, load_summary_and_paths
 from webui.utils.md2html import convert_md_to_output
-from webui.utils.transcribe import  get_whisper_model
+from webui.utils.transcribe import get_whisper_model
 
 # ========== 多任务支持 ==========
 _SCHEDULED_TASKS = {}  # 存储所有计划任务 {job_id: task_info}
@@ -145,6 +145,15 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
 
     else:
         print("⚠️ 未找到任务文件夹")
+
+
+async def gen_media(speaker_audio_path):
+    # 获取最新任务文件夹
+    latest_folder = get_latest_task_folder()
+    if latest_folder:
+        task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
+        hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
+        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir)
 
 
 def generate_srt(segments, output_srt_path):
@@ -482,6 +491,10 @@ def build_tab():
 
             set_button = gr.Button("设置定时任务")
             stop_button = gr.Button("停止定时任务", variant="secondary")
+
+            gen_media_button = gr.Button("合成tts音频及mp4")
+            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown], outputs=[])
+
         with gr.Column():
             output_text = gr.Textbox(label="状态输出")
             task_list = gr.Textbox(label="定时任务清单")

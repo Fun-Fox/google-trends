@@ -254,6 +254,7 @@ cd index-tts
 pip install -r requirements.txt
 set HF_ENDPOINT=https://hf-mirror.com
 huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
+huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v3.5 --local-dir models/faster-distil-whisper-large-v3.5
 ```
 
 ## 模型文件
