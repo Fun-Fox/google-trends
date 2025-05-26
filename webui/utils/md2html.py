@@ -619,7 +619,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
         # time.sleep(3)
 
     # 👇 新增：裁剪最后 1 秒
-    process_video_with_first_frame(tmp_video_path, output_video=video_path)
+    process_video_with_first_frame(tmp_video_path, output_path=video_path)
     # 图片裁剪
     if image_path:
         crop_image_with_gray_area(image_path, image_path)
