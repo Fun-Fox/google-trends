@@ -21,3 +21,4 @@ __pycache__
 /heygem/deploy/ssh
 *.webm
 *.html
+/models
