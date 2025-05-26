@@ -36,7 +36,7 @@ class ContentSummarizer(Node):
         current_date, hot_word, search_volume, search_growth_rate, search_active_time, search_history, context, language, logger = inputs
         current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         hot_word_info = f"此热词从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
-
+        hot_word = hot_word.split("-")[1]
         logger.info(f"编制草稿...")
 
         # 为 LLM 创建一个提示以基于网络研究内容编写草稿
