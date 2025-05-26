@@ -52,11 +52,11 @@ def save_result(result, csv_file_path, selected_row):
                 for row in reader:
                     if row['hot_word'] == hot_word:
                         # 如果有旧的 result，拼接新内容；否则直接写入
-                        old_result = row.get('result', '')
-                        if old_result is not None or old_result != "" or old_result != "nan":
-                            row['result'] = f"{old_result}\n---\n{result}"
-                        else:
-                            row['result'] = result
+                        # old_result = row.get('result', '')
+                        # if old_result is not None or old_result != "" or old_result != "nan":
+                        #     row['result'] = f"{old_result}\n---\n{result}"
+                        # else:
+                        row['result'] = result
                     writer.writerow(row)
 
         # 替换原文件
@@ -96,12 +96,12 @@ def batch_gen_save_result(prompt, hot_word_csv_files_path, language="中文"):
             # 更新result列
             if 'result' in df.columns:
                 # 如果已有result字段，则拼接新内容
-                tmp = df.at[index, 'result']
-                old_result = str(tmp).strip() if pd.notna(tmp) and tmp != "" else ""
-                if old_result is not None or old_result != "" or old_result != "nan":
-                    df.at[index, 'result'] = f"{old_result}\n---\n{result}"
-                else:
-                    df.at[index, 'result'] = result
+                # tmp = df.at[index, 'result']
+                # old_result = str(tmp).strip() if pd.notna(tmp) and tmp != "" else ""
+                # if old_result is not None or old_result != "" or old_result != "nan":
+                #     df.at[index, 'result'] = f"{old_result}\n---\n{result}"
+                # else:
+                df.at[index, 'result'] = result
             else:
                 # 添加新的result列并写入结果
                 df.at[index, 'result'] = result
