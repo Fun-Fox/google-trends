@@ -154,6 +154,7 @@ async def gen_media(speaker_audio_path):
         task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
         hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
         await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir)
+    return "运行结束"
 
 
 def generate_srt(segments, output_srt_path):
