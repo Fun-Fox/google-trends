@@ -196,13 +196,18 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             print(f"开始运行tts，生成音频文件")
             hot_word = row['hot_word']
             content = row['result']
-            speak_content_list=content.split("\n")
+            speak_content_list = content.split("\n")
+            print(f"多角色对话{speak_content_list}")
             result_content = []
-            for co in  speak_content_list:
+            for co in speak_content_list:
                 if ":" in co:
                     speaker_name, content = co.split(":", 1)
                     result_content.append(content)
-
+                elif "：" in co:
+                    speaker_name, content = co.split("：", 1)
+                    result_content.append(content)
+            content_text = '\n'.join(result_content)
+            print(f"多角色转单角色对话：\n{content_text}")
             # 生成时间戳
             formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -215,7 +220,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             os.makedirs(hot_word_tts_dir, exist_ok=True)
 
             # 调用TTS生成音频
-            tts.infer_fast(speaker_audio_path, '\n'.join(result_content), tts_audio_output_path)
+            tts.infer_fast(speaker_audio_path, content_text, tts_audio_output_path)
             # 获取语音时长（毫秒）
             segment = AudioSegment.from_wav(tts_audio_output_path)
             duration_ms = len(segment)  # 毫秒
@@ -496,7 +501,6 @@ def build_tab():
 
             set_button = gr.Button("设置定时任务")
             stop_button = gr.Button("停止定时任务", variant="secondary")
-
 
         with gr.Column():
             output_text = gr.Textbox(label="状态输出")
