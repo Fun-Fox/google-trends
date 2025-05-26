@@ -46,7 +46,7 @@ class DecideAction(Node):
         """调用 LLM 决定是搜索还是回答。"""
         current_date, hot_word, search_volume, search_growth_rate, search_active_time, context, relation_news, links_count, language, logger = inputs
         logger.info(f"代理正在决定下一步操作...")
-        hot_word=hot_word.split("-")[1]
+        hot_word=hot_word.split("-",1)[1]
         desc = f"此热词从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
         # 创建一个提示，帮助 LLM 决定下一步操作，并使用适当的 yaml 格式
         prompt = f"""
