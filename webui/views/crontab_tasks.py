@@ -525,8 +525,8 @@ def build_tab():
                        max_lines=15,
                        every=5)
             gen_media_button = gr.Button("调试-运行tts、生成srt、生成mp4、语音与视频合成")
-
-            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown,prompt_textbox,lang_dropdown,gen_result], outputs=[gr.Textbox(label="运行结果")])
+            gen_result_checkbox = gr.Checkbox(label="强制重新生成口播文案", value=False)
+            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown,prompt_textbox,lang_dropdown,gen_result_checkbox], outputs=[gr.Textbox(label="运行结果")])
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
