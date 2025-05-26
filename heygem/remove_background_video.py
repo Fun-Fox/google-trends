@@ -85,9 +85,9 @@ def create_video_from_frames(frame_dir, output_video, fps=24, keep_audio=False):
     clip = ImageSequenceClip(frames, fps=fps)
 
     if keep_audio:
-        from moviepy.editor import VideoFileClip
+        from moviepy import VideoFileClip
         original_clip = VideoFileClip(frame_dir)
-        clip = clip.set_audio(original_clip.audio)
+        clip.audio = original_clip.audio
 
     clip.write_videofile(output_video, codec="libx264", audio_codec="aac", audio=keep_audio)
     print(f"✅ 视频已生成: {output_video}")

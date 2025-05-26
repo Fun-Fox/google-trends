@@ -279,8 +279,6 @@ async def merge_audio_with_video(video_path, audio_path, output_path):
             output_path,
             codec="libx264",
             audio_codec="aac",
-            verbose=False,
-            logger=None
         )
 
         # 关闭资源
