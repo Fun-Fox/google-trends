@@ -67,9 +67,9 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
     search_growth_rate = hot_word_info["search_growth_rate"]
     search_active_time = hot_word_info["search_active_time"]
     current_date = hot_word_info["current_date"]
-    desc = f"此内容从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
-    """构建 LLM 所需的 Prompt"""
-    return f"""
+    # desc = f"此内容从{search_active_time}开始搜索活跃,搜索量上升{search_growth_rate},搜索总量达到{search_volume}"
+    # """构建 LLM 所需的 Prompt"""
+    prompt = f"""
 你是一位专业热点新闻海报设计师，请根据以下信息生成具有传播力的新闻海报内容。
 
 # 内容定位
@@ -118,8 +118,12 @@ def _build_prompt(output: str, highlights: str, language: str, hot_word_info) ->
 - 只允许一个一级标题
 - 清晰的文档结构，有二级标题
 - 关键数据用**加粗**
-- 在末尾添加 #热点追踪 #数据分析 标签
 """
+    if "中" in language:
+        return prompt + "\n-在末尾添加 #热点追踪 #数据分析 标签"
+    else:
+        # return prompt + "\n# Hot Tracking #Data Analysis"
+        return prompt
 
 
 def _insert_random_image(markdown_content: str, image_dir: str) -> str:
