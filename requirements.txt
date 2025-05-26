@@ -31,3 +31,4 @@ nltk>=3.9.1
 notion-client~=2.3.0
 httpx~=0.28.1
 pyimgur==0.8.1
+faster_whisper

@@ -20,6 +20,7 @@ from webui.utils.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
 from webui.service.search import research_all_hot_word, load_summary_and_paths
 from webui.utils.md2html import convert_md_to_output
+from webui.utils.transcribe import  get_whisper_model
 
 # ========== 多任务支持 ==========
 _SCHEDULED_TASKS = {}  # 存储所有计划任务 {job_id: task_info}
@@ -145,6 +146,28 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
     else:
         print("⚠️ 未找到任务文件夹")
 
+
+def generate_srt(segments, output_srt_path):
+    with open(output_srt_path, "w", encoding="utf-8") as f:
+        for i, segment in enumerate(segments):
+            start = format_timestamp(segment.start)
+            end = format_timestamp(segment.end)
+            text = segment.text.strip()
+
+            f.write(f"{i + 1}\n")
+            f.write(f"{start} --> {end}\n")
+            f.write(f"{text}\n\n")
+    print(f"✅ SRT 字幕文件已生成：{output_srt_path}")
+
+
+def format_timestamp(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = seconds % 60
+    milliseconds = int((seconds - int(seconds)) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}"
+
+
 async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
     try:
         # 读取CSV文件
@@ -160,6 +183,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
 
         # 循环处理每一行
         for _, row in df[['hot_word', 'result']].iterrows():
+            print(f"开始运行tts，生成音频文件")
             hot_word = row['hot_word']
             content = row['result']
 
@@ -167,7 +191,8 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
             # 构建输出路径
-            hot_word_tts_dir = os.path.join(task_dir, hot_word, 'tts')
+            hot_word_dir = os.path.join(task_dir, hot_word)
+            hot_word_tts_dir = os.path.join(hot_word_dir, 'tts')
             tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{formatted_time}.wav")
 
             # 创建目录（如果不存在）
@@ -180,8 +205,16 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
             duration_ms = len(segment)  # 毫秒
             print(f"🔊 已生成音频文件: {tts_audio_output_path}")
 
+            # tts生成srt文件
+            whisper_fast = get_whisper_model()
+            print(f"开始生成srt文件")
+            segments, _ = whisper_fast.transcribe(tts_audio_output_path)
+            output_srt_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{formatted_time}.srt")
+            generate_srt(segments, output_srt_path)
+            print(f"生成srt文件成功: {tts_audio_output_path}")
+
             # 根据tts时长，重新生成语言音频
-            hot_words_folders_path = os.path.dirname(hot_word_csv_files_path)
+            hot_words_folders_path = hot_word_dir
 
             md_path = load_summary_and_paths(hot_words_folders_path)
 
@@ -201,13 +234,13 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir):
                 duration=duration_ms
             )
 
-
             # 将video_path 与tts_audio_output_path 合并
             output_path = os.path.join(md_dir, f"{base_name}_tts_merged.mp4")
             await merge_audio_with_video(video_path, tts_audio_output_path, output_path)
 
     except Exception as e:
         print(f"❌ 批量TTS失败及合成失败: {e}")
+
 
 from moviepy import VideoFileClip, AudioFileClip
 
@@ -230,7 +263,6 @@ async def merge_audio_with_video(video_path, audio_path, output_path):
         # 设置音频到视频
         video.audio = audio
 
-
         # 写入输出文件
         print(f"💾 正在写入合成视频: {output_path}")
         video.write_videofile(
@@ -244,7 +276,6 @@ async def merge_audio_with_video(video_path, audio_path, output_path):
         # 关闭资源
         video.close()
         audio.close()
-        video_with_audio.close()
 
         print(f"✅ 合成完成: {output_path}")
         return output_path
@@ -252,6 +283,7 @@ async def merge_audio_with_video(video_path, audio_path, output_path):
     except Exception as e:
         print(f"❌ 合成失败: {e}")
         return None
+
 
 # ========== 后台调度器线程 ==========
 def run_schedule_in_background():
