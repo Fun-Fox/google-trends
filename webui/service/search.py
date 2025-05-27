@@ -200,7 +200,7 @@ async def convert_md_file_to_img(md_path, language,):
             background_image=bg_image_url,
             custom_font=font_url,
             # 非定时任务（不生成音频、不合成音频），固定一个视频长度即可
-            duration=7000  # 此值是与生成的音频长度一致的
+            duration=7000  # 此值是与生成的音频长度一致的，用于生成视频（但这里不需要，可以随意设置）
         )
         # 返回成功消息和生成的图片
         return f"✅ 转换成功！HTML 已保存至 {html_path}"
