@@ -98,7 +98,7 @@ def merge_videos(video_paths, output_path):
     return output_path
 
 
-async def scheduled_task(to_download_image, origin, category, nums, prompt, speaker_audio_path, language="zh"):
+async def scheduled_task(to_download_image, origin, category, nums, prompt, speaker_audio_path, language="zh",):
     """
     定时执行的任务，接收用户输入参数
     """
@@ -147,7 +147,7 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
         print("⚠️ 未找到任务文件夹")
 
 
-async def gen_media(speaker_audio_path, prompt, language, gen_result=False):
+async def gen_media(speaker_audio_path, prompt, language, gen_result=False, only_tts=False):
     # 获取最新任务文件夹
 
     latest_folder = get_latest_task_folder()
@@ -160,7 +160,7 @@ async def gen_media(speaker_audio_path, prompt, language, gen_result=False):
     if latest_folder:
         # task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
         # hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
-        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, language)
+        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, language, only_tts)
     return "运行结束"
 
 
@@ -185,7 +185,7 @@ def format_timestamp(seconds):
     return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}"
 
 
-async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, language):
+async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, language, only_tts=False):
     try:
         # 读取CSV文件
         df = pd.read_csv(hot_word_csv_files_path)
@@ -209,6 +209,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
                 continue
             if "\n" not in content:
                 continue
+
             speak_content_list = content.split("\n")
             print(f"多角色对话{speak_content_list}")
             result_content = []
@@ -249,7 +250,10 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             generate_srt(segments, output_srt_path)
             print(f"生成srt文件成功: {tts_audio_output_path}")
 
-            # 根据tts时长，重新生成语言音频
+            if only_tts:
+                print("仅生成配音文件，不生成视频")
+                continue
+            # md转视频，生成视频文件
             hot_words_folders_path = hot_word_dir
 
             md_path = load_summary_and_paths(hot_words_folders_path)
@@ -262,7 +266,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             base_name = os.path.splitext(os.path.basename(md_path))[0]
             md_dir = os.path.dirname(md_path)
             output_html = os.path.join(md_dir, f"{base_name}.html")
-            video_path = os.path.join(md_dir, f"{base_name}_tts.mp4")
+            video_path = os.path.join(md_dir, f"{base_name}_no_voice.mp4")
             html_path = output_html
 
             await convert_md_to_output(
@@ -276,7 +280,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             )
 
             # 将video_path 与tts_audio_output_path 合并
-            output_path = os.path.join(task_dir, f"{base_name}_tts_merged.mp4")
+            output_path = os.path.join(task_dir, f"{base_name}_{audio_name}_voice.mp4")
             await merge_audio_with_video(video_path, tts_audio_output_path, output_path)
 
     except Exception as e:
@@ -386,7 +390,7 @@ def calculate_next_run(run_time: str) -> datetime:
 
 
 def set_scheduled_task(run_time, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
-                       language="简体中文", ):
+                       language="简体中文"):
     global _JOB_ID_SEQ
     run_time = run_time.strip()
     try:
@@ -425,7 +429,7 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, prom
                 task_info["last_exec"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 使用 datetime 替代 time
                 # 执行主任务
                 result = await scheduled_task(to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
-                                              language)
+                                              language,)
 
                 # 更新任务结果
                 task_info["status"] = "completed"
@@ -532,13 +536,15 @@ def build_tab():
                        every=5)
             gen_media_button = gr.Button("调试-运行tts、生成srt、生成mp4、语音与视频合成")
             gen_result_checkbox = gr.Checkbox(label="强制重新生成口播文案", value=False)
+            only_tts = gr.Checkbox(label="只生成配音，不生成视频", value=False)
             gen_media_button.click(fn=gen_media,
-                                   inputs=[audio_dropdown, prompt_textbox, lang_dropdown, gen_result_checkbox],
+                                   inputs=[audio_dropdown, prompt_textbox, lang_dropdown, gen_result_checkbox,
+                                           only_tts],
                                    outputs=[gr.Textbox(label="运行结果")])
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
-                             lang_dropdown],
+                             lang_dropdown,],
                      outputs=[output_text, task_list])
 
     stop_button.click(fn=stop_scheduled_task,
