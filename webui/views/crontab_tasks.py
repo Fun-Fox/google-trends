@@ -230,7 +230,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             hot_word_tts_dir = os.path.join(hot_word_dir, 'tts')
             # 参考音频的名称
             audio_name = os.path.splitext(os.path.basename(speaker_audio_path))[0]
-            tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{audio_name}_{formatted_time}_.wav")
+            tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{audio_name}.wav")
 
             # 创建目录（如果不存在）
             os.makedirs(hot_word_tts_dir, exist_ok=True)
