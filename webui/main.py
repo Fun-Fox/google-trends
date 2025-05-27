@@ -26,10 +26,11 @@ url = os.getenv('LOCAL_LLM_URL')
 with gr.Blocks(title="GT") as app:
     if url:
         try:
-            response = requests.get(url)
-            response.raise_for_status()  # 如果响应状态码不是 200，将引发异常
-        except (requests.RequestException, Exception) as e:
-            gr.Markdown(f"⚠️ 大模型服务不可用: {str(e)}")
+            response = requests.get(url,timeout=5)
+        except requests.exceptions.Timeout:
+            gr.Markdown("⚠️ 请求超时：服务响应时间过长，请检查本地大模型是否已正常运行。")
+        except requests.ConnectionError:
+            gr.Markdown("⚠️ 无法连接到服务：请确认服务是否正在运行，以及 LOCAL_LLM_URL 是否配置正确。")
 
     gr.Markdown("# Google Trends 热点采集、优质报道深度搜索、口播文案生成、口播语音生成、数字人生成、定时批量任务设置")
 
