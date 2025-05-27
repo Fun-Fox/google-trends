@@ -203,7 +203,8 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,la
             hot_word = row['hot_word']
             content = row['result']
             print(content)
-            if content is None or content == "" or content == "nan":
+            if content is None or content == "" or str(content) == "nan":
+                print(f"❌ 忽略空结果：{content}")
                 continue
             if "\n" not in content:
                 continue
@@ -250,6 +251,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,la
 
             md_path = load_summary_and_paths(hot_words_folders_path)
             if md_path is None:
+                print("❌ 未找到md文件,重新生成")
                 await md_to_img(hot_words_folders_path, language)
             md_path = load_summary_and_paths(hot_words_folders_path)
 

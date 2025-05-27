@@ -170,7 +170,7 @@ def search_image(query, hot_word_path, search_web_call_count, logger, num_result
 
                     # 保存图片
 
-                    save_path = os.path.join(hot_word_path, f"{hot_word}_{search_web_call_count}_{i + 1}.jpg")
+                    save_path = os.path.join(hot_word_path, f"{hot_word.replace(' ', '_')}_{search_web_call_count}_{i + 1}.jpg")
                     with open(save_path, "wb") as file:
                         file.write(response.content)
                     logger.info(f"图片已保存到: {save_path}")
