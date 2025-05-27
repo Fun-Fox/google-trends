@@ -127,7 +127,7 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
 
         # 进行批量生成口播音频
 
-        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,language)
+        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, language)
         # 新增：整合 MP4 文件
         # print(f"📼 正在扫描 {task_dir} 中的 MP4 文件...")
         # mp4_files = find_mp4_files(task_dir)
@@ -147,19 +147,20 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
         print("⚠️ 未找到任务文件夹")
 
 
-async def gen_media(speaker_audio_path,prompt,language,gen_result=False):
+async def gen_media(speaker_audio_path, prompt, language, gen_result=False):
     # 获取最新任务文件夹
 
     latest_folder = get_latest_task_folder()
     task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
 
     hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
+    print(f"✅ 正在生成媒体文件: {gen_result}")
     if gen_result:
         batch_gen_save_result(prompt, hot_word_csv_files_path, language=language)
     if latest_folder:
         # task_dir = os.path.join(os.getenv("TASK_ROOT_DIR", "tasks"), latest_folder)
         # hot_word_csv_files_path = os.path.join(task_dir, os.getenv("HOT_WORDS_FILE_NAME"))
-        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,language)
+        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, language)
     return "运行结束"
 
 
@@ -184,7 +185,7 @@ def format_timestamp(seconds):
     return f"{hours:02d}:{minutes:02d}:{int(seconds):02d},{milliseconds:03d}"
 
 
-async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,language):
+async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, language):
     try:
         # 读取CSV文件
         df = pd.read_csv(hot_word_csv_files_path)
@@ -204,7 +205,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,la
             content = row['result']
             print(content)
             if content is None or content == "" or str(content) == "nan":
-                print(f"❌ 忽略空结果：{content}")
+                print(f"❌ {hot_word} 忽略空结果：{content}")
                 continue
             if "\n" not in content:
                 continue
@@ -250,8 +251,9 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,la
             hot_words_folders_path = hot_word_dir
 
             md_path = load_summary_and_paths(hot_words_folders_path)
+            print(f"{hot_word}已经找到md文件，文件路径：{md_path}")
             if md_path is None:
-                print("❌ 未找到md文件,重新生成")
+                print(f"❌ {hot_word}未找到md文件,重新生成")
                 await md_to_img(hot_words_folders_path, language)
             md_path = load_summary_and_paths(hot_words_folders_path)
 
@@ -528,7 +530,9 @@ def build_tab():
                        every=5)
             gen_media_button = gr.Button("调试-运行tts、生成srt、生成mp4、语音与视频合成")
             gen_result_checkbox = gr.Checkbox(label="强制重新生成口播文案", value=False)
-            gen_media_button.click(fn=gen_media, inputs=[audio_dropdown,prompt_textbox,lang_dropdown,gen_result_checkbox], outputs=[gr.Textbox(label="运行结果")])
+            gen_media_button.click(fn=gen_media,
+                                   inputs=[audio_dropdown, prompt_textbox, lang_dropdown, gen_result_checkbox],
+                                   outputs=[gr.Textbox(label="运行结果")])
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,

@@ -102,6 +102,7 @@ def batch_gen_save_result(prompt, hot_word_csv_files_path, language="中文"):
                 #     df.at[index, 'result'] = f"{old_result}\n---\n{result}"
                 # else:
                 df.at[index, 'result'] = result
+                print(f"保存结果: {result}")
             else:
                 # 添加新的result列并写入结果
                 df.at[index, 'result'] = result

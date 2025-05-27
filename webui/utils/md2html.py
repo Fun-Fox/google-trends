@@ -4,45 +4,52 @@ import random
 import re
 from PIL import Image
 import markdown2
+from bs4 import BeautifulSoup
 
 from moviepy import *
 import os
 from playwright.async_api import async_playwright
 from webui.utils.constant import root_dir
 
-
 def rewrite_images(html_content, md_path):
     """
-    将 HTML 内容中的 <img> 标签替换为 Base64 数据
-    :param html_content: HTML 字符串
-    :param base_dir: 本地图片基础目录（用于解析相对路径）
-    :return: 新的 HTML 内容
+    将 HTML 内容中的 <img> 标签替换为 Base64 数据 URI
+    :param html_content: 原始 HTML 字符串
+    :param md_path: 当前 Markdown 文件的路径（用于解析相对路径）
+    :return: 新的 HTML 字符串
     """
+    # soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(html_content, 'lxml')
 
-    def replace_img(match, md_path):
-        src = match.group(1)
-        # 相对路径转为绝对路径
-        # print(f"md文件路径：{md_path},图片路径:{src}")
+    for img_tag in soup.find_all('img'):
+        src = img_tag.get('src')
+        if not src:
+            continue  # 忽略没有 src 的 img 标签
+
+        # 处理相对路径
         if '../' in src:
-            full_path = os.path.join(os.path.dirname(os.path.dirname(md_path)), src.split("../")[1]).replace("\\", "/")
-            print(f'开始替换md中的相对图片地址为绝对图片地址:{full_path}')
+            full_path = os.path.join(
+                os.path.dirname(os.path.dirname(md_path)),
+                src.split('../')[-1]
+            ).replace("\\", "/")
+            print(f'开始替换相对图片地址为绝对图片地址: {full_path}')
         else:
             full_path = os.path.join(root_dir, src).replace("\\", "/")
-        # print(f"图片全路径:{full_path}")
+
+        # 检查图片是否存在
         if not os.path.exists(full_path):
-            print(f"图片路径不存在：{full_path}")
-        # print(full_path)
+            print(f"图片路径不存在: {full_path}")
+            continue
+
+        # 转换为 Base64 数据 URI
         new_src = get_image_as_base64(full_path)
+        if new_src:
+            # 保留原有样式和属性，仅替换 src
+            img_tag['src'] = new_src
+            img_tag['style'] = 'max-width:100%; height:auto; border-radius:10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin: 20px 0;'
 
-        return f'<img src="{new_src}" alt="Embedded Image" style="max-width:100%; height:auto; border-radius:10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin: 20px 0;">'
-
-    # 正则匹配 <img> 标签中的 src 属性
-    # img_pattern = r'<img.*?src="(.*?)".*?>'
-    img_pattern = r'<img\b[^>]*?src="([^"]+)"[^>]*>'
-    print(f"开始替换md中的图片地址为Base64")
-    rewritten_html = re.sub(img_pattern, lambda m: replace_img(m, md_path), html_content)
-
-    return rewritten_html
+    # 返回修改后的 HTML 字符串
+    return str(soup)
 
 
 def get_random_bgm(bgm_folder_path):
@@ -74,7 +81,7 @@ def get_random_bgm(bgm_folder_path):
     return f"data:{mime};base64,{encoded}"
 
 
-def md_to_html(md_text, md_path, background_image=None, custom_font=None):
+def md_to_html(md_path, background_image=None, custom_font=None):
     """
     将 Markdown 字符串转换为 HTML 字符串，并应用自定义样式
     :param md_text: Markdown 格式文本
@@ -82,24 +89,28 @@ def md_to_html(md_text, md_path, background_image=None, custom_font=None):
     :param custom_font: 自定义字体 URL 或路径（可选）
     :return: HTML 字符串
     """
+    # with open(md_path, "r", encoding="utf-8") as f:
+    #     md_text = f.read()
+    # print(f"正在读取md文件: {md_path}")
     # 使用 markdown2 转换，启用常见扩展
-    html = markdown2.markdown(
-        md_text,
-        extras=[
-            "tables",  # 表格支持
-            "fenced-code-blocks",  # 围栏代码块
-            "code-friendly",  # 更友好的代码格式
-            "footnotes",  # 脚注
-            "cuddled-lists",  # 松散列表格式
-            "metadata",  # 支持 YAML Front Matter 元数据
-            "numbering",  # 自动编号标题
-            "pyshell",  # Python shell 风格代码块
-            "wiki-tables",  # Wiki 风格表格
-            "task_list",  # 支持任务列表 [-] [x]
-        ]
-    )
+    html = markdown2.markdown_path(md_path)
+    # html = markdown2.markdown(
+    #     md_text,
+    #     extras=[
+    #         "tables",  # 表格支持
+    #         "fenced-code-blocks",  # 围栏代码块
+    #         "code-friendly",  # 更友好的代码格式
+    #         "footnotes",  # 脚注
+    #         "cuddled-lists",  # 松散列表格式
+    #         "metadata",  # 支持 YAML Front Matter 元数据
+    #         "numbering",  # 自动编号标题
+    #         "pyshell",  # Python shell 风格代码块
+    #         "wiki-tables",  # Wiki 风格表格
+    #         "task_list",  # 支持任务列表 [-] [x]
+    #     ]
+    # )
     print(f"开始转换md为html")
-
+    # print(html)
     # 重写图片 src 为 Base64
     html = rewrite_images(html, md_path)
 
@@ -393,25 +404,23 @@ def get_base64_image(path):
 
 def get_image_as_base64(full_path):
     """
-    将图片文件或 URL 转为 Base64 编码
-    :param path: 图片路径（本地路径或远程 URL）
-    :return: Base64 字符串
-    """
-    # 处理本地图片
-    # print(f"图片路径: {full_path}")
+        将图片文件转为 Base64 编码
+        :param full_path: 图片的本地路径
+        :return: Base64 数据 URI 字符串
+        """
     try:
         with open(full_path, "rb") as image_file:
             encoded = base64.b64encode(image_file.read()).decode("utf-8")
             ext = os.path.splitext(full_path)[1].lower()
-            mime = "image/png" if ext == ".png" else "image/webp" if ext == ".webp" else "image/jpeg"
-            base64_data = f"data:{mime};base64,{encoded}"
-            # image_data = base64.b64decode(encoded)
-            #
-            # with open("test_image.png", "wb") as img_file:
-            #     img_file.write(image_data)
-            return base64_data
+            mime = (
+                "image/png"
+                if ext == ".png"
+                else "image/webp" if ext == ".webp" else "image/jpeg"
+            )
+            return f"data:{mime};base64,{encoded}"
     except Exception as e:
         print(f"⚠️ 获取图片失败: {e}")
+        return ''
 
 
 def save_html(html_content, output_path):
@@ -427,26 +436,28 @@ async def convert_md_to_output(md_path, html_path, image_path=None, video_path=N
     统一接口：将 Markdown 转为 HTML 并可选输出图像
     """
     try:
-        with open(md_path, "r", encoding="utf-8") as f:
-            md_text = f.read()
-        print(f"正在读取md文件: {md_path}")
+        if os.path.exists(md_path):
+            print(f"✅ md文件存在: {md_path}, 进行生成")
+            if os.path.exists(html_path):
+                print(f"✅ html文件已存在: {html_path}, 重复生成")
+                html_content = md_to_html(md_path, background_image, custom_font)
+                # 输出 HTML
+                save_html(html_content, html_path)
+            else:
+                print(f"❌ html文件不存在: {html_path}, 进行生成")
+                html_content = md_to_html(md_path, background_image, custom_font)
+                # 输出 HTML
+                save_html(html_content, html_path)
 
-        if os.path.exists(html_path):
-            print(f"✅ html文件已存在: {html_path}, 无需重复生成")
+            # 输出图像（如果提供路径）
+            # if os.path.exists(image_path):
+            # 使用 playwright 截图
+            # 修改为异步调用方式：
+            await html_to_image_with_playwright(html_path, image_path, video_path, mobile=True, duration=duration)
         else:
-            print(f"❌ html文件不存在: {html_path}, 进行生成")
-            html_content = md_to_html(md_text, md_path, background_image, custom_font)
-            # 输出 HTML
-            save_html(html_content, html_path)
-
-        # 输出图像（如果提供路径）
-        # if os.path.exists(image_path):
-        # 使用 playwright 截图
-        # 修改为异步调用方式：
-        await html_to_image_with_playwright(html_path, image_path, video_path, mobile=True, duration=duration)
-
+            print(f"❌ md文件未找到: {md_path}")
     except FileNotFoundError as e:
-        print(f"❌ 文件未找到: {e}")
+        print(f"❌ md文件未找到: {e}")
     except Exception as e:
         print(f"❌ 发生错误: {e}")
 
@@ -757,7 +768,22 @@ def process_video_with_first_frame(video_path, output_path):
 
 if __name__ == "__main__":
     # 示例配置
-    print(os.path.exists("D:/PycharmProjects/google-trends/tasks/2025年05月26日14时59分_美国_所有分类/10-knicks vs pacers/10-kicks vs pacers playoff series analysis_4.jpg"))
+    # print(os.path.exists(
+    #     "D:/PycharmProjects/google-trends/tasks/2025年05月26日14时59分_美国_所有分类/10-knicks vs pacers/10-kicks vs pacers playoff series analysis_4.jpg"))
+    # from markdown2 import Markdown
+    # markdowner = Markdown()
+    # print(markdowner.convert("![图片](../25-kilauea_52_1.jpg)"))
+    # md_path = r"D:\PycharmProjects\google-trends\tasks\2025年05月27日06时00分_美国_所有分类\25-kilauea\md"+r"\25-kilauea_2025年05月27日07时44分.md"
+    #
+    # html = markdown2.markdown_path(md_path)
+    # print(html)
+
+    md_path = r"D:\PycharmProjects\google-trends\tasks\2025年05月27日06时00分_美国_所有分类\25-kilauea\md"+r"\25-kilauea_2025年05月27日07时44分.md"
+
+    html_content=md_to_html( md_path, background_image=None, custom_font=None)
+    html_path = r"D:\PycharmProjects\google-trends\tasks\2025年05月27日06时00分_美国_所有分类\25-kilauea\md"+r"\25-kilauea_2025年05月27日07时44分.html"
+    save_html(html_content, html_path)
+
     # input_md_path = os.path.join(root_dir, "README.md")
     # output_html = os.path.join(root_dir, "output.html")
     # output_image = os.path.join(root_dir, "output.png")
