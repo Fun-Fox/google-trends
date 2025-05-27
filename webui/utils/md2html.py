@@ -11,6 +11,7 @@ import os
 from playwright.async_api import async_playwright
 from webui.utils.constant import root_dir
 
+
 def rewrite_images(html_content, md_path):
     """
     将 HTML 内容中的 <img> 标签替换为 Base64 数据 URI
@@ -46,7 +47,8 @@ def rewrite_images(html_content, md_path):
         if new_src:
             # 保留原有样式和属性，仅替换 src
             img_tag['src'] = new_src
-            img_tag['style'] = 'max-width:100%; height:auto; border-radius:10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin: 20px 0;'
+            img_tag[
+                'style'] = 'max-width:100%; height:auto; border-radius:10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin: 20px 0;'
 
     # 返回修改后的 HTML 字符串
     return str(soup)
@@ -592,7 +594,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
 
         # 增加 10s 停顿再开始录制
         print(f"休眠{duration / 2}ms")
-        await page.wait_for_timeout(timeout=duration/2)
+        await page.wait_for_timeout(timeout=duration / 2)
         # 多次滚动直到所有内容可见
         max_attempts = 5
         attempt = 0
@@ -622,7 +624,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
 
         # 如果指定了视频路径，则保存视频（注意顺序）
         if video_path:
-            tmp_video_path = video_path.replace(".mp4", '') + str(duration) + '_tmp.mp4'
+            tmp_video_path = video_path.replace(".mp4", '') + "_" + str(duration) + "ms" + '_tmp.mp4'
             await page.close()  # 🔥 先关闭页面
             video = page.video
             if video:
@@ -783,10 +785,10 @@ if __name__ == "__main__":
     # html = markdown2.markdown_path(md_path)
     # print(html)
 
-    md_path = r"D:\PycharmProjects\google-trends\tasks\2025年05月27日06时00分_美国_所有分类\25-kilauea\md"+r"\25-kilauea_2025年05月27日07时44分.md"
+    md_path = r"D:\PycharmProjects\google-trends\tasks\2025年05月27日06时00分_美国_所有分类\25-kilauea\md" + r"\25-kilauea_2025年05月27日07时44分.md"
 
-    html_content=md_to_html( md_path, background_image=None, custom_font=None)
-    html_path = r"D:\PycharmProjects\google-trends\tasks\2025年05月27日06时00分_美国_所有分类\25-kilauea\md"+r"\25-kilauea_2025年05月27日07时44分.html"
+    html_content = md_to_html(md_path, background_image=None, custom_font=None)
+    html_path = r"D:\PycharmProjects\google-trends\tasks\2025年05月27日06时00分_美国_所有分类\25-kilauea\md" + r"\25-kilauea_2025年05月27日07时44分.html"
     save_html(html_content, html_path)
 
     # input_md_path = os.path.join(root_dir, "README.md")
