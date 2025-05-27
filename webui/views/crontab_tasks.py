@@ -222,12 +222,14 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             content_text = '\n'.join(result_content)
             print(f"多角色转单角色对话：\n{content_text}")
             # 生成时间戳
-            formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+            formatted_time = datetime.now().strftime("%Y年%m月%d日_%H时%M分%S秒")
 
             # 构建输出路径
             hot_word_dir = os.path.join(task_dir, hot_word)
             hot_word_tts_dir = os.path.join(hot_word_dir, 'tts')
-            tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{formatted_time}.wav")
+            # 参考音频的名称
+            audio_name = os.path.splitext(os.path.basename(speaker_audio_path))[0]
+            tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{audio_name}_{formatted_time}_.wav")
 
             # 创建目录（如果不存在）
             os.makedirs(hot_word_tts_dir, exist_ok=True)

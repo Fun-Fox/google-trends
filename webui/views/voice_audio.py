@@ -133,6 +133,8 @@ def build_tab():
                 print(f"参考音频数据:角色：{speaker_name},路径:{speaker_audio_path}")
                 output_path = os.path.join(task_root_dir, "tmp", f"{i}_{speaker_name}_{formatted_time}.wav")
                 progress(i / text_length * 0.6, f"第{i}段文本的语音生成成功")
+                # 参考音频的名称
+                audio_name = os.path.splitext(os.path.basename(speaker_audio_path))[0]
                 tts.infer_fast(speaker_audio_path, content, output_path)
                 output_files.append(output_path)
 
@@ -149,6 +151,7 @@ def build_tab():
                 # 存储完整信息
                 output_files_with_duration.append({
                     "speaker": speaker_name,
+                    "audio_name":audio_name,
                     "path": output_path,
                     "duration": duration_ms,
                     "content": content,
@@ -172,6 +175,8 @@ def build_tab():
 
                 for seg in speaker_segments:
                     start_time = seg["start_time"]
+
+
                     file_path = seg["path"]
 
                     # 插入等待静音
@@ -189,12 +194,13 @@ def build_tab():
                     last_end_time = seg["end_time"]
 
                 # 保存最终拼接文件
+                audio_name = speaker_segments[0]["audio_name"]
 
                 os.makedirs(hot_word_dir, "tts", exist_ok=True)
 
                 final_output_path = os.path.join(
                     hot_word_dir, "tts",
-                    f"{hot_word}_{results_id}_角色_{speaker_name}_{formatted_time}.wav"
+                    f"{hot_word}_{results_id}_{speaker_name}_{audio_name}_{formatted_time}.wav"
                 )
                 combined_audio.export(final_output_path, format="wav")
                 output_files_by_speaker[speaker_name] = final_output_path
