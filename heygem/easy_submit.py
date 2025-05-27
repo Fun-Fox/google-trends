@@ -9,6 +9,8 @@ load_dotenv()
 HEY_GEN_IP = os.getenv("HEY_GEN_IP", "127.0.0.1")
 
 def call_easy_submit(audio_url, video_url, code):
+    if '\\' in video_url:
+        video_url= video_url.replace('\\', '/')
     url = f"http://{HEY_GEN_IP}:8383/easy/submit"
     data = {
         "audio_url": audio_url,
@@ -40,7 +42,9 @@ def query_easy_status(task_code):
                 result = response.json()
 
                 print(f"第 {attempt} 次查询结果: {result}")
-
+                if result.get("code") == 10004:
+                    print("❌ 任务不存在！")
+                    break
                 if result.get("code") == 10000:
                     data = result.get("data", {})
                     if data.get("status") == 2 and data.get("progress") == 100:
