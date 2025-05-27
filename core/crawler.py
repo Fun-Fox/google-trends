@@ -157,7 +157,8 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
                           "search_history",
                           "highlights",
                           "chinese",
-                          "output", ]
+                          "output",
+                          "result"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
@@ -171,6 +172,7 @@ async def crawl_google_trends_page(page, logging, origin="", category=0, url="",
                  "chinese": '',
                  "output": '',
                  "highlights": "",
+                 "result":""
                  })
             logging.info(
                 f"关键词 {text_content} ,搜索量：{search_volume}，搜索增长率：{str(search_growth_rate).replace(',', '')}，搜索活跃时间：{search_active_time}")

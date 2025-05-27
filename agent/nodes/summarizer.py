@@ -220,6 +220,7 @@ class SupervisorNode(Node):
                                     'chinese': shared['chinese'],
                                     'output': shared['output'],
                                     'highlights': shared['highlights'],
+                                    "result": row['result'],
                                 }
                             else:
                                 row_tmp = {
@@ -231,14 +232,15 @@ class SupervisorNode(Node):
                                     'search_history': row['search_history'],
                                     'chinese': row['chinese'],
                                     'output': row['output'],
-                                    'highlights': row['highlights']
+                                    'highlights': row['highlights'],
+                                    "result": row['result'],
                                 }
                             data.append(row_tmp)
                 else:
                     # 如果文件不存在，创建文件并写入表头
                     data.append({'hot_word': hot_word, 'relation_news': relation_news, 'search_history': search_history,
                                  'highlights': highlights,
-                                 'chinese': shared['chinese'], 'output': shared['output']})
+                                 'chinese': shared['chinese'], 'output': shared['output'],"result":''})
                 logger.info(f"====CSV保存数据：{data}===")
 
                 # 写入数据
@@ -251,7 +253,8 @@ class SupervisorNode(Node):
                                   "search_history",
                                   "highlights",
                                   "chinese",
-                                  "output", ]
+                                  "output",
+                                  "result"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)
