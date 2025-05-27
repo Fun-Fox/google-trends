@@ -17,8 +17,20 @@ from webui.views import (
 )
 
 load_dotenv()
+import requests
+
+# 插入在 url 相关逻辑的位置
+# url = f"{os.getenv('LOCAL_LLM_URL')}" 如果变量不为空，则请求一下url，查看是否响应，不响应则gr报错，提示异常
+url = os.getenv('LOCAL_LLM_URL')
 
 with gr.Blocks(title="GT") as app:
+    if url:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # 如果响应状态码不是 200，将引发异常
+        except (requests.RequestException, Exception) as e:
+            gr.Markdown(f"⚠️ 大模型服务不可用: {str(e)}")
+
     gr.Markdown("# Google Trends 热点采集、优质报道深度搜索、口播文案生成、口播语音生成、数字人生成、定时批量任务设置")
 
     with gr.Tab("Cookie 设置"):
