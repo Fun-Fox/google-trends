@@ -251,7 +251,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             print(f"生成srt文件成功: {tts_audio_output_path}")
 
             if only_tts:
-                print("仅生成配音文件，不生成视频")
+                print("仅生成配音文件和字幕文件，不生成视频")
                 continue
             # md转视频，生成视频文件
             hot_words_folders_path = hot_word_dir
@@ -536,7 +536,7 @@ def build_tab():
                        every=5)
             gen_media_button = gr.Button("调试-运行tts、生成srt、生成mp4、语音与视频合成")
             gen_result_checkbox = gr.Checkbox(label="强制重新生成口播文案", value=False)
-            only_tts = gr.Checkbox(label="只生成配音，不生成视频", value=False)
+            only_tts = gr.Checkbox(label="仅生成配音文件和字幕文件，不生成网页、视频、图片", value=False)
             gen_media_button.click(fn=gen_media,
                                    inputs=[audio_dropdown, prompt_textbox, lang_dropdown, gen_result_checkbox,
                                            only_tts],
