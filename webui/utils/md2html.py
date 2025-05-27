@@ -591,6 +591,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
             await page.set_viewport_size({"width": 900, "height": 1080})
 
         # 增加 10s 停顿再开始录制
+        print(f"休眠{duration / 2}ms")
         await page.wait_for_timeout(timeout=duration/2)
         # 多次滚动直到所有内容可见
         max_attempts = 5
@@ -608,7 +609,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
 
             attempt += 1
             print(f"🔄 第 {attempt} 次滚动完成，继续检查是否有更多内容")
-
+        print(f"休眠{duration / 2}ms")
         await page.wait_for_timeout(timeout=duration / 2)
 
         await page.wait_for_timeout(3000)
