@@ -74,10 +74,10 @@ def create_notion_page(database_id: str, title: str) -> Optional[Dict]:
             },
             children=[]
         )
-        print(f"✅ 页面 '{title}' 创建成功，ID: {page['id']}")
+        print(f"✅ create_notion_page 页面 '{title}' 创建成功，ID: {page['id']}")
         return page
     except Exception as e:
-        print(f"❌ 页面创建失败: {e}")
+        print(f"❌ create_notion_page 页面创建失败: {e}")
         return None
 
 

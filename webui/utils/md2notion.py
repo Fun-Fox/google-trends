@@ -320,7 +320,7 @@ def create_page_from_markdown(database_id: str, file_path: str) -> Optional[dict
     page = create_notion_page(database_id, title, [])
 
     if not page:
-        print("❌ 页面创建失败")
+        print("❌ create_page_from_markdown页面创建失败")
         return None
 
     page_id = page["id"]
@@ -334,7 +334,7 @@ def create_page_from_markdown(database_id: str, file_path: str) -> Optional[dict
     print("📦 正在将内容插入到 Notion 页面中...")
     notion.blocks.children.append(block_id=page_id, children=body_blocks)
 
-    print(f"🎉 页面创建成功！访问地址: {page['url']}")
+    print(f"🎉 create_page_from_markdown页面创建成功！访问地址: {page['url']}")
     return page
 
 

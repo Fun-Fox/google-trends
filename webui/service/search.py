@@ -75,7 +75,7 @@ def get_md_and_image_paths(hot_word_folder: str) -> (str, List[str]):
     if not image_paths:
         raise FileNotFoundError(f"未在 {md_dir} 中找到任何图片文件")
 
-    return latest_md_file, image_paths[0]
+    return latest_md_file, image_paths[-1]
 
 
 def to_notion(hot_word_folders):
@@ -169,8 +169,6 @@ def load_summary_and_paths(hot_word_path):
         return latest_file
     else:
         return None
-
-
 
 
 # ===== 定义按钮点击事件 =====
