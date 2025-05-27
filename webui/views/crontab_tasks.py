@@ -127,7 +127,7 @@ async def scheduled_task(to_download_image, origin, category, nums, prompt, spea
 
         # 进行批量生成口播音频
 
-        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir)
+        await batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir,language)
         # 新增：整合 MP4 文件
         # print(f"📼 正在扫描 {task_dir} 中的 MP4 文件...")
         # mp4_files = find_mp4_files(task_dir)

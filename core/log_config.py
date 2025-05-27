@@ -84,6 +84,6 @@ def get_logger(name=__name__, log_file_path=''):
     #     logger.addHandler(console_handler)
 
     # 检查日志文件数量
-    manage_log_files("logs")
+    # manage_log_files("logs")
 
     return logger
