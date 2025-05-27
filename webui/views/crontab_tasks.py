@@ -98,7 +98,7 @@ def merge_videos(video_paths, output_path):
     return output_path
 
 
-async def scheduled_task(to_download_image, origin, category, nums, prompt, speaker_audio_path, language="zh",):
+async def scheduled_task(to_download_image, origin, category, nums, prompt, speaker_audio_path, language="zh", ):
     """
     定时执行的任务，接收用户输入参数
     """
@@ -246,7 +246,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             whisper_fast = get_whisper_model()
             print(f"开始生成srt文件")
             segments, _ = whisper_fast.transcribe(tts_audio_output_path)
-            output_srt_path = os.path.join(hot_word_tts_dir, f"{hot_word}.srt")
+            output_srt_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{audio_name}.srt")
             generate_srt(segments, output_srt_path)
             print(f"生成srt文件成功: {tts_audio_output_path}")
 
@@ -429,7 +429,7 @@ def set_scheduled_task(run_time, to_download_image, origin, category, nums, prom
                 task_info["last_exec"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 使用 datetime 替代 time
                 # 执行主任务
                 result = await scheduled_task(to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
-                                              language,)
+                                              language, )
 
                 # 更新任务结果
                 task_info["status"] = "completed"
@@ -544,7 +544,7 @@ def build_tab():
 
     set_button.click(fn=set_scheduled_task,
                      inputs=[time_input, to_download_image, origin, category, nums, prompt_textbox, audio_dropdown,
-                             lang_dropdown,],
+                             lang_dropdown, ],
                      outputs=[output_text, task_list])
 
     stop_button.click(fn=stop_scheduled_task,
