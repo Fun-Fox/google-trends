@@ -151,7 +151,7 @@ def search_image(query, hot_word_path, search_web_call_count, logger, num_result
             logger.error(f"计算图片 {img_path} 哈希值时发生异常: {e}")
 
     with DDGS(proxy=os.getenv("PROXY_URL"), timeout=20) as ddgs:
-        img_results = ddgs.images(query, max_results=5, size="Large")
+        img_results = ddgs.images(query, max_results=6, size="Large")
         # 下载并保存图片
         hot_word = os.path.splitext(os.path.basename(hot_word_path))[0]
         for i, result in enumerate(img_results):
@@ -180,7 +180,7 @@ def search_image(query, hot_word_path, search_web_call_count, logger, num_result
 
                     # 再次检查图片数量，避免超过10个
                     existing_images = [f for f in os.listdir(hot_word_path) if f.endswith(('.jpg', '.png'))]
-                    if len(existing_images) >= 10:
+                    if len(existing_images) >= num_results:
                         logger.info(f"目录 {hot_word_path} 中已有 {len(existing_images)} 张图片，不再下载新图片。")
                         break
                 else:
