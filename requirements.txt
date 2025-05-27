@@ -33,4 +33,4 @@ httpx~=0.28.1
 pyimgur==0.8.1
 faster_whisper~=1.1.1
 beautifulsoup4~=4.13.4
-lxml~=1.3.6
+lxml~=5.4.0
