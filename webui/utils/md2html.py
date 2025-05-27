@@ -552,7 +552,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
     :param video_path: 输出视频路径（.webm），若不指定则不录屏
     :param mobile: 是否启用移动端视口
     """
-    print("🚀 正在将 HTML 转为 PNG...")
+    print("🚀 正在将 HTML 转为 PNG、转mp4...")
     print(html_path, image_path, video_path, mobile, duration)
     abs_html_path = os.path.abspath(html_path)
 
