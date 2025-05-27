@@ -591,7 +591,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
             await page.set_viewport_size({"width": 900, "height": 1080})
 
         # 增加 10s 停顿再开始录制
-        await page.wait_for_timeout(timeout=duration)
+        await page.wait_for_timeout(timeout=duration/2)
         # 多次滚动直到所有内容可见
         max_attempts = 5
         attempt = 0
@@ -600,7 +600,7 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
             # 尝试滚动更多
             scrolled = await scroll_to_bottom(page, viewport_height=1920)
 
-            await page.wait_for_timeout(2000)
+            await page.wait_for_timeout(1000)
 
             # 如果没有滚动或内容已完全显示则退出
             if scrolled == 0:
@@ -608,6 +608,10 @@ async def html_to_image_with_playwright(html_path, image_path=None, video_path=N
 
             attempt += 1
             print(f"🔄 第 {attempt} 次滚动完成，继续检查是否有更多内容")
+
+        await page.wait_for_timeout(timeout=duration / 2)
+
+        await page.wait_for_timeout(3000)
 
         # 新增：等待图片加载完成
 
