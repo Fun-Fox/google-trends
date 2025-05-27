@@ -29,8 +29,8 @@ async def research_all_hot_word(task_folders, language):
             ret = hot_word_research_assistant(hot_words_folders_path, language, agent_logger)
             print(f"热词处理成功：{hot_words_folders}")
             print(f"查询md汇总文件,：{hot_words_folders}")
-            input_md_path = load_summary_and_paths(hot_words_folders_path)
-            await convert_md_file_to_img(input_md_path)
+            input_md_path = load_summary_and_paths(hot_words_folders_path,language)
+            await convert_md_file_to_img(input_md_path,language)
         except Exception as e:
             print(f"正在处理热词：{hot_words_folders_path}发生异常，下一个热词")
             continue
@@ -133,7 +133,7 @@ async def md_to_img(hot_words_folders_path, language):
     # input_md_path = load_summary_and_paths(hot_words_folders_path)
     # print(f"正在将md转为图片、视频、html：{hot_words_folders_path}")
 
-    await convert_md_file_to_img(input_md_path)
+    await convert_md_file_to_img(input_md_path,language)
     return "转换html、图片、视频成功"
 
 
@@ -146,19 +146,19 @@ async def research_hot_word(hot_words_folders_path, language):
     ret = hot_word_research_assistant(hot_words_folders_path, language, agent_logger)
     print(f"热词处理成功：{hot_words_folders_path}")
     print(f"查询md汇总文件,：{hot_words_folders_path}")
-    input_md_path = load_summary_and_paths(hot_words_folders_path)
-    await convert_md_file_to_img(input_md_path)
+    input_md_path = load_summary_and_paths(hot_words_folders_path,language)
+    await convert_md_file_to_img(input_md_path, language)
     return ret
 
 
-def load_summary_and_paths(hot_word_path):
+def load_summary_and_paths(hot_word_path,language):
     if not hot_word_path:
         return "",
 
     md_dir = os.path.join(hot_word_path, "md")
     if os.path.exists(md_dir):
         # 查找 .md 文件
-        md_files = [f for f in os.listdir(md_dir) if f.endswith(".md")]
+        md_files = [f for f in os.listdir(md_dir) if f.endswith(f"{language}.md")]
         if not md_files:
             return None
         # 获取完整路径，并按修改时间排序
@@ -171,8 +171,8 @@ def load_summary_and_paths(hot_word_path):
         return None
 
 
-# ===== 定义按钮点击事件 =====
-async def convert_md_file_to_img(md_path, duration=7000):
+# ===== 非定时任务，不需要设置duration，转md文件到图片、视频 =====
+async def convert_md_file_to_img(md_path, language,):
     if not md_path or not os.path.exists(md_path):
         return "❌ Markdown 文件不存在，无法转换"
 
@@ -185,9 +185,9 @@ async def convert_md_file_to_img(md_path, duration=7000):
         font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
         base_name = os.path.splitext(os.path.basename(md_path))[0]
         md_dir = os.path.dirname(md_path)
-        output_html = os.path.join(md_dir, f"{base_name}.html")
-        output_image = os.path.join(md_dir, f"{base_name}.png")
-        video_path = os.path.join(md_dir, f"{base_name}.mp4")
+        output_html = os.path.join(md_dir, f"{base_name}_{language}.html")
+        output_image = os.path.join(md_dir, f"{base_name}_{language}.png")
+        video_path = os.path.join(md_dir, f"{base_name}_{language}.mp4")
         html_path = output_html
         image_path = output_image
         print("开始转换..")
@@ -199,7 +199,8 @@ async def convert_md_file_to_img(md_path, duration=7000):
             video_path=video_path,
             background_image=bg_image_url,
             custom_font=font_url,
-            duration=duration
+            # 非定时任务（不生成音频、不合成音频），固定一个视频长度即可
+            duration=7000  # 此值是与生成的音频长度一致的
         )
         # 返回成功消息和生成的图片
         return f"✅ 转换成功！HTML 已保存至 {html_path}"

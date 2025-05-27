@@ -44,7 +44,7 @@ def generate_news_summary_report(highlights: str, output: str, hot_word_path: st
 
     # Step 4: 写入 Markdown 文件
     try:
-        md_file_path = _write_to_markdown_file(response_with_image, hot_word_path)
+        md_file_path = _write_to_markdown_file(response_with_image, hot_word_path,language)
     except Exception as e:
         logger.error(f"写入 Markdown 文件失败：{e}")
         return {"action": "error", "reason": str(e)}
@@ -147,12 +147,12 @@ def _insert_random_image(markdown_content: str, image_dir: str) -> str:
     return f"{title_line}\n{image_markdown}{rest_lines}"
 
 
-def _write_to_markdown_file(content: str, output_dir: str) -> str:
+def _write_to_markdown_file(content: str, output_dir: str,language) -> str:
     """将 Markdown 内容写入指定目录下的 hot_word.md 文件"""
     md_dir = os.path.join(output_dir, "md")
     base_name = os.path.basename(output_dir)
     os.makedirs(md_dir, exist_ok=True)
-    file_path = os.path.join(md_dir, f"{base_name}_{datetime.datetime.now().strftime('%Y年%m月%d日%H时%M分')}.md")
+    file_path = os.path.join(md_dir, f"{base_name}_{language}.md")
 
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(content)

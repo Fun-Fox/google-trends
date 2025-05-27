@@ -256,17 +256,17 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             # md转视频，生成视频文件
             hot_words_folders_path = hot_word_dir
 
-            md_path = load_summary_and_paths(hot_words_folders_path)
+            md_path = load_summary_and_paths(hot_words_folders_path,language)
             print(f"{hot_word}已经找到md文件，文件路径：{md_path}")
             if md_path is None:
                 print(f"❌ {hot_word}未找到md文件,重新生成")
                 await md_to_img(hot_words_folders_path, language)
-            md_path = load_summary_and_paths(hot_words_folders_path)
+            md_path = load_summary_and_paths(hot_words_folders_path,language)
 
             base_name = os.path.splitext(os.path.basename(md_path))[0]
             md_dir = os.path.dirname(md_path)
-            output_html = os.path.join(md_dir, f"{base_name}.html")
-            video_path = os.path.join(md_dir, f"{base_name}_no_voice.mp4")
+            output_html = os.path.join(md_dir, f"{base_name}_{language}.html")
+            video_path = os.path.join(md_dir, f"{base_name}_{language}_no_voice.mp4")
             html_path = output_html
 
             await convert_md_to_output(
