@@ -15,7 +15,7 @@ class WhisperModelSingleton:
     _instance = None
     _model = None
 
-    def __new__(cls, model_size="deepdml/faster-whisper-large-v3.5", device="auto", compute_type="float16"):
+    def __new__(cls, model_size="deepdml/faster-whisper-large-v3.5", device="auto"):
         if cls._instance is None:
             cls._instance = super(WhisperModelSingleton, cls).__new__(cls)
 
@@ -27,14 +27,12 @@ class WhisperModelSingleton:
                 cls._model = WhisperModel(
                     model_size_or_path=LOCAL_MODEL_PATH,
                     device=device,
-                    compute_type=compute_type
                 )
             else:
                 print(f"🌐 未找到本地模型，正在从远程下载: {model_size}")
                 cls._model = WhisperModel(
                     model_size_or_path=model_size,
                     device=device,
-                    compute_type=compute_type
                 )
         return cls._instance
 
@@ -64,7 +62,7 @@ if __name__ == '__main__':
     model = WhisperModelSingleton()
 
     # 调用模型进行语音识别
-    segments, info = model.transcribe(r"D:\PycharmProjects\google-trends\doc\数字人\参考音频\Trump.wav")
+    segments, info = model.transcribe(r"D:\Code\google-trends\doc\数字人\参考音频\女-英语.MP3")
 
     # 打印识别结果
     for segment in segments:
