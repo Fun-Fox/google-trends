@@ -1,6 +1,7 @@
 import os
 import random
 import re
+import shutil
 import time
 import asyncio
 import threading
@@ -211,6 +212,12 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
                 continue
 
             speak_content_list = content.split("\n")
+            filtered_list = []
+            for item in speak_content_list:
+                if item.strip():  # 或者根据需求使用 if item != ''
+                    filtered_list.append(item)
+            speak_content_list = filtered_list
+
             print(f"多角色对话{speak_content_list}")
             result_content = []
             for co in speak_content_list:
@@ -220,28 +227,56 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
                 elif "：" in co:
                     speaker_name, content = co.split("：", 1)
                     result_content.append(content)
-            content_text = '\n'.join(result_content)
-            print(f"多角色转单角色对话：\n{content_text}")
-            # 生成时间戳
-            formatted_time = datetime.now().strftime("%Y年%m月%d日_%H时%M分%S秒")
+            # content_text = '\n'.join(result_content)
+
 
             # 构建输出路径
             hot_word_dir = os.path.join(task_dir, hot_word)
+            # 清空临时文件夹
+            tmp_folder = os.path.join(task_dir, "tmp")
+            if os.path.exists(tmp_folder):
+                for file in os.listdir(tmp_folder):
+                    file_path = os.path.join(tmp_folder, file)
+                    try:
+                        if os.path.isfile(file_path):
+                            os.unlink(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as e:
+                        print(f"删除 {file_path} 失败: {e}")
+            else:
+                os.makedirs(tmp_folder, exist_ok=True)
+
             hot_word_tts_dir = os.path.join(hot_word_dir, 'tts')
             # 参考音频的名称
             audio_name = os.path.splitext(os.path.basename(speaker_audio_path))[0]
             tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{audio_name}.wav")
-
             # 创建目录（如果不存在）
             os.makedirs(hot_word_tts_dir, exist_ok=True)
 
-            # 调用TTS生成音频
-            tts.infer_fast(speaker_audio_path, content_text, tts_audio_output_path)
+            formatted_time = datetime.fromtimestamp(time.time()).strftime("%Y年%m月%d日%H时%M分%S秒")
+
+            # 在循环外部初始化一个空的音频对象
+            combined_audio = AudioSegment.silent(duration=0)
+            for i,content_text in enumerate(result_content):
+                print(f"一段段生成：\n{content_text}")
+                tts_audio_tmp_output_path = os.path.join(tmp_folder, f"{i}_{hot_word}_{audio_name}_{formatted_time}.wav")
+
+                # 调用TTS生成音频
+                tts.infer_fast(speaker_audio_path, content_text, tts_audio_tmp_output_path)
+
+                print(f"🔊 已生成音频对话片段文件: {tts_audio_tmp_output_path}")
+                # 加载音频片段到内存并追加
+                segment = AudioSegment.from_wav(tts_audio_tmp_output_path)
+                combined_audio += segment  # 直接拼接在内存中
+
+            # 最后统一导出最终音频文件
+            combined_audio.export(tts_audio_output_path, format="wav")
+            print(f"✅ 音频已合并完成并写入: {tts_audio_output_path}")
+
             # 获取语音时长（毫秒）
             segment = AudioSegment.from_wav(tts_audio_output_path)
             duration_ms = len(segment)  # 毫秒
-            print(f"🔊 已生成音频文件: {tts_audio_output_path}")
-
             # tts生成srt文件
             whisper_fast = get_whisper_model()
             print(f"开始生成srt文件")

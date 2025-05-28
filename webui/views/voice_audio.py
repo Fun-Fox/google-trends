@@ -220,7 +220,7 @@ def build_tab():
                     # f.write(f"{i}\n{start} --> {end}\n[{speaker}] {content}\n\n")
             progress(1, f"SRT 字幕已经生成")
 
-            # 清空零时文件夹
+            # 清空临时文件夹
             tmp_folder = os.path.join(task_root_dir, "tmp")
             if os.path.exists(tmp_folder):
                 for file in os.listdir(tmp_folder):
