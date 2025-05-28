@@ -35,12 +35,12 @@ def build_tab():
 
     with gr.Row():
         prompt_textbox1 = gr.Textbox(label="请输入口播人设提示词 1(可编辑)",
-                                     value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 直接切入内容，无需开场的问候\n- 通过标点符号(-)在任意位置控制停顿""",
+                                     value="""- 制作播音文稿，使用专业的新闻播音主持风格\n- 直接切入内容，无需开场的问候\n""",
                                      lines=3)
 
-        prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2(可编辑)", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 直接开场，无需客套\n- 通过标点符号(-)在任意位置控制停顿
+        prompt_textbox2 = gr.Textbox(label="请输入口播人设提示词 2(可编辑)", value="""- 制作播音文稿，使用幽默搞笑的相声风格\n- 直接开场，无需客套\n
                 """, lines=3)
-        prompt_textbox3 = gr.Textbox(label="请输入口播人设提示词 3(可编辑)", value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 直接开场，无需客套\n- 通过标点符号(-)在任意位置控制停顿
+        prompt_textbox3 = gr.Textbox(label="请输入口播人设提示词 3(可编辑)", value="""- 制作播音文稿，使用愤世嫉俗的批判主义风格\n- 直接开场，无需客套\n
                 """, lines=3)
     lang_dropdown = gr.Dropdown(label="选择语言",
                                 choices=["简体中文", "繁体中文", "英文", "日文", "韩文", "俄文"],
