@@ -19,8 +19,9 @@
 ## 模型支持
 
 支持本地模型与云端模型：
-本地模型（多模态）基于gemma3:4b\12b\27b
-云模型（多模态）基于deepseek-ai/deepseek-vl2
+
+- 本地模型（多模态）基于gemma3:4b\12b\27b
+- 云模型（多模态）基于deepseek-ai/deepseek-vl2
 
 ## 媒体画廊
 
@@ -43,28 +44,34 @@
 git https://github.com/Fun-Fox/google-trends.git
 cd google-trends
 git submodule update --init --recursive
+# 创建虚拟环境
 conda create -n google-trends python=11
 conda activate google-trends
 pip install -r requirements.txt
+# 下载网页采集依赖
 playwright install chromium
 conda  install ffmpeg
 cd index-tts
 pip install -r requirements.txt
 set HF_ENDPOINT=https://hf-mirror.com
+# 下载index-tts模型文件
 huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
+# 下载fast-whisper模型文件
 cd ..
 huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v3.5 --local-dir models/faster-distil-whisper-large-v3.5
+# 部署heygem数字人 Docker 容器服务
+cd heygem/deploy
+docker compose up -f  docker-compose-lite.yml up -d
 ```
+## 项目配置
 
-### tts模型文件
+将项目下的.env_example 复制为 .env
 
-- bigvgan_generator.pth
-- bpe.model
-- gpt.pth
+按描述修改.env文件:
 
-### fast-whisper模型文件
+- PROXY_URL :代理配置
+- HEY_GEN_IP：Heygem数字人docker端地址
 
-- faster-distil-whisper-large-v3.5/model.bin
 
 ## 开发计划
 
