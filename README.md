@@ -1,30 +1,32 @@
-# Google Trends 时下热点追踪Agent
+# 🌟 Google Trends 时下热点追踪Agent
 
-## 项目简介
+## 📌 项目简介
 
-本项目是一个基于pocketflow设计的时下热词追踪Agent
+本项目是一个基于[pocketflow](https://github.com/The-Pocket/PocketFlow)) 设计的 **时下热词追踪Agent** 💡  
+集成多 Tools、TTS、ASR、HeyGem API 实现以下核心能力：
 
-集成多Tools、TTS、ASR、Heygem API 实现:
+- 🔍 热点叙事的深度搜索
+- 🖼️ 热点的配图采集
+- 📰 热点转图文
+- 🎤 热点转多角色语音播报
+- 🧑‍💻 数字人视频生成
+- 📄 字幕生成
+- ⏰ 定时任务自动执行
+- 🔄 同步 Notion Web 页面
 
-- 热点叙事的深度搜索
-- 热点的配图采集
-- 热点转图文
-- 热点转多角色语音
-- 热点播报数字人生成
-- 字幕生成
-- 定时任务
-- 同步Notion Web页面
+后续将持续完善更多功能，敬请期待！🎉
+---
+## 🧠 模型支持
 
-等功能，后续持续完善....
+我们支持 **本地模型** 和 **云端模型**，灵活适配不同场景需求：
 
-## 模型支持
+- **本地模型（多模态）**：基于 `gemma3`（4b/12b/27b）
+- **云端模型（多模态）**：基于 `deepseek-ai/deepseek-vl2`
 
-支持本地模型与云端模型：
+---
 
-- 本地模型（多模态）基于gemma3:4b\12b\27b
-- 云模型（多模态）基于deepseek-ai/deepseek-vl2
 
-## 媒体画廊
+## 🎥 媒体画廊
 
  ![](doc/10.png)
 
@@ -36,9 +38,9 @@
 | 多人对话          | <img src="doc/多人对话口播.jpg" width="150"> | [点击查看](https://www.bilibili.com/video/BV1Am5Kz1ESB) |
 
 
-## 快速开始
+## 🚀 快速开始
 
-## 部署
+## 🛠️ 部署步骤
 
 ```commandline
 
@@ -75,39 +77,39 @@ cd heygem/deploy
 docker compose up -f  docker-compose-lite.yml up -d
 
 ```
-## 项目配置
+## 🛠️ 项目配置
 
 将项目下的.env_example 复制为 .env，按描述修改.env文件
 
-### 必填
+### ✅ 必填项：
 - PROXY_URL :代理配置
 - SERPAPI_API_KEY ：[注册地址](https://serper.dev/) 注册就有2000的额度，可以用很久
 > 本地模型或云端模型只需要填一种即可
 - LOCAL_LLM_URL、LOCAL_MODEL_NAME： 本地模型接入配置
 - CLOUD_API_KEY、CLOUD_MODEL_NAME ：云端模型配置接入配置 [注册地址](https://api.siliconflow.cn)
 
-### 选填
+### 📎 选填项：
 
 - HEY_GEN_IP：Heygem数字人服务IP地址，如果使用docker部署，则填写当前宿主机的IP地址
 - IMGUR_CLIENT_ID、IMGUR_CLIENT_SECRET： 图床服务地址，用于notion图片上传 [注册地址](https://api.imgur.com/oauth2/addclient)
 - NOTION_API_KEY、DATABASE_ID：Notion数据库配置，用于api同步 [注册地址](https://developers.notion.com/docs/create-a-notion-integration)
 
-## 开发计划
+##  📈 开发计划
 
 | 功能             | 状态      |
 |----------------|---------|
-| 时下热词采集         | [x] 已完成 |
-| 深度搜索           | [x] 已完成 |
-| 口播文案           | [x] 已完成 |
-| 定制口播提示词        | [x] 已完成 |
-| 集成tts          | [x] 已完成 |
-| 基于多角色生成口播音频    | [x] 已完成 |
-| 集成heyGen数字人api | [x] 已完成 |
-| 完善定时任务         | [x] 已完成 |
-| 完善批量操作         | [x] 已完成 |
-| 生成网页同步Notion   | [x] 已完成 |
+| 时下热词采集         | [x] 已完成 ✅ |
+| 深度搜索           | [x] 已完成 ✅ |
+| 口播文案           | [x] 已完成 ✅ |
+| 定制口播提示词        | [x] 已完成 ✅ |
+| 集成 TTS           | [x] 已完成 ✅ |
+| 多角色口播音频生成     | [x] 已完成 ✅ |
+| 集成 HeyGen 数字人 API | [x] 已完成 ✅ |
+| 完善定时任务         | [x] 已完成 ✅ |
+| 批量操作优化         | [x] 已完成 ✅ |
+| 自动同步 Notion 页面   | [x] 已完成 ✅ |
 
-## 系统运行
+## 🖥️ 系统运行截图及流程示例
 
 | 功能名称       | 描述信息                                                                 | 配图示意                                      |
 |----------------|--------------------------------------------------------------------------|-----------------------------------------------|
@@ -119,17 +121,18 @@ docker compose up -f  docker-compose-lite.yml up -d
 | 定时任务       | 支持定时执行任务流程                                                    | ![image](doc/8.png)                           |
 | 素材下载       | 下载热词相关的初稿及素材，并对图片进行评分（与内容相关性）                | ![image](doc/5.png)                           |
 
-## 它是如何工作的？
+## 🧩 它是如何工作的？
 
-### 深度搜索工作流：deepsearch_flow
+### 深度搜索工作流：[deepsearch_flow](file://D:\PycharmProjects\google-trends\agent\flow\deepsearch_flow.py#L0-L0)
+
 
 节点说明：
 
-- DecideAction：决策节点，判断是否继续深度搜索，如果继续则继续深度搜索，如果结束则结束深度搜索
-- SearchWeb：网页搜索（热词相关文本及图片）
-- ContentSummarizer：根据最终结果进行LLM写初稿
-- SupervisorNode：对初稿内容进行审核
-- EvaluateImage：评估符合热词叙事的配图，对图片进行多维度评分
+- [DecideAction](file://D:\PycharmProjects\google-trends\agent\nodes\deepsearch.py#L18-L147)：判断是否继续深度搜索
+- [SearchWeb](file://D:\PycharmProjects\google-trends\agent\nodes\deepsearch.py#L150-L245)：网页搜索（文本 + 图片）
+- [ContentSummarizer](file://D:\PycharmProjects\google-trends\agent\nodes\summarizer.py#L17-L152)：LLM 写初稿
+- [SupervisorNode](file://D:\PycharmProjects\google-trends\agent\nodes\summarizer.py#L156-L273)：审核初稿内容
+- `EvaluateImage`：评估图片与内容的相关性
 
 tool说明：
 
@@ -146,12 +149,14 @@ graph TD
     B -->|"decide"| A
     
 ```
-### 内容风格撰写工作流：content_flow
+### 🎨 内容风格撰写工作流：[content_flow](file://D:\PycharmProjects\google-trends\agent\flow\content_flow.py#L0-L0)
+
 
 节点说明：
 
-- ContentParaphraser：根据不同的风格Prompt，结合初稿进行LLM写最终稿
-- WriteSupervisorNode：对初稿内容进行审核
+
+- [ContentParaphraser](file://D:\PycharmProjects\google-trends\agent\nodes\paraphraser.py#L8-L59)：根据风格 Prompt 调整叙事风格
+- [WriteSupervisorNode](file://D:\PycharmProjects\google-trends\agent\nodes\paraphraser.py#L62-L102)：内容校验节点
 
 ```mermaid
 graph TD
@@ -160,9 +165,9 @@ graph TD
     
 ```
 
-### 提示词-示例
+### 🧾 提示词模板示例
 
-####  DecideAction 深度搜索决策节点
+####  🤖 DecideAction（深度搜索决策节点）
 
 ```
 你是一个可以搜索网络的热点新闻深度搜索助手
@@ -229,7 +234,7 @@ search_query: <具体的搜索查询如果操作是搜索>
        
 ```
 
-#### ContentSummarizer 输出节点
+#### 🧮 ContentSummarizer（输出总结节点）
 
 ```
     
@@ -292,7 +297,7 @@ output: |
 - 不要对 `chinese` 和 `output` 字段进行嵌套或添加额外结构
 ```
 
-#### EvaluateImage 配图与内容关联性评分节点
+#### 📊 EvaluateImage（配图评分节点）
 
 ```
     
@@ -328,8 +333,10 @@ output: |
     
 ```
 
->其余内容不做过多叙述，可以查看代码
+> 更多细节请查看完整代码仓库 👀
+---
 
+🚀 本项目持续更新中，敬请关注 GitHub 最新动态！
 
 
 
