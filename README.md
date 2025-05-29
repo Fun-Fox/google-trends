@@ -161,7 +161,7 @@ graph TD
 
 ### 提示词-示例
 
-####  DecideAction
+####  DecideAction 深度搜索决策节点
 
 ```
 你是一个可以搜索网络的热点新闻深度搜索助手
@@ -228,7 +228,7 @@ search_query: <具体的搜索查询如果操作是搜索>
        
 ```
 
-#### ContentSummarizer
+#### ContentSummarizer 输出节点
 
 ```
     
@@ -291,7 +291,7 @@ output: |
 - 不要对 `chinese` 和 `output` 字段进行嵌套或添加额外结构
 ```
 
-#### EvaluateImage
+#### EvaluateImage 配图与内容关联性评分节点
 
 ```
     
