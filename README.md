@@ -145,10 +145,23 @@ graph TD
     B -->|"decide"| A
     
 ```
+### 内容风格撰写工作流：content_flow
 
-#### 提示词
+节点说明：
 
-> DecideAction
+- ContentParaphraser：根据不同的风格Prompt，结合初稿进行LLM写最终稿
+- WriteSupervisorNode：对初稿内容进行审核
+
+```mermaid
+graph TD
+    A[ContentParaphraser] -->|"final_article"| B[WriteSupervisorNode]
+    B -->|"retry"| A  
+    
+```
+
+### 提示词-示例
+
+####  DecideAction
 
 ```
 你是一个可以搜索网络的热点新闻深度搜索助手
@@ -215,7 +228,7 @@ search_query: <具体的搜索查询如果操作是搜索>
        
 ```
 
-> AnswerEditor
+#### ContentSummarizer
 
 ```
     
@@ -314,19 +327,6 @@ output: |
     
 ```
 
-### 内容风格撰写工作流：content_flow
-
-节点说明：
-
-- ContentParaphraser：根据不同的风格Prompt，结合初稿进行LLM写最终稿
-- WriteSupervisorNode：对初稿内容进行审核
-
-```mermaid
-graph TD
-    A[ContentParaphraser] -->|"final_article"| B[WriteSupervisorNode]
-    B -->|"retry"| A  
-    
-```
 >其余内容不做过多叙述，可以查看代码
 
 
