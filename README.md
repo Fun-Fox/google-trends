@@ -349,5 +349,5 @@ output: |
 
 🚀 本项目持续更新中，敬请关注 GitHub 最新动态！
 
-
+![](doc/QRcode_网站.jpg)
 
