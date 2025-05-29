@@ -2,7 +2,9 @@
 
 ## 项目简介
 
-本项目是一个基于Playwright(网页自动化)、pocketflow(Agent框架) 的 Google Trends 时下热词采集、搜索、叙事撰写、叙事配图评分、叙事撰写（人设测试）工具。
+本项目是一个基于Playwright(网页自动化)、pocketflow(Agent框架) 的 Google Trends 时下热词采集、搜索、叙事撰写、叙事配图评分、叙事撰写、同步notion、生成图片、生成配音、生成数字人
+
+## 模型支持
 支持本地模型与云端模型。本地模型（多模态）基于gemma3，云模型（多模态）基于deepseek-ai/deepseek-vl2
 
 ## 流程
@@ -305,14 +307,19 @@ graph TD
 ## 部署
 
 ```commandline
+
 git https://github.com/Fun-Fox/google-trends.git
+cd google-trends
 git submodule update --init --recursive
+conda create -n google-trends python=11
+conda activate google-trends
 pip install -r requirements.txt
 playwright install chromium
 cd index-tts
 pip install -r requirements.txt
 set HF_ENDPOINT=https://hf-mirror.com
 huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
+cd ..
 huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v3.5 --local-dir models/faster-distil-whisper-large-v3.5
 ```
 
