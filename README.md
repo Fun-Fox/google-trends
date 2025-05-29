@@ -315,6 +315,7 @@ conda create -n google-trends python=11
 conda activate google-trends
 pip install -r requirements.txt
 playwright install chromium
+conda  install ffmpeg
 cd index-tts
 pip install -r requirements.txt
 set HF_ENDPOINT=https://hf-mirror.com
