@@ -82,7 +82,12 @@ huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v
 cd heygem/deploy
 docker compose up -f  docker-compose-lite.yml up -d
 
+
 ```
+# 启动项目
+
+python start.py
+
 ## 🛠️ 项目配置
 
 将项目下的.env_example 复制为 .env，按描述修改.env文件
