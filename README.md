@@ -78,7 +78,7 @@ huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v
 | 完善批量操作         | [x] 已完成 |
 | 生成网页同步Notion   | [x] 已完成 |
 
-## 系统运行截图及过程例子
+## 系统运行
 
 ### 时下热词采集
 
