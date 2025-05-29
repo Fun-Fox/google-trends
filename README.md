@@ -76,13 +76,20 @@ docker compose up -f  docker-compose-lite.yml up -d
 ```
 ## 项目配置
 
-将项目下的.env_example 复制为 .env
+将项目下的.env_example 复制为 .env，按描述修改.env文件
 
-按描述修改.env文件:
-
+### 必填
 - PROXY_URL :代理配置
-- HEY_GEN_IP：Heygem数字人docker端地址
+- SERPAPI_API_KEY ：https://serper.dev/ 注册就有2000的额度，可以用很久
+> 本地模型或云端模型只需要填一种即可
+- LOCAL_LLM_URL、LOCAL_MODEL_NAME： 本地模型接入配置
+- CLOUD_API_KEY、CLOUD_MODEL_NAME ：云端模型配置接入配置 https://api.siliconflow.cn
 
+### 选填
+
+- HEY_GEN_IP：Heygem数字人服务IP地址，如果使用docker部署，则填写当前宿主机的IP地址
+- IMGUR_CLIENT_ID、IMGUR_CLIENT_SECRET： 图床服务地址，用于notion图片上传 https://api.imgur.com/oauth2/addclient
+- NOTION_API_KEY、DATABASE_ID：Notion数据库配置，用于api同步 https://developers.notion.com/docs/create-a-notion-integration
 
 ## 开发计划
 
