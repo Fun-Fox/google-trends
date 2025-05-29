@@ -8,11 +8,14 @@
 - 🔍 热点叙事的深度搜索
 - 🖼️ 热点的配图采集
 - 📰 热点转图文
-- 🎤 热点转多角色语音播报
+- 🎤 热点转多角色语音播报（支持多角色参考音频）
 - 🧑‍💻 数字人视频生成
 - 📄 字幕生成
 - ⏰ 定时任务自动执行
-- 🔄 同步 Notion Web 页面
+- 🔄 Markdown热点图文 [示例](doc/示例19-bryce harper_简体中文.md)
+- 🔄 热点图片 [示例](19-bryce harper_简体中文_简体中文.png)
+- 🔄 热点静态HTML页面 [示例，下载后,浏览器打开](doc/示例/19-bryce%20harper_简体中文_简体中文.html)
+- 🔄 热点Notion API 同步[示例](https://power-filament-0e1.notion.site/128-126-2018ae0baa5f81b5b3a3d44eb2ed8f5a)
 
 后续将持续完善更多功能，敬请期待！🎉
 ---
@@ -32,10 +35,10 @@
 
 | 类别             | 封面图片路径              | 视频链接                                                                 |
 |------------------|---------------------|--------------------------------------------------------------------------|
-| 图文口播视频      | <img src="doc/图文口播.jpg" width="150">   | [点击查看](https://www.bilibili.com/video/BV1pDjrz7ExF) |
-| 支持中文以及英文  | <img src="doc/英语.jpg" width="150">       | [点击查看](https://www.bilibili.com/video/BV1i1j9zuE59) |
-| 数字人            | <img src="doc/数字人.jpg" width="150">     | [点击查看](https://www.bilibili.com/video/BV197EBzFESq) |
-| 多人对话          | <img src="doc/多人对话口播.jpg" width="150"> | [点击查看](https://www.bilibili.com/video/BV1Am5Kz1ESB) |
+| 图文口播视频      | <img src="doc/示例/图文口播.jpg" width="150">   | [点击查看](https://www.bilibili.com/video/BV1pDjrz7ExF) |
+| 支持中文以及英文  | <img src="doc/示例/英语.jpg" width="150">       | [点击查看](https://www.bilibili.com/video/BV1i1j9zuE59) |
+| 数字人            | <img src="doc/示例/数字人.jpg" width="150">     | [点击查看](https://www.bilibili.com/video/BV197EBzFESq) |
+| 多人对话          | <img src="doc/示例/多人对话口播.jpg" width="150"> | [点击查看](https://www.bilibili.com/video/BV1Am5Kz1ESB) |
 
 
 ## 🚀 快速开始
