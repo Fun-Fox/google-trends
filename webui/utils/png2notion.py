@@ -1,4 +1,5 @@
 # upload_image_to_notion.py
+import random
 from datetime import datetime
 from dotenv import load_dotenv
 from notion_client import Client
@@ -60,10 +61,11 @@ def upload_image_to_imgur(image_path: str) -> Optional[str]:
         return None
 
 
-def create_notion_page(database_id: str, title: str) -> Optional[Dict]:
+def create_notion_page(database_id: str,cover_url:str, title: str) -> Optional[Dict]:
     """创建空页面"""
     try:
         page = notion.pages.create(
+            cover={"type": "external", "external": {"url": cover_url}},
             parent={"database_id": database_id},
             properties={
                 "title": {"title": [{"text": {"content": title}}]},
@@ -102,16 +104,28 @@ def add_image_block_to_page(page_id: str, image_url: str):
         print(f"❌ 插入图片失败: {e}")
 
 
-def upload_image_and_create_notion_page(database_id: str, title: str, image_path: str):
+def upload_image_and_create_notion_page(database_id: str, title: str, md_image_path: str):
+    hot_word_dir = os.path.dirname(os.path.dirname(md_image_path))
+    image_files = [f for f in os.listdir(hot_word_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    random_image = random.choice(image_files)
+    path_or_url = os.path.join(hot_word_dir, random_image).replace('\\', '/')
+    # 2.1 将random_image 传入imgur
+    # 使用 Imgur 上传图片
+    imgur_client_id = os.getenv("IMGUR_CLIENT_ID")  # 替换为你自己的 Client ID
+    cover_url = upload_image_to_imgur(path_or_url, imgur_client_id)
+    print("成功插入页面头部图片")
+
+    if not cover_url:
+        cover_url = ''
     # Step 1: 创建页面
-    page = create_notion_page(database_id, title)
+    page = create_notion_page(database_id, cover_url,title)
     if not page:
         return
 
     page_id = page["id"]
 
     # Step 2: 上传图片到 Imgur
-    image_url = upload_image_to_imgur(image_path)
+    image_url = upload_image_to_imgur(md_image_path)
     if not image_url:
         print("❌ 图片上传失败")
         return

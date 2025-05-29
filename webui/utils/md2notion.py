@@ -319,7 +319,7 @@ def create_page_from_markdown(database_id: str, file_path: str) -> Optional[dict
 
     # Step 2: 在数据库中创建一个空页面
 
-    hot_word_dir = os.path.dirname(file_path)
+    hot_word_dir = os.path.dirname(os.path.dirname(file_path))
     image_files = [f for f in os.listdir(hot_word_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     random_image = random.choice(image_files)
     path_or_url = os.path.join(hot_word_dir, random_image).replace('\\', '/')
