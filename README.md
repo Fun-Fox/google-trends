@@ -4,7 +4,7 @@
 
 本项目是一个基于pocketflow设计的时下热词追踪Agent
 
-集成多Tools、TTS、ASR、Heygem API 实现
+集成多Tools、TTS、ASR、Heygem API 实现:
 
 - 热点叙事的深度搜索
 - 热点的配图采集
@@ -13,6 +13,7 @@
 - 字幕生成
 - 定时任务
 - 同步Notion Web页面
+
 等功能，后续持续完善....
 
 ## 模型支持
