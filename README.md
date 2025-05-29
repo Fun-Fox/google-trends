@@ -1,4 +1,4 @@
-# Google Trends 时下热词追踪Agent
+# Google Trends 时下热点追踪Agent
 
 ## 项目简介
 
