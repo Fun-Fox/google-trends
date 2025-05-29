@@ -14,13 +14,27 @@
 基于Python 11
 
 ## 画廊
-### 热点图文口播视频
-<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=114588402058657&bvid=BV1pDjrz7ExF&cid=30204692145&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true">
-</iframe>
+### 图文口播视频
 
-### 产生的素材说明
-https://yxbsjr92ock.feishu.cn/docx/ERhIdYiBfosifrxgcbhcDwulnXu?from=from_copylink
+[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV1pDjrz7ExF)
 
+### 支持中文、英文
+
+[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV1i1j9zuE59)
+
+### 数字人
+
+
+[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV197EBzFESq)
+
+### 多人对话
+
+<video crossorigin="anonymous" preload="auto" src="blob:https://www.bilibili.com/4574ce3a-125a-4435-9d46-d876f4256c64"></video>
+[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV1Am5Kz1ESB)
+
+### 其余素材说明
+
+[其余媒体素材说明](https://yxbsjr92ock.feishu.cn/docx/ERhIdYiBfosifrxgcbhcDwulnXu?from=from_copylink)
 
 ## 快速开始
 
