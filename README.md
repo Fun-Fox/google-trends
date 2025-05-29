@@ -10,6 +10,31 @@
 热点->深度查询->叙事->叙事配图->配图评分->叙事撰写（人设测试）
 
 基于Python 11
+
+## 快速开始
+
+## 部署
+
+```commandline
+git https://github.com/Fun-Fox/google-trends.git
+git submodule update --init --recursive
+pip install -r requirements.txt
+playwright install chromium
+cd index-tts
+pip install -r requirements.txt
+set HF_ENDPOINT=https://hf-mirror.com
+huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
+huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v3.5 --local-dir models/faster-distil-whisper-large-v3.5
+```
+
+## 模型文件
+- bigvgan_generator.pth
+- bpe.model
+- gpt.pth
+## 安装ffmpeg
+- windows: conda  install ffmpeg
+- linux： apt-get install ffmpeg
+
 ## 开发计划
 
 | 功能             | 状态     |
@@ -43,16 +68,19 @@
 这部分可以在界面上选择时下热词-叙事自定义提示词，进行人设设置，然后进行测试
 
 ![image](doc/3.png)
-![image](doc/4.png)
 
 ### 口播音频
 
 支持多角色的各自独立音频轨道生成
 
 ![image](doc/6.png)
-![image](doc/7.png)
 
 ### 多角色的数字人合成
+
+![image](doc/9.png)
+
+### 定时任务
+![image](doc/8.png)
 
 ### 素材下载
 可以下载时下热词，并且还有搜索后的初稿以及素材下载，并且对图片进行的评分(与内容相关性的评分)
@@ -67,14 +95,18 @@
 
 - DecideAction：决策节点，判断是否继续深度搜索，如果继续则继续深度搜索，如果结束则结束深度搜索
 - SearchWeb：网页搜索（热词相关文本及图片）
-- AnswerEditor：根据最终结果进行LLM写初稿
+- ContentSummarizer：根据最终结果进行LLM写初稿
 - SupervisorNode：对初稿内容进行审核
 - EvaluateImage：评估符合热词叙事的配图，对图片进行多维度评分
+
+tool说明：
+- crawler：深度采集页面
+- summary：生成报告
 
 ```mermaid
 graph TD
     A[DecideAction] -->|"search"| B[SearchWeb]
-    A -->|"answer"| C[AnswerEditor]
+    A -->|"answer"| C[ContentSummarizer]
     C -->D[SupervisorNode]
     D -->|"approved"|E[EvaluateImage]
     D -->|"retry"| A
@@ -87,59 +119,67 @@ graph TD
 > DecideAction
 
 ```
-    
-    ## 上下文
-    
-    你是一个可以搜索网络的热点新闻深度查询助手
-    现在给你一个时下网络流行热词，你需要进行深度查询，确保最终理解并能够全面的回答该热词对应的叙事内容。
-    
-    ### 查询维度
-    
-    - 发生时间：最近48小时内
-    - 事件基本信息 : 确认热词对应的具体事件、时间、地点、主要人物
-    - 事件发展脉络 : 事件起因、关键节点、最新进展
-    - 社会影响范围 : 受众群体、地域影响、行业影响
-    - 争议焦点 : 各方观点分歧、争论核心问题
-    - 官方回应 : 相关权威机构/人物的正式表态
-    - 公众反应 : 主流情绪倾向、典型评论
-    - 专业解读 : 权威专家/媒体的分析观点
-    - 传播特点 : 传播路径、关键推手、发酵速度
-    - 关联事件 : 与此热点相关的历史/并行事件
-    
-    ### 输入
-    时下流行热词: {hot_word}
-    先前的研究: 
-    {context}
-    
-    ## 操作空间
-    [1] search
-      描述: 在网络上查找更多信息
-      参数:
-        - query (str): 搜索内容
-    
-    [2] answer
-      描述: 用当前知识回答问题
-      参数:
-        - answer (str): 问题的最终回答
-    
-    ### 下一步操作
-    根据上下文、查询维度和可用操作决定下一步操作。
-    请以以下格式返回你的响应：
-    
-    ```yaml
-    thinking: |
-        <你的逐步推理过程>
-    action: search OR answer
-    reason: <为什么选择这个操作>
-    answer: <如果操作是回答>
-    search_query: <具体的搜索查询如果操作是搜索>
-    ```
-    重要：请确保：
-    
-    1. 使用|字符表示多行文本字段
-       2. 多行字段使用缩进（4个空格）
-       3. 单行字段不使用|字符
-       4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
+你是一个可以搜索网络的热点新闻深度搜索助手
+现在给你一个时下网络流行热词，你需要参考查询维度、先前的研究进行深度搜索，深度思考并理解该热词对应的叙事内容。
+使用{language}回答
+### 查询维度
+
+- 事件基本信息 : 确认热词对应的具体事件、时间、地点、主要人物
+- 事件发展脉络 : 事件起因、关键节点、最新进展
+- 社会影响范围 : 受众群体、地域影响、行业影响
+- 争议焦点 : 各方观点分歧、争论核心问题
+- 官方回应 : 相关权威机构/人物的正式表态
+- 关联事件 : 与此热点相关的历史/并行事件
+
+并非所有查询条件都需满足，可使用优先级进行排序
+查询优先级：事件基本信息>事件发展脉络>社会影响范围>争议焦点>官方回应>关联事件
+
+## 上下文
+- 当前时间: {current_date}
+- 时下流行热词: {hot_word}
+{desc}
+- 相关新闻报导标题：
+
+{relation_news}
+
+- 先前的研究,总计为{links_count}条,具体如下：
+
+{context}
+
+## 操作空间
+[1] search
+  描述: 在网络上查找更多信息
+  参数:
+    - query (str): 搜索内容
+
+[2] answer
+  描述: 用当前知识回答问题
+  参数:
+    - answer (str): 问题的最终回答
+
+### 下一步操作
+根据上下文、查询维度和可用操作决定下一步操作。
+重要：请确保：
+如先前的研究，总计大于6条，则结合已有的研究进行回答操作，不再进行深度搜索，
+
+请以以下格式返回你的响应：
+
+
+thinking: |
+    <你的逐步推理过程>
+action: search OR answer
+reason: <为什么选择这个操作>
+answer: <如果操作是回答>
+search_query: <具体的搜索查询如果操作是搜索>
+
+重要：请确保：
+
+如先前的研究，总计大于6条，则结合已有的研究进行回答操作，不再进行深度搜索，
+1. 使用|字符表示多行文本字段
+2. 多行字段使用缩进（4个空格）
+3. 单行字段不使用|字符
+4. 不允许直接在键后嵌套另一个键（如 answer: search_query:)
+5. 非键值对不允许随意使用冒号: 
        
 ```
 
@@ -147,44 +187,63 @@ graph TD
 
 ```
     
-    ## 上下文
-    
-    你是一个热点信息精炼助手，基于以下信息，回答问题。
-    
-    ### 精炼维度
-    
-    - 核心事实提取: 从海量信息中提取关键事实要素
-      - 舆情脉络梳理: 梳理公众情绪变化与讨论焦点转移路径
-      - 发酵点识别: 识别推动话题扩散的关键节点与触发因素
-      - 趋势预判: 基于现有信息预测话题可能的发展方向
-    
-    ### 输入格式:
-    
-    时下网络流行热词: {hot_word}
-    研究: 
-    {context}
-    
-    ### 你的回答:
-    结合热词对应的研究进行理解，
-    - 使用精炼维度撰写叙事文案
-      - 使用中文和英文。
-      - 用简单易懂的语言解释想法
-      - 使用日常语言，避免术语
-            
-    请以以下格式返回你的响应：
-    
-    ```yaml
-    chinese: |
-        <中文叙事文案>
-    english: |
-        <英文叙事文案>
-    ```
+你是一个热点信息精炼助手，基于以下信息，回答问题。
 
-    重要：请确保：
-    1. 使用|字符表示多行文本字段
-    2. 多行字段使用缩进（4个空格）
-    3. 单行字段不使用|字符
-    
+### 精炼维度
+
+- 核心事实提取: 从海量信息中提取关键事实要素
+- 舆情脉络梳理: 梳理公众情绪变化与讨论焦点转移路径
+- 发酵点识别: 识别推动话题扩散的关键节点与触发因素
+- 趋势预判: 基于现有信息预测话题可能的发展方向
+
+### 输入格式:
+
+当前时间: {current_date}
+时下流行热词: {hot_word}
+
+{hot_word_info}
+
+内容描述: 
+
+{context}
+
+相关搜索历史:
+
+{search_history}
+
+### 你的回答:
+1. 请根据研究内容撰写如下两部分叙事文案：
+   - 中文叙事 (`chinese`)
+   - {language}叙事 (`output`)
+   - 内容要求：
+     * 使用日常语言，避免术语
+     * 涵盖核心事实、舆情脉络、发酵点及趋势预判等维度
+     * 每段保持结构清晰，逻辑通顺
+
+2. 同时，请从研究内容中提取 **2个最相关的优质报道摘要**，并返回以下结构：
+
+
+highlights: 
+  - title: <报道标题1,使用{language}> 
+    summary: <摘要,使用{language}> 
+    link: "<来源链接,链接使用引号>"
+  - title: <报道标题2,使用{language}> 
+    summary: <摘要,使用{language}> 
+    link: "<来源链接,链接使用引号>"
+chinese: |
+    <中文叙事文案>
+output: |
+    <{language}叙事文案,注意此部分文案使用{language}>
+
+
+重要：请确保：
+⚠️ YAML 格式要求：
+- 所有字段使用英文冒号 `:` + **一个空格** 开始值
+- 多行字段使用 `|` 表示，并至少比键名多一级缩进（推荐 4 个空格）
+- 列表项（`-`）需统一缩进
+- 不允许在 `title:`、`summary:`、`link:` 后直接嵌套新结构
+- 避免使用中文冒号 `：` 或省略空格
+- 不要对 `chinese` 和 `output` 字段进行嵌套或添加额外结构
 ```
 
 > EvaluateImage
