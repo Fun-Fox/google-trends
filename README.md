@@ -23,30 +23,13 @@
 
  ![](doc/10.png)
 
-### 图文口播视频
+| 类别             | 封面图片路径              | 视频链接                                                                 |
+|------------------|---------------------|--------------------------------------------------------------------------|
+| 图文口播视频      | <img src="doc/图文口播.jpg" width="150">   | [点击查看](https://www.bilibili.com/video/BV1pDjrz7ExF) |
+| 支持中文以及英文  | <img src="doc/英语.jpg" width="150">       | [点击查看](https://www.bilibili.com/video/BV1i1j9zuE59) |
+| 数字人            | <img src="doc/数字人.jpg" width="150">     | [点击查看](https://www.bilibili.com/video/BV197EBzFESq) |
+| 多人对话          | <img src="doc/多人对话口播.jpg" width="150"> | [点击查看](https://www.bilibili.com/video/BV1Am5Kz1ESB) |
 
-[![视频封面](doc/图文口播.jpg)](https://www.bilibili.com/video/BV1pDjrz7ExF)
-
-### 支持中文以及英文
-
-[![视频封面](doc/英文.png)](https://www.bilibili.com/video/BV1i1j9zuE59)
-
-### 数字人
-
-[![视频封面](doc/数字人.jpg)](https://www.bilibili.com/video/BV197EBzFESq)
-
-### 多人对话
-
-[![视频封面](doc/多人对话口播.jpg)](https://www.bilibili.com/video/BV1Am5Kz1ESB)
-
-### 相关媒体素材说明
-
-在tasks目录下
-[其余媒体素材说明](https://yxbsjr92ock.feishu.cn/docx/ERhIdYiBfosifrxgcbhcDwulnXu?from=from_copylink)
-
-## 快速开始
-
-## 部署
 
 ## 快速开始
 
