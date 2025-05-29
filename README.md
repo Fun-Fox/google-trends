@@ -1,69 +1,89 @@
-# Google Trends 时下热词叙事风格撰写
+# Google Trends 时下热词追踪Agent
 
 ## 项目简介
 
-本项目是一个基于Playwright(网页自动化)、pocketflow(Agent框架) 的 Google Trends 时下热词采集、搜索、叙事撰写、叙事配图评分、叙事撰写、同步notion、生成图片、生成配音、生成数字人
+本项目是一个基于pocketflow设计的时下热词追踪Agent
+集成多Tools、TTS、ASR、Heygem API 实现
+-热点叙事的深度搜索
+-热点的配图采集
+-热点转图文
+-热点转多角色语音
+-字幕生成
+-定时任务
+-同步Notion Web页面
+等功能
 
 ## 模型支持
-支持本地模型与云端模型。本地模型（多模态）基于gemma3，云模型（多模态）基于deepseek-ai/deepseek-vl2
 
-## 流程
+支持本地模型与云端模型：
+本地模型（多模态）基于gemma3:4b\12b\27b
+云模型（多模态）基于deepseek-ai/deepseek-vl2
 
-热点->深度查询->叙事->叙事配图->配图评分->叙事撰写（人设测试）
+## 媒体画廊
 
-基于Python 11
+ ![](doc/10.png)
 
-## 画廊
 ### 图文口播视频
 
-[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV1pDjrz7ExF)
+[![视频封面](doc/图文口播.jpg)](https://www.bilibili.com/video/BV1pDjrz7ExF)
 
-### 支持中文、英文
+### 支持中文以及英文
 
-[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV1i1j9zuE59)
+[![视频封面](doc/英文.png)](https://www.bilibili.com/video/BV1i1j9zuE59)
 
 ### 数字人
 
-
-[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV197EBzFESq)
+[![视频封面](doc/数字人.jpg)](https://www.bilibili.com/video/BV197EBzFESq)
 
 ### 多人对话
 
-<video crossorigin="anonymous" preload="auto" src="blob:https://www.bilibili.com/4574ce3a-125a-4435-9d46-d876f4256c64"></video>
-[![视频封面](https://i.ytimg.com/vi/your-video-id/hqdefault.jpg)](https://www.bilibili.com/video/BV1Am5Kz1ESB)
+[![视频封面](doc/多人对话口播.jpg)](https://www.bilibili.com/video/BV1Am5Kz1ESB)
 
-### 其余素材说明
+### 相关媒体素材说明
 
+在tasks目录下
 [其余媒体素材说明](https://yxbsjr92ock.feishu.cn/docx/ERhIdYiBfosifrxgcbhcDwulnXu?from=from_copylink)
 
 ## 快速开始
 
 ## 部署
 
+## 快速开始
+
+## 部署
+
 ```commandline
+
 git https://github.com/Fun-Fox/google-trends.git
+cd google-trends
 git submodule update --init --recursive
+conda create -n google-trends python=11
+conda activate google-trends
 pip install -r requirements.txt
 playwright install chromium
+conda  install ffmpeg
 cd index-tts
 pip install -r requirements.txt
 set HF_ENDPOINT=https://hf-mirror.com
 huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
+cd ..
 huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v3.5 --local-dir models/faster-distil-whisper-large-v3.5
 ```
 
-## 模型文件
+### tts模型文件
+
 - bigvgan_generator.pth
 - bpe.model
 - gpt.pth
-## 安装ffmpeg
-- windows: conda  install ffmpeg
-- linux： apt-get install ffmpeg
+
+### fast-whisper模型文件
+
+- faster-distil-whisper-large-v3.5/model.bin
 
 ## 开发计划
 
-| 功能             | 状态     |
-|----------------|--------|
+| 功能             | 状态      |
+|----------------|---------|
 | 时下热词采集         | [x] 已完成 |
 | 深度搜索           | [x] 已完成 |
 | 口播文案           | [x] 已完成 |
@@ -73,15 +93,18 @@ huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v
 | 集成heyGen数字人api | [x] 已完成 |
 | 完善定时任务         | [x] 已完成 |
 | 完善批量操作         | [x] 已完成 |
+| 生成网页同步Notion   | [x] 已完成 |
 
 ## 系统运行截图及过程例子
 
 ### 时下热词采集
+
 采集google trends 全球不同地区不同分类的热词数据，并且还可以下载推荐的新闻热图
 
 ![image](doc/1.png)
 
 ### 深度搜索
+
 由网络搜索决策者，决定进行深度搜索，最终则到满足要求的结果
 
 ![image](doc/2.png)
@@ -90,6 +113,7 @@ huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v
 [agent执行日志文件](doc/agent执行过程-样例.log)
 
 ### 口播文案
+
 这部分可以在界面上选择时下热词-叙事自定义提示词，进行人设设置，然后进行测试
 
 ![image](doc/3.png)
@@ -105,16 +129,18 @@ huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v
 ![image](doc/9.png)
 
 ### 定时任务
+
 ![image](doc/8.png)
 
 ### 素材下载
+
 可以下载时下热词，并且还有搜索后的初稿以及素材下载，并且对图片进行的评分(与内容相关性的评分)
 
 ![image](doc/5.png)
 
 ## 它是如何工作的？
 
-#### 深度搜索工作流：research_hot_word_flow
+### 深度搜索工作流：deepsearch_flow
 
 节点说明：
 
@@ -125,6 +151,7 @@ huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v
 - EvaluateImage：评估符合热词叙事的配图，对图片进行多维度评分
 
 tool说明：
+
 - crawler：深度采集页面
 - summary：生成报告
 
@@ -307,7 +334,7 @@ output: |
     
 ```
 
-### 风格撰写工作流：write_in_style_flow
+### 内容风格撰写工作流：content_flow
 
 节点说明：
 
@@ -320,39 +347,8 @@ graph TD
     B -->|"retry"| A  
     
 ```
+>其余内容不做过多叙述，可以查看代码
 
-#### 提示词
 
-这部分可以在界面上选择时下热词-叙事自定义提示词，进行人设设置，然后进行测试
-
-## 快速开始
-
-## 部署
-
-```commandline
-
-git https://github.com/Fun-Fox/google-trends.git
-cd google-trends
-git submodule update --init --recursive
-conda create -n google-trends python=11
-conda activate google-trends
-pip install -r requirements.txt
-playwright install chromium
-conda  install ffmpeg
-cd index-tts
-pip install -r requirements.txt
-set HF_ENDPOINT=https://hf-mirror.com
-huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
-cd ..
-huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v3.5 --local-dir models/faster-distil-whisper-large-v3.5
-```
-
-## 模型文件
-- bigvgan_generator.pth
-- bpe.model
-- gpt.pth
-## 安装ffmpeg
-- windows: conda  install ffmpeg
-- linux： apt-get install ffmpeg
 
 
