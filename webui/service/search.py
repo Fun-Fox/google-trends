@@ -5,7 +5,7 @@ from typing import List
 from lxml.isoschematron import extract_xsd
 
 from agent import hot_word_research_assistant
-from agent.tools.summary import generate_news_summary_report
+from agent.tools.summary2md import generate_news_summary_report
 from core import get_logger
 from webui.utils.constant import task_root_dir, root_dir
 from webui.utils.md2html import (get_random_bg_image, convert_md_to_output)

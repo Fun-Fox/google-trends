@@ -6,7 +6,7 @@ from time import sleep
 from dotenv import load_dotenv
 from pocketflow import Node
 
-from agent.tools.summary import generate_news_summary_report
+from agent.tools.summary2md import generate_news_summary_report
 from agent.utils import get_images, call_llm
 import yaml
 

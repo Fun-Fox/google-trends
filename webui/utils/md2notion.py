@@ -1,5 +1,7 @@
+import random
 from datetime import datetime
 
+from PIL.ImageOps import cover
 from dotenv import load_dotenv
 from notion_client import Client
 from typing import Tuple, List, Optional
@@ -75,7 +77,6 @@ def upload_image_to_imgur(image_path: str, client_id: str) -> Optional[str]:
     except Exception as e:
         print(f"❌ Imgur upload failed: {e}")
         return None
-
 
 
 def upload_local_image_to_notion(image_path: str, parent_page_id: str, notion_token: str) -> Optional[str]:
@@ -278,10 +279,11 @@ notion = Client(
 )
 
 
-def create_notion_page(database_id: str, title: str, body_blocks: List[dict]) -> Optional[dict]:
+def create_notion_page(database_id: str, title: str, cover_url: str, body_blocks: List[dict]) -> Optional[dict]:
     """在指定数据库中创建新页面，并插入多个 block"""
     try:
         page = notion.pages.create(
+            cover={"type": "external", "external": {"url": cover_url}},
             parent={"database_id": database_id},
             properties={
                 "title": {"title": [{"text": {"content": title}}]},
@@ -316,8 +318,21 @@ def create_page_from_markdown(database_id: str, file_path: str) -> Optional[dict
     title, _ = processor.parse()
 
     # Step 2: 在数据库中创建一个空页面
+
+    hot_word_dir = os.path.dirname(file_path)
+    image_files = [f for f in os.listdir(hot_word_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    random_image = random.choice(image_files)
+    path_or_url = os.path.join(hot_word_dir, random_image).replace('\\', '/')
+    # 2.1 将random_image 传入imgur
+    # 使用 Imgur 上传图片
+    imgur_client_id = os.getenv("IMGUR_CLIENT_ID")  # 替换为你自己的 Client ID
+    cover_url = upload_image_to_imgur(path_or_url, imgur_client_id)
+    print("成功插入页面头部图片")
+
+    if not cover_url:
+        cover_url = ''
     print(f"正在使用标题 '{title}' 创建新页面...")
-    page = create_notion_page(database_id, title, [])
+    page = create_notion_page(database_id, title, cover_url, [])
 
     if not page:
         print("❌ create_page_from_markdown页面创建失败")
