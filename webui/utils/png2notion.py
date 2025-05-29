@@ -112,7 +112,7 @@ def upload_image_and_create_notion_page(database_id: str, title: str, md_image_p
     # 2.1 将random_image 传入imgur
     # 使用 Imgur 上传图片
     imgur_client_id = os.getenv("IMGUR_CLIENT_ID")  # 替换为你自己的 Client ID
-    cover_url = upload_image_to_imgur(path_or_url, imgur_client_id)
+    cover_url = upload_image_to_imgur(path_or_url)
     print("成功插入页面头部图片")
 
     if not cover_url:
