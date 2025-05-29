@@ -15,7 +15,7 @@
 - 🔄 Markdown热点图文 [示例](doc/示例19-bryce harper_简体中文.md)
 - 🔄 热点图片 [示例](19-bryce harper_简体中文_简体中文.png)
 - 🔄 热点静态HTML页面 [示例，下载后,浏览器打开](doc/示例/19-bryce%20harper_简体中文_简体中文.html)
-- 🔄 热点Notion API 同步[示例](https://power-filament-0e1.notion.site/128-126-2018ae0baa5f81b5b3a3d44eb2ed8f5a)
+- 🔄 热点Notion API同步 [示例](https://power-filament-0e1.notion.site/128-126-2018ae0baa5f81b5b3a3d44eb2ed8f5a)
 
 后续将持续完善更多功能，敬请期待！🎉
 ---
