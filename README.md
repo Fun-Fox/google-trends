@@ -318,12 +318,12 @@ output: |
 
 节点说明：
 
-- WriteInStyle：根据不同的风格Prompt，结合初稿进行LLM写最终稿
+- ContentParaphraser：根据不同的风格Prompt，结合初稿进行LLM写最终稿
 - WriteSupervisorNode：对初稿内容进行审核
 
 ```mermaid
 graph TD
-    A[WriteInStyle] -->|"final_article"| B[WriteSupervisorNode]
+    A[ContentParaphraser] -->|"final_article"| B[WriteSupervisorNode]
     B -->|"retry"| A  
     
 ```
