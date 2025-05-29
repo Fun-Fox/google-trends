@@ -20,7 +20,7 @@ from webui.utils.constant import root_dir
 from webui.utils.log import update_agent_log_textbox, update_task_log_textbox
 from webui.service.crawler import run_crawler
 from webui.service.search import research_all_hot_word, load_summary_and_paths, md_to_img
-from webui.utils.md2html import convert_md_to_output
+from webui.utils.md2html import convert_md_to_output, get_random_bg_image
 from webui.utils.transcribe import get_whisper_model
 
 # ========== 多任务支持 ==========
@@ -304,12 +304,16 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             video_path = os.path.join(md_dir, f"{base_name}_{language}_no_voice.mp4")
             html_path = output_html
 
+            bg_folder = os.path.join(root_dir, "webui", "bg")
+            bg_image_path = get_random_bg_image(bg_folder)
+            bg_image_url = bg_image_path.replace("\\", "/") if bg_image_path else None
+
             await convert_md_to_output(
                 md_path=md_path,
                 html_path=html_path,
                 image_path=None,
                 video_path=video_path,
-                background_image=None,
+                background_image=bg_image_url,
                 custom_font=None,
                 duration=duration_ms
             )
