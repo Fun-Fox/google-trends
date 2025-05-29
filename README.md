@@ -20,10 +20,10 @@
 
 多媒体分发：
 
-- Markdown图文 [示例](doc/示例/19-bryce%20harper_简体中文.md)
-- 图片 [示例](doc/示例/19-bryce%20harper_简体中文_简体中文.png)
-- 静态HTML页面 [示例，下载后,浏览器打开](doc/示例/19-bryce%20harper_简体中文_简体中文.html)
-- Notion API同步 [示例](https://www.funfox.icu/%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA/2018ae0b-aa5f-8133-b07b-fb4e5a614fb8)
+- Markdown图文 [查看效果](doc/示例/19-bryce%20harper_简体中文.md)
+- 图片 [查看效果](doc/示例/19-bryce%20harper_简体中文_简体中文.png)
+- 静态HTML页面 [查看效果，下载后,浏览器打开](doc/示例/19-bryce%20harper_简体中文_简体中文.html)
+- Notion API同步 [查看效果](https://www.funfox.icu/%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA/2018ae0b-aa5f-8133-b07b-fb4e5a614fb8)
 
 后续将持续完善更多功能，敬请期待！🎉
 ---
