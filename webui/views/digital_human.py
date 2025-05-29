@@ -34,7 +34,7 @@ def build_tab():
     # ======================
 
     def refresh_task_dropdown():
-        return gr.Dropdown.update(choices=[''] + get_task_folders())
+        return gr.Dropdown(choices=[''] + get_task_folders())
 
     refresh_button.click(fn=refresh_task_dropdown, outputs=task_folders)
     task_folders.change(fn=update_hot_word_folders, inputs=task_folders, outputs=hot_word_folders)
