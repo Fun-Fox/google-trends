@@ -13,6 +13,15 @@
 
 基于Python 11
 
+## 画廊
+### 热点图文口播视频
+<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=114588402058657&bvid=BV1pDjrz7ExF&cid=30204692145&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true">
+</iframe>
+
+### 产生的素材说明
+https://yxbsjr92ock.feishu.cn/docx/ERhIdYiBfosifrxgcbhcDwulnXu?from=from_copylink
+
+
 ## 快速开始
 
 ## 部署
