@@ -44,24 +44,35 @@
 git https://github.com/Fun-Fox/google-trends.git
 cd google-trends
 git submodule update --init --recursive
+
 # 创建虚拟环境
+
 conda create -n google-trends python=11
 conda activate google-trends
 pip install -r requirements.txt
+
 # 下载网页采集依赖
+
 playwright install chromium
 conda  install ffmpeg
 cd index-tts
 pip install -r requirements.txt
 set HF_ENDPOINT=https://hf-mirror.com
+
 # 下载index-tts模型文件
+
 huggingface-cli download IndexTeam/Index-TTS bigvgan_discriminator.pth bigvgan_generator.pth bpe.model dvae.pth gpt.pth unigram_12000.vocab --local-dir checkpoints
+
 # 下载fast-whisper模型文件
+
 cd ..
 huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v3.5 --local-dir models/faster-distil-whisper-large-v3.5
+
 # 部署heygem数字人 Docker 容器服务
+
 cd heygem/deploy
 docker compose up -f  docker-compose-lite.yml up -d
+
 ```
 ## 项目配置
 
