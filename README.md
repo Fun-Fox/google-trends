@@ -39,7 +39,7 @@
 
 ## 🎥 媒体画廊
 
- ![](doc/10.png)
+![[跳转](https://space.bilibili.com/27070648/lists/5431461?type=season)](doc/10.png)]
 
 ## 🚀 快速开始
 
