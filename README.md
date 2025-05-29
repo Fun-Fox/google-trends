@@ -26,7 +26,7 @@
 - Notion API同步 [查看效果](https://www.funfox.icu/%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA/2018ae0b-aa5f-8133-b07b-fb4e5a614fb8)
 
 ![](doc/11.png)
-
+<img src="doc/QRcode_网站.jpg" width="100">
 后续将持续完善更多功能，敬请期待！🎉
 
 ---
@@ -349,5 +349,5 @@ output: |
 
 🚀 本项目持续更新中，敬请关注 GitHub 最新动态！
 
-<img src="doc/QRcode_网站.jpg" width="100">
+
 
