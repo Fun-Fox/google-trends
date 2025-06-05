@@ -2,6 +2,10 @@ import os
 from asyncio import sleep
 from dotenv import load_dotenv
 load_dotenv()
+import requests
+from PIL import Image
+from io import BytesIO
+from base64 import b64encode
 
 # 设置代理
 proxies = {
@@ -36,7 +40,7 @@ def call_local_llm(prompt, logger=None, image_path='', ):
         # 使用本地ollama模型gemma3
         url = f"{os.getenv('LOCAL_LLM_URL')}"
 
-        if os.getenv("LOCAL_MODEL_NAME") == "gemma3" and image_path != "":
+        if "gemma3" in os.getenv("LOCAL_MODEL_NAME") and image_path != "":
             logger.info(f"使用本地模型{os.getenv('LOCAL_MODEL_NAME')},进行视觉操作")
             payload = {
                 "model": f"{os.getenv('LOCAL_MODEL_NAME')}",
@@ -64,11 +68,6 @@ def call_local_llm(prompt, logger=None, image_path='', ):
         return "错误: 调用LLM时发生异常。", False
 
 
-import os
-import requests
-from PIL import Image
-from io import BytesIO
-from base64 import b64encode
 
 api_key = os.getenv("CLOUD_API_KEY")
 api_url = os.getenv("CLOUD_API_URL")
