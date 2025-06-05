@@ -5,6 +5,8 @@
 | 图文口播视频   | <img src="doc/示例/图文口播.jpg" width="150"> | [点击查看](https://www.bilibili.com/video/BV1pDjrz7ExF) | 支持英文 | <img src="doc/示例/英语.jpg" width="150">     | [点击查看](https://www.bilibili.com/video/BV1i1j9zuE59) |
 | 数字人      | <img src="doc/示例/数字人.jpg" width="150">  | [点击查看](https://www.bilibili.com/video/BV197EBzFESq) | 多人对话     | <img src="doc/示例/多人对话口播.jpg" width="150"> | [点击查看](https://www.bilibili.com/video/BV1Am5Kz1ESB) |
 
+![](doc/4.png)
+
 ## 📌 项目简介
 
 本项目是一个基于[pocketflow](https://github.com/The-Pocket/PocketFlow)) 设计的 **时下热词追踪Agent** 💡  
