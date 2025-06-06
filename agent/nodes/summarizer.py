@@ -133,8 +133,9 @@ output: |
         highlights = response.get('highlights', [])
         if highlights:
             highlights_str = "\n".join([
-                f"{index}.🌐:\n[{highlight['title']}]({highlight.get('link', '')})\n摘要：\n{highlight.get('summary', '无摘要')}\n\n"
+                f"""{index}.🌐:\n[{cleaned_title}]({highlight.get('link', '')})\n摘要：\n{highlight.get('summary', '无摘要')}\n\n"""
                 for index, highlight in enumerate(highlights, start=1)
+                for cleaned_title in [highlight['title'].replace('\n', '')]
             ])
         else:
             highlights_str = ""
