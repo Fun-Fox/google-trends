@@ -227,6 +227,7 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
                 elif "：" in co:
                     speaker_name, content = co.split("：", 1)
                     result_content.append(content)
+            print(f"对话内容：{result_content}")
             # content_text = '\n'.join(result_content)
 
 
