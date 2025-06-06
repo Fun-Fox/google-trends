@@ -230,7 +230,6 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             print(f"对话内容：{result_content}")
             # content_text = '\n'.join(result_content)
 
-
             # 构建输出路径
             hot_word_dir = os.path.join(task_dir, hot_word)
             # 清空临时文件夹
@@ -252,28 +251,33 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             # 参考音频的名称
             audio_name = os.path.splitext(os.path.basename(speaker_audio_path))[0]
             tts_audio_output_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{audio_name}.wav")
-            # 创建目录（如果不存在）
-            os.makedirs(hot_word_tts_dir, exist_ok=True)
+            if not os.path.exists(tts_audio_output_path):
 
-            formatted_time = datetime.fromtimestamp(time.time()).strftime("%Y年%m月%d日%H时%M分%S秒")
+                # 创建目录（如果不存在）
+                os.makedirs(hot_word_tts_dir, exist_ok=True)
 
-            # 在循环外部初始化一个空的音频对象
-            combined_audio = AudioSegment.silent(duration=0)
-            for i,content_text in enumerate(result_content):
-                print(f"一段段生成：\n{content_text}")
-                tts_audio_tmp_output_path = os.path.join(tmp_folder, f"{i}_{hot_word}_{audio_name}_{formatted_time}.wav")
+                formatted_time = datetime.fromtimestamp(time.time()).strftime("%Y年%m月%d日%H时%M分%S秒")
 
-                # 调用TTS生成音频
-                tts.infer_fast(speaker_audio_path, content_text, tts_audio_tmp_output_path)
+                # 在循环外部初始化一个空的音频对象
+                combined_audio = AudioSegment.silent(duration=0)
+                for i, content_text in enumerate(result_content):
+                    print(f"一段段生成：\n{content_text}")
+                    tts_audio_tmp_output_path = os.path.join(tmp_folder,
+                                                             f"{i}_{hot_word}_{audio_name}_{formatted_time}.wav")
 
-                print(f"🔊 已生成音频对话片段文件: {tts_audio_tmp_output_path}")
-                # 加载音频片段到内存并追加
-                segment = AudioSegment.from_wav(tts_audio_tmp_output_path)
-                combined_audio += segment  # 直接拼接在内存中
+                    # 调用TTS生成音频
+                    tts.infer_fast(speaker_audio_path, content_text, tts_audio_tmp_output_path)
 
-            # 最后统一导出最终音频文件
-            combined_audio.export(tts_audio_output_path, format="wav")
-            print(f"✅ 音频已合并完成并写入: {tts_audio_output_path}")
+                    print(f"🔊 已生成音频对话片段文件: {tts_audio_tmp_output_path}")
+                    # 加载音频片段到内存并追加
+                    segment = AudioSegment.from_wav(tts_audio_tmp_output_path)
+                    combined_audio += segment  # 直接拼接在内存中
+
+                # 最后统一导出最终音频文件
+                combined_audio.export(tts_audio_output_path, format="wav")
+                print(f"✅ 音频已合并完成并写入: {tts_audio_output_path}")
+            else:
+                print(f"音频已存在: {tts_audio_output_path}")
 
             # 获取语音时长（毫秒）
             segment = AudioSegment.from_wav(tts_audio_output_path)
@@ -283,8 +287,11 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             print(f"开始生成srt文件")
             segments, _ = whisper_fast.transcribe(tts_audio_output_path)
             output_srt_path = os.path.join(hot_word_tts_dir, f"{hot_word}_{audio_name}.srt")
-            generate_srt(segments, output_srt_path)
-            print(f"生成srt文件成功: {tts_audio_output_path}")
+            if not os.path.exists(output_srt_path):
+                generate_srt(segments, output_srt_path)
+                print(f"生成srt文件成功: {tts_audio_output_path}")
+            else:
+                print(f"srt文件已存在: {tts_audio_output_path}")
 
             if only_tts:
                 print("仅生成配音文件和字幕文件，不生成视频")
@@ -292,12 +299,12 @@ async def batch_gen_tts(hot_word_csv_files_path, speaker_audio_path, task_dir, l
             # md转视频，生成视频文件
             hot_words_folders_path = hot_word_dir
 
-            md_path = load_summary_and_paths(hot_words_folders_path,language)
+            md_path = load_summary_and_paths(hot_words_folders_path, language)
             print(f"{hot_word}已经找到md文件，文件路径：{md_path}")
             if md_path is None:
                 print(f"❌ {hot_word}未找到md文件,重新生成")
                 await md_to_img(hot_words_folders_path, language)
-            md_path = load_summary_and_paths(hot_words_folders_path,language)
+            md_path = load_summary_and_paths(hot_words_folders_path, language)
 
             base_name = os.path.splitext(os.path.basename(md_path))[0]
             md_dir = os.path.dirname(md_path)
