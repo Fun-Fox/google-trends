@@ -100,8 +100,10 @@ thinking: |
     <你的逐步推理过程>
 action: search OR answer
 reason: <为什么选择这个操作>
-answer: <如果操作是回答>
-search_query: <具体的搜索查询如果操作是搜索>
+answer: |
+    <如果操作是回答>
+search_query: |
+    <具体的搜索查询如果操作是搜索>
 ```
 重要：请确保：
 

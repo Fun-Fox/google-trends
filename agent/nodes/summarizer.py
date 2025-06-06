@@ -80,11 +80,15 @@ class ContentSummarizer(Node):
 
 ```yaml
 highlights: 
-  - title: <报道标题1,使用{language}> 
-    summary: <摘要,使用{language}> 
+  - title: |
+        <报道标题1,使用{language}>
+    summary: |
+        <摘要,使用{language}>
     link: "<来源链接,链接使用引号>"
-  - title: <报道标题2,使用{language}> 
-    summary: <摘要,使用{language}> 
+  - title: |
+        <报道标题2,使用{language}> 
+    summary: |
+        <摘要,使用{language}> 
     link: "<来源链接,链接使用引号>"
 chinese: |
     <中文叙事文案>
@@ -129,7 +133,7 @@ output: |
         highlights = response.get('highlights', [])
         if highlights:
             highlights_str = "\n".join([
-                f"{index}.🌐:\n[{highlight['title']}]({highlight['link']})\n摘要：\n{highlight['summary']}\n\n"
+                f"{index}.🌐:\n[{highlight['title']}]({highlight.get('link', '')})\n摘要：\n{highlight.get('summary', '无摘要')}\n\n"
                 for index, highlight in enumerate(highlights, start=1)
             ])
         else:
