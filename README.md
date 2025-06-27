@@ -81,6 +81,11 @@ huggingface-cli download --repo-type model deepdml/faster-distil-whisper-large-v
 
 # 部署heygem数字人 Docker 容器服务
 
+# 安装PyTorch
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu128
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
+
+
 cd heygem/deploy
 docker compose up -f  docker-compose-lite.yml up -d
 
